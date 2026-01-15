@@ -33,6 +33,20 @@ impl Default for VirtualCursor {
     }
 }
 
+/// Click state for the virtual cursor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ClickState {
+    /// Not clicking.
+    #[default]
+    Idle,
+    /// Click just started this frame.
+    JustPressed,
+    /// Click is being held.
+    Held,
+    /// Click just released this frame.
+    JustReleased,
+}
+
 /// Resource tracking virtual cursor state.
 #[derive(Debug, Clone, Default, Resource)]
 pub struct VirtualCursorState {
@@ -40,35 +54,51 @@ pub struct VirtualCursorState {
     pub active: bool,
     /// Current cursor position in screen space.
     pub position: Vec2,
-    /// Whether a "click" is being held.
-    pub clicking: bool,
-    /// Whether a click just started this frame.
-    pub just_clicked: bool,
-    /// Whether a click just ended this frame.
-    pub just_released: bool,
+    /// Current click state.
+    pub click_state: ClickState,
 }
 
 impl VirtualCursorState {
     /// Reset frame state (call at start of frame).
     pub fn reset_frame_state(&mut self) {
-        self.just_clicked = false;
-        self.just_released = false;
+        // Transition JustPressed -> Held and JustReleased -> Idle
+        self.click_state = match self.click_state {
+            ClickState::JustPressed => ClickState::Held,
+            ClickState::JustReleased => ClickState::Idle,
+            other => other,
+        };
     }
 
     /// Start a click.
     pub fn start_click(&mut self) {
-        if !self.clicking {
-            self.clicking = true;
-            self.just_clicked = true;
+        if self.click_state == ClickState::Idle {
+            self.click_state = ClickState::JustPressed;
         }
     }
 
     /// End a click.
     pub fn end_click(&mut self) {
-        if self.clicking {
-            self.clicking = false;
-            self.just_released = true;
+        if matches!(self.click_state, ClickState::Held | ClickState::JustPressed) {
+            self.click_state = ClickState::JustReleased;
         }
+    }
+
+    /// Check if currently clicking.
+    #[must_use]
+    pub const fn is_clicking(&self) -> bool {
+        matches!(self.click_state, ClickState::Held | ClickState::JustPressed)
+    }
+
+    /// Check if click just started.
+    #[must_use]
+    pub const fn just_clicked(&self) -> bool {
+        matches!(self.click_state, ClickState::JustPressed)
+    }
+
+    /// Check if click just released.
+    #[must_use]
+    pub const fn just_released(&self) -> bool {
+        matches!(self.click_state, ClickState::JustReleased)
     }
 }
 
@@ -88,7 +118,7 @@ pub fn update_virtual_cursor(
         return;
     }
 
-    let Ok(window) = window_query.get_single() else {
+    let Ok(window) = window_query.single() else {
         return;
     };
 
@@ -96,12 +126,12 @@ pub fn update_virtual_cursor(
     let mut cursor_delta = Vec2::ZERO;
     for gamepad in gamepads.iter() {
         // Check if we should use this gamepad
-        if let Some(active_gamepad) = input_state.active_gamepad() {
+        if let Some(_active_gamepad) = input_state.active_gamepad() {
             if cursor_query.is_empty() {
                 continue;
             }
 
-            for (mut transform, virtual_cursor) in cursor_query.iter_mut() {
+            for (_transform, virtual_cursor) in &mut cursor_query {
                 // Get stick input based on configuration
                 let (x_axis, y_axis) = if virtual_cursor.use_left_stick {
                     (GamepadAxis::LeftStickX, GamepadAxis::LeftStickY)
@@ -123,12 +153,12 @@ pub fn update_virtual_cursor(
     }
 
     // Update cursor position
-    if let Ok((mut transform, _)) = cursor_query.get_single_mut() {
+    if let Ok((mut transform, _)) = cursor_query.single_mut() {
         let new_pos = transform.translation.truncate() + cursor_delta;
 
         // Clamp to window bounds
-        let half_width = window.width() / 2.0;
-        let half_height = window.height() / 2.0;
+        let half_width: f32 = window.width() / 2.0;
+        let half_height: f32 = window.height() / 2.0;
         let clamped = Vec2::new(
             new_pos.x.clamp(-half_width, half_width),
             new_pos.y.clamp(-half_height, half_height),
@@ -165,7 +195,7 @@ pub fn toggle_virtual_cursor_visibility(
 ) {
     let should_show = input_state.using_gamepad();
 
-    for mut visibility in cursor_query.iter_mut() {
+    for mut visibility in &mut cursor_query {
         *visibility = if should_show {
             Visibility::Visible
         } else {
@@ -175,7 +205,7 @@ pub fn toggle_virtual_cursor_visibility(
 }
 
 /// Event fired when the virtual cursor clicks.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct VirtualCursorClick {
     /// Position where the click occurred.
     pub position: Vec2,
@@ -186,7 +216,7 @@ pub fn fire_virtual_cursor_events(
     cursor_state: Res<VirtualCursorState>,
     mut click_events: MessageWriter<VirtualCursorClick>,
 ) {
-    if cursor_state.just_clicked {
+    if cursor_state.just_clicked() {
         click_events.write(VirtualCursorClick {
             position: cursor_state.position,
         });
@@ -194,6 +224,7 @@ pub fn fire_virtual_cursor_events(
 }
 
 /// Helper function to spawn a virtual cursor entity.
+#[must_use]
 pub fn spawn_virtual_cursor(
     commands: &mut Commands,
     asset_server: &AssetServer,
@@ -218,7 +249,7 @@ pub fn spawn_virtual_cursor(
 /// Plugin for registering virtual cursor types and systems.
 pub(crate) fn register_virtual_cursor_types(app: &mut App) {
     app.init_resource::<VirtualCursorState>()
-        .add_event::<VirtualCursorClick>();
+        .add_message::<VirtualCursorClick>();
 }
 
 /// Add virtual cursor systems to the app.

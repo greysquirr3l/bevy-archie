@@ -1,20 +1,52 @@
-# Bevy Archie - Controller Support Module
+# Bevy Archie - Rust / Bevy Controller Support Module
 
-A comprehensive game controller support module for Bevy engine, inspired by the RenPy Controller GUI project.
+![Archie Out of Context](docs/assets/archie_context.png)
+
+A comprehensive game controller support module for the Bevy engine, inspired by the RenPy Controller GUI project.
 
 ## Features
 
+### Core Input System
+
 - **Input Device Detection**: Automatically detect and switch between mouse, keyboard, and gamepad input
+- **Input Action Mapping**: Abstract input actions with customizable bindings for gamepad, keyboard, and mouse
+- **Action State Tracking**: Query pressed, just_pressed, just_released states and analog values for any action
+- **Per-Stick Settings**: Independent sensitivity and inversion for left/right analog sticks
+- **Deadzone Configuration**: Configurable stick deadzones with per-stick customization
+
+### Controller Support
+
 - **Controller Icon System**: Display appropriate button icons based on controller type (Xbox, PlayStation, Nintendo, Steam, Stadia, Generic)
-- **Input Action Mapping**: Abstract input actions with customizable bindings
+- **Controller Profiles**: Automatic detection and profile loading based on vendor/product IDs
+- **Multi-controller Support**: Handle multiple connected controllers with player assignment
+- **Controller Layout Detection**: Auto-detect and adapt UI to controller type
+
+### Advanced Input Features
+
+- **Haptic Feedback**: Rumble and vibration patterns (Constant, Pulse, Explosion, DamageTap, HeavyImpact, Engine, Heartbeat)
+- **Input Buffering**: Record and analyze input sequences for fighting game-style combo detection
+- **Action Modifiers**: Detect Tap, Hold, DoubleTap, LongPress, and Released events on actions
+- **Gyroscope Support**: Motion controls for PS4/PS5/Switch controllers (placeholder - platform-specific implementation required)
+- **Touchpad Support**: PS4/PS5 touchpad input with multi-touch and gesture detection (swipe, pinch, tap)
+
+### Multiplayer
+
+- **Player Assignment**: Automatic or manual controller-to-player assignment (up to 4 players)
+- **Controller Ownership**: Track which player owns which controller
+- **Hot-swapping**: Handle controller disconnection and reassignment
+
+### UI & Configuration
+
 - **Controller Remapping**: Allow players to remap controller buttons at runtime
 - **Virtual Keyboard**: On-screen keyboard for controller-friendly text input
 - **Virtual Cursor**: Gamepad-controlled cursor for mouse-based UI navigation
-- **Per-Stick Settings**: Independent sensitivity and inversion for left/right analog sticks
 - **Configuration Persistence**: Save and load controller settings to/from JSON files
-- **Deadzone Configuration**: Configurable stick deadzones and sensitivity
-- **Focus Management**: Keyboard/controller-friendly UI focus navigation
-- **Multi-controller Support**: Handle multiple connected controllers
+
+### Developer Tools
+
+- **Input Debugging**: Visualize input states, history, and analog values
+- **Input Recording**: Record input sequences for testing and replay
+- **Input Playback**: Play back recorded inputs for automated testing
 
 ## Supported Controllers
 
@@ -218,6 +250,325 @@ Config files are saved to platform-specific directories:
 - **Stadia**: Google Stadia Controller (Bluetooth mode)
 - **Generic**: Fallback for unrecognized controllers
 
+## Advanced Features
+
+### Haptic Feedback
+
+Add rumble and vibration to your game:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn trigger_rumble(
+    mut rumble_events: MessageWriter<RumbleRequest>,
+    gamepads: Query<Entity, With<Gamepad>>,
+) {
+    for gamepad in gamepads.iter() {
+        // Simple rumble
+        rumble_events.write(RumbleRequest::new(
+            gamepad,
+            0.8,  // Intensity (0.0-1.0)
+            Duration::from_millis(500),
+        ));
+        
+        // Pattern-based rumble
+        rumble_events.write(RumbleRequest::with_pattern(
+            gamepad,
+            RumblePattern::Explosion,  // Strong fade effect
+            0.9,
+            Duration::from_secs(1),
+        ));
+    }
+}
+
+// Available patterns:
+// - Constant: Steady vibration
+// - Pulse: Rhythmic pulsing
+// - Explosion: Strong start with fade
+// - DamageTap: Quick impact feel
+// - HeavyImpact: Longer impact
+// - Engine: Motor-like hum
+// - Heartbeat: Pulse pattern
+```
+
+### Input Buffering & Combos
+
+Detect input sequences for fighting game mechanics:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn setup_combos(mut registry: ResMut<ComboRegistry>) {
+    // Define a combo sequence
+    registry.register(
+        Combo::new("hadouken", vec![
+            GameAction::Down,
+            GameAction::Right,
+            GameAction::Primary,
+        ])
+        .with_window(Duration::from_millis(500))
+    );
+}
+
+fn handle_combos(
+    mut combo_events: MessageReader<ComboDetected>,
+) {
+    for event in combo_events.read() {
+        println!("Combo detected: {}", event.combo);
+        // Trigger special move
+    }
+}
+```
+
+### Multiplayer Controller Management
+
+Assign controllers to players:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn setup_players(mut commands: Commands) {
+    // Spawn player entities
+    commands.spawn(Player::new(0)); // Player 1
+    commands.spawn(Player::new(1)); // Player 2
+}
+
+fn manual_assignment(
+    mut assign_events: MessageWriter<AssignControllerRequest>,
+    gamepads: Query<Entity, With<Gamepad>>,
+) {
+    // Manually assign a controller to a player
+    if let Some(gamepad) = gamepads.iter().next() {
+        assign_events.write(AssignControllerRequest {
+            gamepad,
+            player: PlayerId::new(0),
+        });
+    }
+}
+
+fn check_ownership(
+    ownership: Res<ControllerOwnership>,
+    input: Res<ActionState>,
+) {
+    // Check which player owns a gamepad
+    if let Some(player_id) = ownership.get_owner(gamepad_entity) {
+        println!("Controller owned by player {}", player_id.id());
+    }
+    
+    // Get gamepad for a specific player
+    if let Some(gamepad) = ownership.get_gamepad(PlayerId::new(0)) {
+        // Read input for player 1's controller
+    }
+}
+```
+
+### Action Modifiers
+
+Detect advanced input patterns:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn handle_modifiers(
+    mut modifier_events: MessageReader<ModifiedActionEvent>,
+) {
+    for event in modifier_events.read() {
+        match event.modifier {
+            ActionModifier::Tap => {
+                println!("Quick tap on {:?}", event.action);
+            }
+            ActionModifier::Hold => {
+                println!("Held for {} seconds", event.duration);
+            }
+            ActionModifier::DoubleTap => {
+                println!("Double-tapped!");
+            }
+            ActionModifier::LongPress => {
+                println!("Long press detected");
+            }
+            ActionModifier::Released => {
+                println!("Button released");
+            }
+        }
+    }
+}
+
+// Configure modifier timings
+fn configure_modifiers(mut state: ResMut<ActionModifierState>) {
+    state.config.hold_duration = 0.2;        // 200ms for hold
+    state.config.long_press_duration = 0.8;  // 800ms for long press
+    state.config.double_tap_window = 0.3;    // 300ms between taps
+}
+```
+
+### PlayStation Touchpad
+
+Handle touchpad input on DualShock 4 and DualSense:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn handle_touchpad(
+    mut gesture_events: MessageReader<TouchpadGestureEvent>,
+    touchpad_query: Query<&TouchpadData>,
+) {
+    // Handle gestures
+    for event in gesture_events.read() {
+        match event.gesture {
+            TouchpadGesture::Tap => println!("Tapped at {:?}", event.position),
+            TouchpadGesture::TwoFingerTap => println!("Two-finger tap"),
+            TouchpadGesture::SwipeLeft => println!("Swiped left"),
+            TouchpadGesture::SwipeRight => println!("Swiped right"),
+            TouchpadGesture::SwipeUp => println!("Swiped up"),
+            TouchpadGesture::SwipeDown => println!("Swiped down"),
+            TouchpadGesture::PinchIn => println!("Pinch in (zoom out)"),
+            TouchpadGesture::PinchOut => println!("Pinch out (zoom in)"),
+        }
+    }
+    
+    // Direct touchpad access
+    for touchpad in touchpad_query.iter() {
+        let finger1_pos = touchpad.finger1.position();
+        let finger1_delta = touchpad.finger1_delta();
+        
+        if touchpad.button_pressed {
+            println!("Touchpad button pressed");
+        }
+        
+        println!("Active fingers: {}", touchpad.active_fingers());
+    }
+}
+```
+
+### Controller Profiles
+
+Automatically detect controller models and load profiles:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn setup_profiles(mut registry: ResMut<ProfileRegistry>) {
+    // Register a custom profile for PS5 controllers
+    let ps5_profile = ControllerProfile::new("PS5 Default", ControllerModel::PS5)
+        .with_action_map(my_custom_action_map())
+        .with_layout(ControllerLayout::PlayStation);
+    
+    registry.register(ps5_profile);
+    registry.auto_load = true;  // Auto-apply profiles when controllers connect
+}
+
+fn handle_detection(
+    mut detected_events: MessageReader<ControllerDetected>,
+    detected_query: Query<&DetectedController>,
+) {
+    for event in detected_events.read() {
+        println!("Detected: {:?}", event.model);
+        
+        // Check controller capabilities
+        if event.model.supports_gyro() {
+            println!("Controller has gyroscope support");
+        }
+        if event.model.supports_touchpad() {
+            println!("Controller has touchpad");
+        }
+        if event.model.supports_adaptive_triggers() {
+            println!("Controller has adaptive triggers (PS5)");
+        }
+    }
+}
+```
+
+### Motion Controls (Gyroscope)
+
+Access gyroscope and accelerometer data:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn handle_motion(
+    mut gesture_events: MessageReader<MotionGestureDetected>,
+    gyro_query: Query<&GyroData>,
+    accel_query: Query<&AccelData>,
+) {
+    // Handle detected gestures
+    for event in gesture_events.read() {
+        match event.gesture {
+            MotionGesture::Flick => println!("Quick rotation detected"),
+            MotionGesture::Shake => println!("Controller shaken"),
+            MotionGesture::Tilt => println!("Controller tilted"),
+            MotionGesture::Roll => println!("Controller rolled"),
+        }
+    }
+    
+    // Direct gyro access
+    for gyro in gyro_query.iter() {
+        if gyro.valid {
+            let rotation_speed = gyro.magnitude();
+            println!("Rotation: pitch={}, yaw={}, roll={}", 
+                gyro.pitch, gyro.yaw, gyro.roll);
+        }
+    }
+    
+    // Direct accelerometer access
+    for accel in accel_query.iter() {
+        if accel.valid {
+            if accel.is_shaking(3.0) {  // Threshold in m/s²
+                println!("Shake detected!");
+            }
+        }
+    }
+}
+
+// Configure motion controls
+fn configure_motion(mut config: ResMut<MotionConfig>) {
+    config.gyro_sensitivity = 1.5;
+    config.gyro_deadzone = 0.01;
+    config.enabled = true;
+}
+```
+
+### Debug Tools
+
+Visualize and record input for testing:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn toggle_debug(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut debug_events: MessageWriter<ToggleInputDebug>,
+) {
+    if keyboard.just_pressed(KeyCode::F12) {
+        debug_events.write(ToggleInputDebug { enable: true });
+    }
+}
+
+fn configure_debugger(mut debugger: ResMut<InputDebugger>) {
+    debugger.show_history = true;   // Show input history
+    debugger.show_sticks = true;    // Show analog stick positions
+    debugger.show_buttons = true;   // Show button states
+    debugger.show_gyro = true;      // Show gyro data
+    debugger.history_size = 50;     // Keep last 50 inputs
+}
+
+fn start_recording(
+    mut record_events: MessageWriter<RecordingCommand>,
+) {
+    record_events.write(RecordingCommand { start: true });
+}
+
+fn playback_recording(
+    recorder: Res<InputRecorder>,
+    mut playback_events: MessageWriter<PlaybackCommand>,
+) {
+    if !recorder.recording {
+        playback_events.write(PlaybackCommand {
+            inputs: recorder.recorded.clone(),
+        });
+    }
+}
+```
+
 ## Examples
 
 Run the examples to see features in action:
@@ -238,6 +589,185 @@ cargo run --example virtual_cursor
 # Config persistence
 cargo run --example config_persistence
 ```
+
+## API Reference
+
+### Core Types
+
+#### `InputDeviceState`
+
+Tracks the currently active input device.
+
+```rust
+pub struct InputDeviceState {
+    pub active_device: InputDevice,
+    pub last_gamepad: Option<Entity>,
+    // ...
+}
+
+// Methods
+fn using_gamepad(&self) -> bool;
+fn using_keyboard(&self) -> bool;
+fn using_mouse(&self) -> bool;
+fn active_gamepad(&self) -> Option<Entity>;
+```
+
+#### `ActionState`
+
+Query the state of game actions.
+
+```rust
+pub struct ActionState {
+    // ...
+}
+
+// Methods
+fn pressed(&self, action: GameAction) -> bool;
+fn just_pressed(&self, action: GameAction) -> bool;
+fn just_released(&self, action: GameAction) -> bool;
+fn value(&self, action: GameAction) -> f32;  // 0.0-1.0 for analog
+```
+
+#### `ActionMap`
+
+Map actions to input sources.
+
+```rust
+pub struct ActionMap {
+    // ...
+}
+
+// Methods
+fn bind_gamepad(&mut self, action: GameAction, button: GamepadButton);
+fn bind_axis(&mut self, action: GameAction, axis: GamepadAxis, direction: AxisDirection, threshold: f32);
+fn bind_key(&mut self, action: GameAction, key: KeyCode);
+fn bind_mouse(&mut self, action: GameAction, button: MouseButton);
+fn clear_bindings(&mut self, action: GameAction);
+fn primary_gamepad_button(&self, action: GameAction) -> Option<GamepadButton>;
+```
+
+#### `GameAction`
+
+Predefined actions that can be customized.
+
+```rust
+pub enum GameAction {
+    // Navigation
+    Confirm, Cancel, Pause, Select,
+    
+    // Movement
+    Up, Down, Left, Right,
+    
+    // Camera
+    LookUp, LookDown, LookLeft, LookRight,
+    
+    // Actions
+    Primary, Secondary,
+    LeftShoulder, RightShoulder,
+    LeftTrigger, RightTrigger,
+    
+    // UI
+    PageLeft, PageRight,
+    
+    // Custom slots
+    Custom1, Custom2, Custom3, Custom4,
+}
+
+// Methods
+fn all() -> &'static [GameAction];
+fn display_name(&self) -> &'static str;
+fn is_remappable(&self) -> bool;
+fn is_required(&self) -> bool;
+```
+
+### Configuration
+
+#### `ControllerConfig`
+
+Main configuration resource.
+
+```rust
+pub struct ControllerConfig {
+    pub deadzone: f32,
+    pub left_stick_sensitivity: f32,
+    pub right_stick_sensitivity: f32,
+    pub invert_left_x: bool,
+    pub invert_left_y: bool,
+    pub invert_right_x: bool,
+    pub invert_right_y: bool,
+    pub auto_detect_layout: bool,
+    pub force_layout: Option<ControllerLayout>,
+}
+
+// Methods (for persistence)
+fn save_default(&self) -> std::io::Result<()>;
+fn save_to_file(&self, path: impl AsRef<Path>) -> std::io::Result<()>;
+fn load_or_default() -> std::io::Result<Self>;
+fn load_from_file(path: impl AsRef<Path>) -> std::io::Result<Self>;
+```
+
+### Events (now Messages in Bevy 0.17)
+
+All events are now `Message` types. Use `MessageReader` and `MessageWriter`:
+
+- `InputDeviceChanged` - Input device switched
+- `GamepadConnected` / `GamepadDisconnected` - Controller connection
+- `VirtualCursorClick` - Virtual cursor clicked
+- `RumbleRequest` - Request haptic feedback
+- `ComboDetected` - Input combo detected
+- `ModifiedActionEvent` - Action modifier detected
+- `TouchpadGestureEvent` - Touchpad gesture
+- `MotionGestureDetected` - Motion gesture
+- `ControllerAssigned` / `ControllerUnassigned` - Player assignment
+- `ControllerDetected` - Controller model detected
+- `StartRemapEvent` / `RemapEvent` - Remapping events
+- `ToggleInputDebug` / `RecordingCommand` / `PlaybackCommand` - Debug commands
+
+## Platform Support
+
+### Haptic Feedback
+
+Currently a placeholder. Platform-specific implementations needed:
+
+- **Windows**: XInput for Xbox controllers
+- **Linux**: evdev or SDL2
+- **macOS**: IOKit or SDL2
+- **Cross-platform**: Use `gilrs` crate with rumble support
+
+### Motion Controls
+
+Placeholder implementation. Requires platform-specific drivers:
+
+- **PS4/PS5**: Use `hidapi` to read HID reports
+- **Switch**: Joy-Con/Pro controller via Bluetooth
+- **Cross-platform**: SDL2 with sensor support
+
+### Touchpad
+
+Placeholder for PS4/PS5 touchpad. Requires:
+
+- Platform-specific HID report parsing
+- Or use SDL2 with touchpad support when available
+
+## Migration from Bevy 0.16
+
+Bevy 0.17 introduced a major change: **Events are now Messages**.
+
+### Key Changes
+
+```rust
+// Bevy 0.16
+app.add_event::<MyEvent>();
+fn system(mut events: EventWriter<MyEvent>) { }
+fn reader(mut events: EventReader<MyEvent>) { }
+
+// Bevy 0.17
+app.add_message::<MyEvent>();
+fn system(mut events: MessageWriter<MyEvent>) { }
+fn reader(mut events: MessageReader<MyEvent>) { }
+```
+
+All events in bevy_archie have been migrated to Messages.
 
 ## Credits
 

@@ -74,6 +74,7 @@ pub enum GameAction {
 
 impl GameAction {
     /// Get all actions as a slice.
+    #[must_use]
     pub fn all() -> &'static [GameAction] {
         &[
             Self::Confirm,
@@ -104,6 +105,7 @@ impl GameAction {
     }
 
     /// Get the display name for this action.
+    #[must_use]
     pub fn display_name(&self) -> &'static str {
         match self {
             Self::Confirm => "Confirm",
@@ -134,18 +136,20 @@ impl GameAction {
     }
 
     /// Whether this action can be remapped by the player.
+    #[must_use]
     pub fn is_remappable(&self) -> bool {
         !matches!(self, Self::Pause) // Pause is usually not remappable
     }
 
     /// Whether this action requires a binding (cannot be unbound).
+    #[must_use]
     pub fn is_required(&self) -> bool {
         matches!(self, Self::Confirm | Self::Cancel | Self::Pause)
     }
 }
 
 /// A binding source for an action.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum InputBinding {
     /// A gamepad button
     GamepadButton(GamepadButton),
@@ -172,18 +176,22 @@ pub enum AxisDirection {
 pub struct ActionMap {
     /// Gamepad button bindings
     #[reflect(ignore)]
+    #[serde(skip)]
     pub gamepad_bindings: HashMap<GameAction, Vec<GamepadButton>>,
 
     /// Gamepad axis bindings (action -> (axis, direction, threshold))
     #[reflect(ignore)]
+    #[serde(skip)]
     pub axis_bindings: HashMap<GameAction, Vec<(GamepadAxis, AxisDirection, f32)>>,
 
     /// Keyboard bindings
     #[reflect(ignore)]
+    #[serde(skip)]
     pub key_bindings: HashMap<GameAction, Vec<KeyCode>>,
 
     /// Mouse button bindings
     #[reflect(ignore)]
+    #[serde(skip)]
     pub mouse_bindings: HashMap<GameAction, Vec<MouseButton>>,
 }
 
@@ -336,6 +344,7 @@ impl ActionMap {
     }
 
     /// Get the primary gamepad button for an action (for icon display).
+    #[must_use]
     pub fn primary_gamepad_button(&self, action: GameAction) -> Option<GamepadButton> {
         self.gamepad_bindings
             .get(&action)
@@ -366,26 +375,30 @@ pub struct ActionState {
 
 impl ActionState {
     /// Check if an action is currently pressed.
+    #[must_use]
     pub fn pressed(&self, action: GameAction) -> bool {
         self.pressed.get(&action).copied().unwrap_or(false)
     }
 
     /// Check if an action was just pressed this frame.
+    #[must_use]
     pub fn just_pressed(&self, action: GameAction) -> bool {
         self.just_pressed.get(&action).copied().unwrap_or(false)
     }
 
     /// Check if an action was just released this frame.
+    #[must_use]
     pub fn just_released(&self, action: GameAction) -> bool {
         self.just_released.get(&action).copied().unwrap_or(false)
     }
 
     /// Get the analog value of an action (0.0 - 1.0).
+    #[must_use]
     pub fn value(&self, action: GameAction) -> f32 {
         self.values.get(&action).copied().unwrap_or(0.0)
     }
 
-    /// Reset just_pressed and just_released flags.
+    /// Reset `just_pressed` and `just_released` flags.
     pub(crate) fn reset_frame_state(&mut self) {
         self.just_pressed.clear();
         self.just_released.clear();

@@ -1,7 +1,7 @@
 //! Controller icon system.
 //!
 //! This module provides controller button icons that automatically
-//! adapt to the current controller layout (Xbox, PlayStation, etc.).
+//! adapt to the current controller layout (Xbox, `PlayStation`, etc.).
 
 use bevy::prelude::*;
 
@@ -21,7 +21,8 @@ pub enum IconSize {
 
 impl IconSize {
     /// Get the pixel size for this icon size.
-    pub fn pixels(&self) -> u32 {
+    #[must_use]
+    pub const fn pixels(self) -> u32 {
         match self {
             Self::Small => 32,
             Self::Medium => 48,
@@ -30,7 +31,8 @@ impl IconSize {
     }
 
     /// Get the suffix for asset paths.
-    pub fn suffix(&self) -> &'static str {
+    #[must_use]
+    pub const fn suffix(self) -> &'static str {
         match self {
             Self::Small => "_small",
             Self::Medium => "",
@@ -75,6 +77,7 @@ pub enum ButtonIcon {
 
 impl ButtonIcon {
     /// Get the icon for a gamepad button type.
+    #[must_use]
     pub fn from_button_type(button: GamepadButton) -> Option<Self> {
         match button {
             GamepadButton::South => Some(Self::FaceDown),
@@ -99,6 +102,7 @@ impl ButtonIcon {
     }
 
     /// Get the asset filename for this icon on a specific layout.
+    #[must_use]
     pub fn filename(&self, layout: ControllerLayout, size: IconSize) -> String {
         let base = match (layout, self) {
             // Face buttons vary by platform
@@ -173,6 +177,7 @@ impl ButtonIcon {
     }
 
     /// Get the text label for this button on a specific layout.
+    #[must_use]
     pub fn label(&self, layout: ControllerLayout) -> &'static str {
         match (layout, self) {
             // Face buttons
@@ -198,10 +203,10 @@ impl ButtonIcon {
             (_, Self::FaceUp) => "Y",
 
             // Shoulder buttons
-            (ControllerLayout::PlayStation, Self::LeftBumper) => "L1",
-            (ControllerLayout::PlayStation, Self::RightBumper) => "R1",
-            (ControllerLayout::PlayStation, Self::LeftTrigger) => "L2",
-            (ControllerLayout::PlayStation, Self::RightTrigger) => "R2",
+            (ControllerLayout::PlayStation | ControllerLayout::Stadia, Self::LeftBumper) => "L1",
+            (ControllerLayout::PlayStation | ControllerLayout::Stadia, Self::RightBumper) => "R1",
+            (ControllerLayout::PlayStation | ControllerLayout::Stadia, Self::LeftTrigger) => "L2",
+            (ControllerLayout::PlayStation | ControllerLayout::Stadia, Self::RightTrigger) => "R2",
 
             (ControllerLayout::Nintendo, Self::LeftBumper) => "L",
             (ControllerLayout::Nintendo, Self::RightBumper) => "R",
@@ -212,11 +217,6 @@ impl ButtonIcon {
             (ControllerLayout::Xbox, Self::RightBumper) => "RB",
             (ControllerLayout::Xbox, Self::LeftTrigger) => "LT",
             (ControllerLayout::Xbox, Self::RightTrigger) => "RT",
-
-            (ControllerLayout::Stadia, Self::LeftBumper) => "L1",
-            (ControllerLayout::Stadia, Self::RightBumper) => "R1",
-            (ControllerLayout::Stadia, Self::LeftTrigger) => "L2",
-            (ControllerLayout::Stadia, Self::RightTrigger) => "R2",
 
             (_, Self::LeftBumper) => "L1",
             (_, Self::RightBumper) => "R1",
@@ -262,6 +262,7 @@ pub struct ControllerIconAssets {
 
 impl ControllerIconAssets {
     /// Create a new icon assets resource with a base path.
+    #[must_use]
     pub fn new(base_path: impl Into<String>) -> Self {
         Self {
             base_path: base_path.into(),
@@ -270,6 +271,7 @@ impl ControllerIconAssets {
     }
 
     /// Get or load an icon for a button.
+    #[must_use]
     pub fn get_icon(
         &mut self,
         icon: ButtonIcon,
@@ -290,6 +292,7 @@ impl ControllerIconAssets {
     }
 
     /// Get an icon for a gamepad button type.
+    #[must_use]
     pub fn get_button_icon(
         &mut self,
         button: GamepadButton,
@@ -332,7 +335,7 @@ pub fn update_icon_displays(
 ) {
     let layout = config.layout();
 
-    for (display, mut image) in query.iter_mut() {
+    for (display, mut image) in &mut query {
         if display.auto_update {
             let handle = icons.get_icon(display.icon, layout, display.size, &asset_server);
             image.image = handle;

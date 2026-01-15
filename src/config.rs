@@ -26,6 +26,7 @@ pub enum ControllerLayout {
 
 impl ControllerLayout {
     /// Detect controller layout from controller name.
+    #[must_use] 
     pub fn from_name(name: &str) -> Self {
         let name_lower = name.to_lowercase();
 
@@ -72,6 +73,7 @@ impl ControllerLayout {
     }
 
     /// Get the display name for a button on this layout.
+    #[must_use] 
     pub fn button_name(&self, button: GamepadButton) -> &'static str {
         match (self, button) {
             // Face buttons
@@ -242,28 +244,33 @@ impl Default for ControllerConfig {
 
 impl ControllerConfig {
     /// Get the effective deadzone value clamped to valid range.
+    #[must_use] 
     pub fn effective_deadzone(&self) -> f32 {
         self.deadzone.clamp(self.min_deadzone, self.max_deadzone)
     }
 
     /// Get the effective left stick sensitivity value clamped to valid range.
+    #[must_use] 
     pub fn effective_left_sensitivity(&self) -> f32 {
         self.left_stick_sensitivity
             .clamp(self.min_sensitivity, self.max_sensitivity)
     }
 
     /// Get the effective right stick sensitivity value clamped to valid range.
+    #[must_use] 
     pub fn effective_right_sensitivity(&self) -> f32 {
         self.right_stick_sensitivity
             .clamp(self.min_sensitivity, self.max_sensitivity)
     }
 
     /// Get the current layout (forced or detected).
+    #[must_use] 
     pub fn layout(&self) -> ControllerLayout {
         self.forced_layout.unwrap_or(self.current_layout)
     }
 
     /// Apply deadzone and sensitivity to an axis value for the left stick.
+    #[must_use] 
     pub fn apply_deadzone_left(&self, value: f32) -> f32 {
         let deadzone = self.effective_deadzone();
         if value.abs() < deadzone {
@@ -277,6 +284,7 @@ impl ControllerConfig {
     }
 
     /// Apply deadzone and sensitivity to an axis value for the right stick.
+    #[must_use] 
     pub fn apply_deadzone_right(&self, value: f32) -> f32 {
         let deadzone = self.effective_deadzone();
         if value.abs() < deadzone {
@@ -289,6 +297,7 @@ impl ControllerConfig {
     }
 
     /// Apply deadzone to a 2D axis (stick) with per-stick sensitivity.
+    #[must_use] 
     pub fn apply_deadzone_2d(&self, x: f32, y: f32, is_left_stick: bool) -> Vec2 {
         let deadzone = self.effective_deadzone();
         let magnitude = (x * x + y * y).sqrt();
@@ -310,6 +319,7 @@ impl ControllerConfig {
     }
 
     /// Apply inversion to stick input based on configuration.
+    #[must_use] 
     pub fn apply_inversion(&self, mut value: Vec2, is_left_stick: bool) -> Vec2 {
         if is_left_stick {
             if self.invert_left_x {
@@ -332,7 +342,7 @@ impl ControllerConfig {
     /// Save configuration to a JSON file.
     pub fn save_to_file(&self, path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
         let json = serde_json::to_string_pretty(self)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+            .map_err(|e| std::io::Error::other(e))?;
         std::fs::write(path, json)
     }
 
@@ -344,6 +354,7 @@ impl ControllerConfig {
     }
 
     /// Get the default config file path for the current platform.
+    #[must_use] 
     pub fn default_config_path() -> std::path::PathBuf {
         if let Some(config_dir) = dirs::config_dir() {
             config_dir.join("bevy_archie").join("controller.json")
@@ -353,6 +364,7 @@ impl ControllerConfig {
     }
 
     /// Load configuration from the default path, or return default if not found.
+    #[must_use] 
     pub fn load_or_default() -> Self {
         let path = Self::default_config_path();
         Self::load_from_file(&path).unwrap_or_default()
@@ -369,7 +381,7 @@ impl ControllerConfig {
 }
 
 /// Event fired when controller configuration changes.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct ControllerConfigChanged {
     /// The field that changed.
     pub field: ConfigField,
@@ -392,5 +404,5 @@ pub(crate) fn register_config_types(app: &mut App) {
     app.register_type::<ControllerConfig>()
         .register_type::<ControllerLayout>()
         .init_resource::<ControllerConfig>()
-        .add_event::<ControllerConfigChanged>();
+        .add_message::<ControllerConfigChanged>();
 }

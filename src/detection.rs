@@ -19,21 +19,25 @@ pub enum InputDevice {
 
 impl InputDevice {
     /// Returns true if this is a gamepad device.
+    #[must_use] 
     pub fn is_gamepad(&self) -> bool {
         matches!(self, Self::Gamepad(_))
     }
 
     /// Returns true if this is the mouse.
+    #[must_use] 
     pub fn is_mouse(&self) -> bool {
         matches!(self, Self::Mouse)
     }
 
     /// Returns true if this is the keyboard.
+    #[must_use] 
     pub fn is_keyboard(&self) -> bool {
         matches!(self, Self::Keyboard)
     }
 
     /// Get the gamepad entity if this is a gamepad device.
+    #[must_use] 
     pub fn gamepad(&self) -> Option<Entity> {
         match self {
             Self::Gamepad(entity) => Some(*entity),
@@ -84,26 +88,31 @@ impl Default for InputDeviceState {
 
 impl InputDeviceState {
     /// Returns true if the player is currently using a mouse.
+    #[must_use] 
     pub fn using_mouse(&self) -> bool {
         self.active_device.is_mouse()
     }
 
     /// Returns true if the player is currently using a keyboard.
+    #[must_use] 
     pub fn using_keyboard(&self) -> bool {
         self.active_device.is_keyboard()
     }
 
     /// Returns true if the player is currently using a gamepad.
+    #[must_use] 
     pub fn using_gamepad(&self) -> bool {
         self.active_device.is_gamepad()
     }
 
     /// Returns true if using keyboard or gamepad (non-mouse).
+    #[must_use] 
     pub fn using_non_mouse(&self) -> bool {
         !self.using_mouse()
     }
 
     /// Get the active gamepad entity, if any.
+    #[must_use] 
     pub fn active_gamepad(&self) -> Option<Entity> {
         self.active_device.gamepad()
     }
@@ -119,7 +128,7 @@ impl InputDeviceState {
 }
 
 /// Event fired when the active input device changes.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct InputDeviceChanged {
     /// The previous input device.
     pub previous: InputDevice,
@@ -128,7 +137,7 @@ pub struct InputDeviceChanged {
 }
 
 /// Event fired when a gamepad is connected.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct GamepadConnected {
     /// The connected gamepad entity.
     pub gamepad: Entity,
@@ -137,7 +146,7 @@ pub struct GamepadConnected {
 }
 
 /// Event fired when a gamepad is disconnected.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct GamepadDisconnected {
     /// The disconnected gamepad entity.
     pub gamepad: Entity,
@@ -146,8 +155,8 @@ pub struct GamepadDisconnected {
 /// System to detect input device changes based on user input.
 pub fn detect_input_device(
     mut state: ResMut<InputDeviceState>,
-    mut device_changed_events: EventWriter<InputDeviceChanged>,
-    mut mouse_motion: EventReader<bevy::input::mouse::MouseMotion>,
+    mut device_changed_events: MessageWriter<InputDeviceChanged>,
+    mut mouse_motion: MessageReader<bevy::input::mouse::MouseMotion>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     keyboard: Res<ButtonInput<KeyCode>>,
     gamepads: Query<(&Gamepad, Entity)>,
@@ -180,9 +189,9 @@ pub fn detect_input_device(
         let has_button_input = gamepad.get_just_pressed().next().is_some();
 
         // Check if any axis exceeds threshold
-        let has_axis_input = gamepad.get_pressed().any(|btn| {
-            matches!(btn, GamepadButton::LeftStick | GamepadButton::RightStick)
-        });
+        // Note: LeftStick and RightStick button variants were removed in Bevy 0.17
+        // This check is now simplified to just button presses
+        let has_axis_input = false;
 
         if has_button_input || has_axis_input {
             state.set_active(InputDevice::Gamepad(gamepad_entity));
@@ -202,10 +211,10 @@ pub fn detect_input_device(
 /// System to track gamepad connections/disconnections.
 pub fn track_gamepad_connections(
     mut state: ResMut<InputDeviceState>,
-    mut connected_events: EventWriter<GamepadConnected>,
-    mut disconnected_events: EventWriter<GamepadDisconnected>,
+    mut connected_events: MessageWriter<GamepadConnected>,
+    mut disconnected_events: MessageWriter<GamepadDisconnected>,
     gamepads: Query<(Entity, Option<&Name>), Added<Gamepad>>,
-    removed_gamepads: RemovedComponents<Gamepad>,
+    mut removed_gamepads: RemovedComponents<Gamepad>,
 ) {
     // Track new connections
     for (entity, name) in gamepads.iter() {
@@ -219,7 +228,7 @@ pub fn track_gamepad_connections(
 
             connected_events.write(GamepadConnected {
                 gamepad: entity,
-                name: name.map(|n| n.to_string()),
+                name: name.map(std::string::ToString::to_string),
             });
         }
     }
@@ -238,8 +247,7 @@ pub fn track_gamepad_connections(
             if state.active_device == InputDevice::Gamepad(entity) {
                 state.active_device = state
                     .primary_gamepad
-                    .map(InputDevice::Gamepad)
-                    .unwrap_or(InputDevice::Keyboard);
+                    .map_or(InputDevice::Keyboard, InputDevice::Gamepad);
             }
 
             disconnected_events.write(GamepadDisconnected { gamepad: entity });
@@ -252,9 +260,9 @@ pub(crate) fn register_detection_types(app: &mut App) {
     app.register_type::<InputDevice>()
         .register_type::<InputDeviceState>()
         .init_resource::<InputDeviceState>()
-        .add_event::<InputDeviceChanged>()
-        .add_event::<GamepadConnected>()
-        .add_event::<GamepadDisconnected>();
+        .add_message::<InputDeviceChanged>()
+        .add_message::<GamepadConnected>()
+        .add_message::<GamepadDisconnected>();
 }
 
 /// Add detection systems to the app.

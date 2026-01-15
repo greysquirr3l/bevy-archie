@@ -12,6 +12,10 @@ Cargo.lock
 .rustc_info.json
 *.profraw
 
+# Serena
+.serena/
+.mcp.json
+
 # macOS
 .DS_Store
 .AppleDouble
@@ -74,3 +78,6 @@ temp/
 *.tmp
 *.bak
 *.cache
+
+# Development Documents
+docs/dev/

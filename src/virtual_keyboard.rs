@@ -255,18 +255,18 @@ pub enum FocusDirection {
 }
 
 /// Event to show the virtual keyboard.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct ShowVirtualKeyboard {
     /// The keyboard configuration.
     pub keyboard: VirtualKeyboard,
 }
 
 /// Event to hide the virtual keyboard.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct HideVirtualKeyboard;
 
 /// Event fired when input is confirmed.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct VirtualKeyboardEvent {
     /// The final input value.
     pub value: String,
@@ -293,7 +293,7 @@ pub struct VirtualKeyboardInput;
 
 /// System to handle showing the virtual keyboard.
 pub fn handle_show_keyboard(
-    mut events: EventReader<ShowVirtualKeyboard>,
+    mut events: MessageReader<ShowVirtualKeyboard>,
     mut keyboard: ResMut<VirtualKeyboard>,
     mut next_state: ResMut<NextState<VirtualKeyboardState>>,
 ) {
@@ -305,7 +305,7 @@ pub fn handle_show_keyboard(
 
 /// System to handle hiding the virtual keyboard.
 pub fn handle_hide_keyboard(
-    mut events: EventReader<HideVirtualKeyboard>,
+    mut events: MessageReader<HideVirtualKeyboard>,
     mut next_state: ResMut<NextState<VirtualKeyboardState>>,
 ) {
     for _ in events.read() {
@@ -316,8 +316,8 @@ pub fn handle_hide_keyboard(
 /// System to handle keyboard input from controller.
 pub fn handle_keyboard_input(
     mut keyboard: ResMut<VirtualKeyboard>,
-    mut keyboard_events: EventWriter<VirtualKeyboardEvent>,
-    mut hide_events: EventWriter<HideVirtualKeyboard>,
+    mut keyboard_events: MessageWriter<VirtualKeyboardEvent>,
+    mut hide_events: MessageWriter<HideVirtualKeyboard>,
     gamepads: Query<&Gamepad>,
     config: Res<VirtualKeyboardConfig>,
 ) {
@@ -415,14 +415,10 @@ pub(crate) fn add_virtual_keyboard_systems(app: &mut App) {
     app.init_state::<VirtualKeyboardState>()
         .init_resource::<VirtualKeyboard>()
         .init_resource::<VirtualKeyboardConfig>()
-        .add_event::<ShowVirtualKeyboard>()
-        .add_event::<HideVirtualKeyboard>()
-        .add_event::<VirtualKeyboardEvent>()
-        .add_systems(
-            Update,
-            (handle_show_keyboard, handle_hide_keyboard)
-                .run_if(on_event::<ShowVirtualKeyboard>.or(on_event::<HideVirtualKeyboard>)),
-        )
+        .add_message::<ShowVirtualKeyboard>()
+        .add_message::<HideVirtualKeyboard>()
+        .add_message::<VirtualKeyboardEvent>()
+        .add_systems(Update, (handle_show_keyboard, handle_hide_keyboard))
         .add_systems(
             Update,
             handle_keyboard_input.run_if(in_state(VirtualKeyboardState::Visible)),

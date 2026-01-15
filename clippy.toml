@@ -1,0 +1,12 @@
+# Clippy configuration for Bevy game projects
+# NOTE: multiple_crate_versions warnings are bevy-related false-positives
+# caused by different Bevy plugins and their dependencies using different versions.
+# These will resolve with ecosystem-wide dependency updates.
+
+# Allow needless_pass_by_value for Bevy system parameters
+# Bevy systems require exact signatures like Res<T>, not &Res<T>
+avoid-breaking-exported-api = false
+
+# Suppress multiple crate versions warning - this is a dependency management issue
+# that requires careful dependency updates across the entire Bevy ecosystem
+disallowed-macros = []

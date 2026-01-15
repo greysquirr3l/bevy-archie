@@ -43,11 +43,13 @@ impl RemappingContext {
     }
 
     /// Check if remapping is active.
+    #[must_use]
     pub fn is_active(&self) -> bool {
         self.action.is_some()
     }
 
     /// Get the remaining time as a percentage (0.0 - 1.0).
+    #[must_use]
     pub fn time_remaining_percent(&self) -> f32 {
         if self.max_timeout > 0.0 {
             self.timeout / self.max_timeout
@@ -58,7 +60,7 @@ impl RemappingContext {
 }
 
 /// Event to start remapping an action.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub struct StartRemapEvent {
     /// The action to remap.
     pub action: GameAction,
@@ -68,6 +70,7 @@ pub struct StartRemapEvent {
 
 impl StartRemapEvent {
     /// Create a new remap event with default timeout.
+    #[must_use]
     pub fn new(action: GameAction) -> Self {
         Self {
             action,
@@ -76,13 +79,14 @@ impl StartRemapEvent {
     }
 
     /// Create a new remap event with custom timeout.
+    #[must_use]
     pub fn with_timeout(action: GameAction, timeout: f32) -> Self {
         Self { action, timeout }
     }
 }
 
 /// Event fired when remapping completes.
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Message)]
 pub enum RemapEvent {
     /// Remapping was successful.
     Success {
@@ -116,6 +120,7 @@ pub enum RemapEvent {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, Resource)]
 pub struct SavedBindings {
     /// Custom gamepad button bindings.
+    #[serde(skip)]
     pub gamepad: std::collections::HashMap<GameAction, Vec<GamepadButton>>,
 }
 
@@ -145,7 +150,7 @@ pub struct RemapButton {
 
 /// System to handle starting a remap operation.
 pub fn handle_start_remap(
-    mut events: EventReader<StartRemapEvent>,
+    mut events: MessageReader<StartRemapEvent>,
     mut context: ResMut<RemappingContext>,
     mut next_state: ResMut<NextState<RemappingState>>,
 ) {
@@ -159,7 +164,7 @@ pub fn handle_start_remap(
 pub fn handle_remap_input(
     mut context: ResMut<RemappingContext>,
     mut action_map: ResMut<ActionMap>,
-    mut remap_events: EventWriter<RemapEvent>,
+    mut remap_events: MessageWriter<RemapEvent>,
     mut next_state: ResMut<NextState<RemappingState>>,
     time: Res<Time>,
     gamepads: Query<&Gamepad>,
@@ -261,12 +266,14 @@ pub(crate) fn add_remapping_systems(app: &mut App) {
     app.init_state::<RemappingState>()
         .init_resource::<RemappingContext>()
         .init_resource::<SavedBindings>()
-        .add_event::<StartRemapEvent>()
-        .add_event::<RemapEvent>()
+        .add_message::<StartRemapEvent>()
+        .add_message::<RemapEvent>()
         .add_systems(
             Update,
             (handle_start_remap, handle_remap_input)
                 .chain()
-                .run_if(in_state(RemappingState::WaitingForInput).or(on_event::<StartRemapEvent>)),
+                .run_if(in_state(RemappingState::WaitingForInput)),
+        )
+        .add_systems(Update, handle_start_remap),
         );
 }
