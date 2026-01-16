@@ -65,6 +65,7 @@ yarn-error.log*
 # Testing
 coverage/
 .nyc_output/
+tarpaulin-report.html
 
 # OS generated files
 Thumbs.db
