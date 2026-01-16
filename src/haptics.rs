@@ -18,17 +18,35 @@ pub struct RumbleIntensity {
 impl RumbleIntensity {
     /// Create a new rumble intensity.
     #[must_use]
-    pub fn new(low: f32, high: f32) -> Self {
+    pub const fn new(low: f32, high: f32) -> Self {
         Self {
-            low_frequency: low.clamp(0.0, 1.0),
-            high_frequency: high.clamp(0.0, 1.0),
+            low_frequency: if low < 0.0 {
+                0.0
+            } else if low > 1.0 {
+                1.0
+            } else {
+                low
+            },
+            high_frequency: if high < 0.0 {
+                0.0
+            } else if high > 1.0 {
+                1.0
+            } else {
+                high
+            },
         }
     }
 
     /// Create a uniform rumble (both motors same intensity).
     #[must_use]
-    pub fn uniform(intensity: f32) -> Self {
-        let clamped = intensity.clamp(0.0, 1.0);
+    pub const fn uniform(intensity: f32) -> Self {
+        let clamped = if intensity < 0.0 {
+            0.0
+        } else if intensity > 1.0 {
+            1.0
+        } else {
+            intensity
+        };
         Self {
             low_frequency: clamped,
             high_frequency: clamped,
@@ -90,14 +108,19 @@ impl RumbleController {
     }
 
     /// Start a simple rumble.
-    pub fn rumble(&mut self, intensity: RumbleIntensity, duration: Duration) {
+    pub const fn rumble(&mut self, intensity: RumbleIntensity, duration: Duration) {
         self.intensity = intensity;
         self.duration = duration;
         self.pattern = Some(RumblePattern::Constant);
     }
 
     /// Start a rumble with pattern.
-    pub fn rumble_pattern(&mut self, pattern: RumblePattern, intensity: f32, duration: Duration) {
+    pub const fn rumble_pattern(
+        &mut self,
+        pattern: RumblePattern,
+        intensity: f32,
+        duration: Duration,
+    ) {
         self.intensity = RumbleIntensity::uniform(intensity);
         self.duration = duration;
         self.pattern = Some(pattern);
@@ -128,7 +151,7 @@ pub struct RumbleRequest {
 impl RumbleRequest {
     /// Create a simple rumble request.
     #[must_use]
-    pub fn new(gamepad: Entity, intensity: f32, duration: Duration) -> Self {
+    pub const fn new(gamepad: Entity, intensity: f32, duration: Duration) -> Self {
         Self {
             gamepad,
             intensity: RumbleIntensity::uniform(intensity),
@@ -139,7 +162,7 @@ impl RumbleRequest {
 
     /// Create a rumble with pattern.
     #[must_use]
-    pub fn with_pattern(
+    pub const fn with_pattern(
         gamepad: Entity,
         pattern: RumblePattern,
         intensity: f32,
@@ -225,7 +248,7 @@ pub fn update_rumble(
                         (0.5 - t).max(0.0) * 2.0
                     }
                 }
-                RumblePattern::Engine => 0.3 + (controller.pattern_timer * 30.0).sin() * 0.1,
+                RumblePattern::Engine => (controller.pattern_timer * 30.0).sin().mul_add(0.1, 0.3),
                 RumblePattern::Heartbeat => {
                     let beat = (controller.pattern_timer * 2.0).sin();
                     if beat > 0.8 { 1.0 } else { 0.0 }

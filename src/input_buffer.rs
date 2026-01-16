@@ -80,13 +80,17 @@ impl InputBuffer {
         let mut seq_idx = 0;
 
         for input in self.inputs.iter().rev() {
-            if input.action == sequence[seq_idx] {
-                seq_idx += 1;
-                if seq_idx == sequence.len() {
-                    // Check if all within window
-                    let first_time = self.inputs[self.inputs.len() - seq_idx].timestamp;
-                    let last_time = input.timestamp;
-                    return (last_time - first_time) <= window_secs;
+            if let Some(&seq_action) = sequence.get(seq_idx) {
+                if input.action == seq_action {
+                    seq_idx += 1;
+                    if seq_idx == sequence.len() {
+                        // Check if all within window
+                        if let Some(first_input) = self.inputs.get(self.inputs.len() - seq_idx) {
+                            let first_time = first_input.timestamp;
+                            let last_time = input.timestamp;
+                            return (last_time - first_time) <= window_secs;
+                        }
+                    }
                 }
             }
         }
@@ -148,7 +152,7 @@ impl Combo {
 
     /// Set the window duration.
     #[must_use]
-    pub fn with_window(mut self, window: Duration) -> Self {
+    pub const fn with_window(mut self, window: Duration) -> Self {
         self.window = window;
         self
     }
@@ -243,6 +247,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[allow(clippy::float_cmp)]
     fn test_buffered_input_creation() {
         let input = BufferedInput {
             action: GameAction::Primary,
@@ -255,6 +260,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::float_cmp)]
     fn test_input_buffer_new() {
         let buffer = InputBuffer::new(Duration::from_millis(500));
         assert_eq!(buffer.window, Duration::from_millis(500));
@@ -263,6 +269,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::float_cmp)]
     fn test_input_buffer_default() {
         let buffer = InputBuffer::default();
         assert_eq!(buffer.inputs.len(), 0);
@@ -270,6 +277,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::indexing_slicing)]
     fn test_input_buffer_push() {
         let mut buffer = InputBuffer::new(Duration::from_secs(1));
         buffer.push(GameAction::Primary, false);
@@ -281,6 +289,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::cast_lossless)]
     fn test_input_buffer_max_size() {
         let mut buffer = InputBuffer::new(Duration::from_secs(100));
 
@@ -317,6 +326,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::indexing_slicing)]
     fn test_input_buffer_check_sequence_match() {
         let mut buffer = InputBuffer::new(Duration::from_secs(10));
 

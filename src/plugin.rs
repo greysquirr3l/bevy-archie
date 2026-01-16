@@ -13,12 +13,10 @@ use bevy::prelude::*;
 /// use bevy::prelude::*;
 /// use bevy_archie::prelude::*;
 ///
-/// fn main() {
-///     App::new()
-///         .add_plugins(DefaultPlugins)
-///         .add_plugins(ControllerPlugin::default())
-///         .run();
-/// }
+/// App::new()
+///     .add_plugins(DefaultPlugins)
+///     .add_plugins(ControllerPlugin::default())
+///     .run();
 /// ```
 #[derive(Debug, Clone, Default)]
 pub struct ControllerPlugin {

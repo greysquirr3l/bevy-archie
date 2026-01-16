@@ -10,6 +10,7 @@ use crate::actions::GameAction;
 
 /// Debug overlay state.
 #[derive(Debug, Clone, Default, Resource)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct InputDebugger {
     /// Whether debugging is enabled.
     pub enabled: bool,
@@ -129,6 +130,10 @@ impl InputPlayback {
     }
 
     /// Get next inputs to play.
+    ///
+    /// # Panics
+    ///
+    /// This method will not panic as the unwrap is guarded by the while condition.
     #[must_use]
     pub fn get_next(&mut self, current_time: f64) -> Vec<RecordedInput> {
         if !self.playing {

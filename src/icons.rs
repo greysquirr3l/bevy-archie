@@ -103,7 +103,7 @@ impl ButtonIcon {
 
     /// Get the asset filename for this icon on a specific layout.
     #[must_use]
-    pub fn filename(&self, layout: ControllerLayout, size: IconSize) -> String {
+    pub fn filename(self, layout: ControllerLayout, size: IconSize) -> String {
         let base = match (layout, self) {
             // Face buttons vary by platform
             (ControllerLayout::PlayStation, Self::FaceDown) => "ps_cross",
@@ -178,7 +178,7 @@ impl ButtonIcon {
 
     /// Get the text label for this button on a specific layout.
     #[must_use]
-    pub fn label(&self, layout: ControllerLayout) -> &'static str {
+    pub const fn label(self, layout: ControllerLayout) -> &'static str {
         match (layout, self) {
             // Face buttons
             (ControllerLayout::PlayStation, Self::FaceDown) => "✕",

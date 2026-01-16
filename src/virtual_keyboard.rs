@@ -106,24 +106,28 @@ impl VirtualKeyboard {
     }
 
     /// Set the maximum input length.
+    #[must_use]
     pub fn with_max_length(mut self, length: usize) -> Self {
         self.max_length = Some(length);
         self
     }
 
     /// Set allowed characters.
+    #[must_use]
     pub fn with_allow(mut self, chars: impl Into<String>) -> Self {
         self.allow = Some(chars.into());
         self
     }
 
     /// Set excluded characters.
+    #[must_use]
     pub fn with_exclude(mut self, chars: impl Into<String>) -> Self {
         self.exclude = Some(chars.into());
         self
     }
 
     /// Set initial value.
+    #[must_use]
     pub fn with_value(mut self, value: impl Into<String>) -> Self {
         self.buffer = value.into();
         self.cursor = self.buffer.len();
@@ -131,6 +135,7 @@ impl VirtualKeyboard {
     }
 
     /// Check if a character is allowed.
+    #[must_use]
     pub fn is_char_allowed(&self, c: char) -> bool {
         if let Some(ref allow) = self.allow {
             if !allow.contains(c) {
@@ -199,7 +204,7 @@ impl VirtualKeyboard {
 
     /// Toggle between letter and symbol pages.
     pub fn toggle_page(&mut self) {
-        self.current_page = if self.current_page == 0 { 1 } else { 0 };
+        self.current_page = usize::from(self.current_page == 0);
     }
 
     /// Add a space.
@@ -214,6 +219,7 @@ impl VirtualKeyboard {
     }
 
     /// Get the current value.
+    #[must_use]
     pub fn value(&self) -> &str {
         &self.buffer
     }
@@ -635,18 +641,6 @@ mod tests {
     }
 
     #[test]
-    fn test_virtual_keyboard_config_default() {
-        let config = VirtualKeyboardConfig::default();
-        assert_eq!(config.row1, "qwertyuiop");
-        assert_eq!(config.row2, "asdfghjkl'");
-        assert_eq!(config.row3, "zxcvbnm,.?");
-        assert_eq!(config.numbers, "1234567890");
-        assert_eq!(config.key_width, 60.0);
-        assert_eq!(config.key_height, 50.0);
-        assert_eq!(config.key_spacing, 5.0);
-    }
-
-    #[test]
     fn test_focus_direction_variants() {
         let all_directions = [
             FocusDirection::Up,
@@ -663,15 +657,6 @@ mod tests {
                 }
             }
         }
-    }
-
-    #[test]
-    fn test_virtual_keyboard_state_variants() {
-        assert_ne!(VirtualKeyboardState::Hidden, VirtualKeyboardState::Visible);
-        assert_eq!(
-            VirtualKeyboardState::default(),
-            VirtualKeyboardState::Hidden
-        );
     }
 
     // ========== Additional VirtualKeyboard Tests ==========

@@ -74,7 +74,7 @@ impl ControllerLayout {
 
     /// Get the display name for a button on this layout.
     #[must_use]
-    pub fn button_name(&self, button: GamepadButton) -> &'static str {
+    pub const fn button_name(self, button: GamepadButton) -> &'static str {
         match (self, button) {
             // Face buttons
             (Self::PlayStation, GamepadButton::South) => "Cross",
@@ -152,6 +152,7 @@ impl ControllerLayout {
 /// Global controller configuration resource.
 #[derive(Debug, Clone, Resource, Serialize, Deserialize, Reflect)]
 #[reflect(Resource)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct ControllerConfig {
     /// Analog stick deadzone (0.0 - 1.0).
     /// Values below this threshold are ignored.
@@ -340,12 +341,20 @@ impl ControllerConfig {
     }
 
     /// Save configuration to a JSON file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if serialization fails or the file cannot be written.
     pub fn save_to_file(&self, path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
-        let json = serde_json::to_string_pretty(self).map_err(|e| std::io::Error::other(e))?;
+        let json = serde_json::to_string_pretty(self).map_err(std::io::Error::other)?;
         std::fs::write(path, json)
     }
 
     /// Load configuration from a JSON file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or contains invalid JSON.
     pub fn load_from_file(path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
         let json = std::fs::read_to_string(path)?;
         serde_json::from_str(&json)
@@ -370,6 +379,10 @@ impl ControllerConfig {
     }
 
     /// Save configuration to the default path, creating directories if needed.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if directories cannot be created or the file cannot be written.
     pub fn save_default(&self) -> std::io::Result<()> {
         let path = Self::default_config_path();
         if let Some(parent) = path.parent() {

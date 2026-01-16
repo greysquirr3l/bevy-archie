@@ -137,7 +137,7 @@ impl SavedBindings {
 
     /// Save current bindings from an action map.
     pub fn save_from(&mut self, action_map: &ActionMap) {
-        self.gamepad = action_map.gamepad_bindings.clone();
+        self.gamepad.clone_from(&action_map.gamepad_bindings);
     }
 }
 
@@ -161,6 +161,10 @@ pub fn handle_start_remap(
 }
 
 /// System to handle input during remapping.
+///
+/// # Panics
+///
+/// Panics if the remapping context has no action set when active.
 pub fn handle_remap_input(
     mut context: ResMut<RemappingContext>,
     mut action_map: ResMut<ActionMap>,
@@ -274,6 +278,5 @@ pub(crate) fn add_remapping_systems(app: &mut App) {
                 .chain()
                 .run_if(in_state(RemappingState::WaitingForInput)),
         )
-        .add_systems(Update, handle_start_remap),
-        );
+        .add_systems(Update, handle_start_remap);
 }

@@ -106,7 +106,7 @@ impl GameAction {
 
     /// Get the display name for this action.
     #[must_use]
-    pub fn display_name(&self) -> &'static str {
+    pub const fn display_name(self) -> &'static str {
         match self {
             Self::Confirm => "Confirm",
             Self::Cancel => "Cancel",
@@ -137,13 +137,13 @@ impl GameAction {
 
     /// Whether this action can be remapped by the player.
     #[must_use]
-    pub fn is_remappable(&self) -> bool {
+    pub const fn is_remappable(self) -> bool {
         !matches!(self, Self::Pause) // Pause is usually not remappable
     }
 
     /// Whether this action requires a binding (cannot be unbound).
     #[must_use]
-    pub fn is_required(&self) -> bool {
+    pub const fn is_required(self) -> bool {
         matches!(self, Self::Confirm | Self::Cancel | Self::Pause)
     }
 }
