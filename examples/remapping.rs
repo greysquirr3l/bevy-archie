@@ -1,3 +1,5 @@
+#![allow(clippy::needless_pass_by_value)]
+
 //! Controller remapping example.
 
 use bevy::prelude::*;
@@ -98,7 +100,7 @@ fn setup(mut commands: Commands) {
         });
 }
 
-fn spawn_remap_row(parent: &mut ChildBuilder, action: GameAction) {
+fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Row,
@@ -106,7 +108,7 @@ fn spawn_remap_row(parent: &mut ChildBuilder, action: GameAction) {
             column_gap: Val::Px(20.0),
             ..default()
         })
-        .with_children(|row| {
+        .with_children(|row: &mut ChildSpawnerCommands| {
             // Action name
             row.spawn((
                 Text::new(action.display_name()),
@@ -148,7 +150,7 @@ fn spawn_remap_row(parent: &mut ChildBuilder, action: GameAction) {
                 Button,
                 RemapActionButton(action),
             ))
-            .with_children(|btn| {
+            .with_children(|btn: &mut ChildSpawnerCommands| {
                 btn.spawn((
                     Text::new("Remap"),
                     TextFont {
@@ -162,7 +164,7 @@ fn spawn_remap_row(parent: &mut ChildBuilder, action: GameAction) {
 }
 
 fn handle_remap_ui(
-    mut remap_events: EventWriter<StartRemapEvent>,
+    mut remap_events: MessageWriter<StartRemapEvent>,
     action_map: Res<ActionMap>,
     config: Res<ControllerConfig>,
     interaction_query: Query<(&Interaction, &RemapActionButton), Changed<Interaction>>,
@@ -177,10 +179,10 @@ fn handle_remap_ui(
 
     // Update current binding displays
     let layout = config.layout();
-    for (mut text, binding_text) in binding_query.iter_mut() {
+    for (mut text, binding_text) in &mut binding_query {
         if let Some(button) = action_map.primary_gamepad_button(binding_text.0) {
             let button_name = layout.button_name(button);
-            **text = format!("[{}]", button_name);
+            **text = format!("[{button_name}]");
         } else {
             **text = "[None]".to_string();
         }
@@ -188,34 +190,31 @@ fn handle_remap_ui(
 }
 
 fn handle_remap_events(
-    mut events: EventReader<RemapEvent>,
+    mut events: MessageReader<RemapEvent>,
     mut status_query: Query<&mut Text, With<StatusText>>,
 ) {
     for event in events.read() {
         let message = match event {
             RemapEvent::Success { action, button } => {
-                format!("Remapped {:?} to {:?}", action, button)
+                format!("Remapped {action:?} to {button:?}")
             }
             RemapEvent::Cancelled { action } => {
-                format!("Cancelled remapping {:?}", action)
+                format!("Cancelled remapping {action:?}")
             }
             RemapEvent::TimedOut { action } => {
-                format!("Timed out remapping {:?}", action)
+                format!("Timed out remapping {action:?}")
             }
             RemapEvent::Conflict {
                 action,
                 conflicting_action,
                 ..
             } => {
-                format!(
-                    "Conflict: {:?} is already bound to {:?}",
-                    action, conflicting_action
-                )
+                format!("Conflict: {action:?} is already bound to {conflicting_action:?}")
             }
         };
 
-        for mut text in status_query.iter_mut() {
-            **text = message.clone();
+        for mut text in &mut status_query {
+            text.0.clone_from(&message);
         }
     }
 }

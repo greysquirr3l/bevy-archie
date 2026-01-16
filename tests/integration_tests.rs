@@ -1,3 +1,5 @@
+#![allow(clippy::float_cmp, clippy::doc_markdown)]
+
 //! Integration tests for bevy_archie.
 
 use bevy::prelude::*;

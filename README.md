@@ -1,5 +1,11 @@
 # Bevy Archie - Rust / Bevy Controller Support Module
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange.svg)](https://www.rust-lang.org)
+[![Bevy](https://img.shields.io/badge/bevy-0.17-purple.svg)](https://bevyengine.org)
+[![Coverage](https://img.shields.io/badge/coverage-66.56%25-yellowgreen.svg)](target/coverage/tarpaulin-report.html)
+
 ![Archie Out of Context](docs/assets/archie_context.png)
 
 A comprehensive game controller support module for the Bevy engine, inspired by the RenPy Controller GUI project.

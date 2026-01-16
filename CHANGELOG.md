@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-01-16
+
+### Fixed
+
+- Fixed compilation errors in examples due to Bevy 0.17 API changes
+- Updated `ChildBuilder` references to `ChildSpawnerCommands` in all examples
+- Fixed `MessageWriter.send()` calls to use `.write()` method
+- Fixed `ControllerConfig::load()` to use `load_from_file()` in config_persistence example
+- Resolved Camera2d initialization in examples
+- Added `StartRemapEvent` to prelude exports
+
+### Added
+
+- Dependency check configuration with `deny.toml` for CI
+- Security audit configuration with `.cargo/audit.toml`
+- License allowlist including MIT, Apache-2.0, BSD-*, ISC, Zlib, MIT-0, CC0-1.0, Unicode-3.0, MPL-2.0
+- Advisory ignore for RUSTSEC-2024-0436 (unmaintained paste crate from Bevy dependencies)
+
 ## [0.1.1] - 2026-01-15
 
 ### Added
@@ -108,4 +126,6 @@ When contributing, please:
 
 ---
 
+[0.1.2]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.2
+[0.1.1]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.1
 [0.1.0]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.0

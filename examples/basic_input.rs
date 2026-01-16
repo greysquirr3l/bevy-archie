@@ -1,3 +1,9 @@
+#![allow(
+    clippy::needless_pass_by_value,
+    clippy::explicit_iter_loop,
+    clippy::uninlined_format_args
+)]
+
 //! Basic input example demonstrating controller detection and action mapping.
 
 use bevy::prelude::*;

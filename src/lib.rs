@@ -94,7 +94,7 @@ pub mod prelude {
     pub use crate::touchpad::{TouchpadConfig, TouchpadData, TouchpadGesture};
 
     #[cfg(feature = "remapping")]
-    pub use crate::remapping::{RemapButton, RemapEvent, RemappingState};
+    pub use crate::remapping::{RemapButton, RemapEvent, RemappingState, StartRemapEvent};
 
     pub use crate::virtual_cursor::{VirtualCursor, VirtualCursorClick, VirtualCursorState};
 

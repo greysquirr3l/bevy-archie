@@ -1,3 +1,5 @@
+#![allow(clippy::needless_pass_by_value)]
+
 //! Example demonstrating controller configuration persistence.
 //!
 //! This example shows:
@@ -28,13 +30,13 @@ fn main() {
 
 fn load_config(mut config: ResMut<ControllerConfig>) {
     // Try to load saved config, or use defaults
-    match ControllerConfig::load_or_default() {
+    match ControllerConfig::load_from_file("controller_config.ron") {
         Ok(loaded_config) => {
             println!("Loaded config from file");
             *config = loaded_config;
         }
         Err(e) => {
-            println!("Using default config: {}", e);
+            println!("Using default config: {e}");
         }
     }
 
@@ -52,7 +54,7 @@ fn load_config(mut config: ResMut<ControllerConfig>) {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d::default());
+    commands.spawn(Camera2d);
 
     // Instructions
     commands.spawn((
@@ -127,8 +129,8 @@ fn handle_config_changes(mut config: ResMut<ControllerConfig>, gamepads: Query<&
         // Manual save
         if gamepad.just_pressed(GamepadButton::Start) {
             match config.save_default() {
-                Ok(_) => println!("Config saved successfully!"),
-                Err(e) => println!("Failed to save config: {}", e),
+                Ok(()) => println!("Config saved successfully!"),
+                Err(e) => println!("Failed to save config: {e}"),
             }
         }
 
@@ -144,14 +146,14 @@ fn save_config_on_change(config: Res<ControllerConfig>) {
     if config.is_changed() && !config.is_added() {
         // Auto-save on any change
         if let Err(e) = config.save_default() {
-            eprintln!("Auto-save failed: {}", e);
+            eprintln!("Auto-save failed: {e}");
         }
     }
 }
 
 fn display_config_info(config: Res<ControllerConfig>, mut text_query: Query<&mut Text>) {
     if config.is_changed() {
-        for mut text in text_query.iter_mut() {
+        for mut text in &mut text_query {
             text.0 = format!(
                 "Controller Config Example\n\n\
                 D-Pad Up/Down: Adjust left stick sensitivity\n\

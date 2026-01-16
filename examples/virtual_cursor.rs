@@ -1,3 +1,12 @@
+#![allow(
+    clippy::needless_pass_by_value,
+    clippy::explicit_iter_loop,
+    clippy::uninlined_format_args,
+    clippy::indexing_slicing,
+    clippy::default_constructed_unit_structs,
+    unused_must_use
+)]
+
 //! Example demonstrating virtual cursor for gamepad-controlled UI.
 //!
 //! This example shows:
@@ -123,9 +132,7 @@ fn show_cursor_position(cursor_state: Res<VirtualCursorState>, mut text_query: Q
         for mut text in text_query.iter_mut() {
             text.0 = format!(
                 "Move cursor with RIGHT STICK\nClick with A button\nSwitch to mouse to hide cursor\n\nCursor: ({:.0}, {:.0})\nActive: {}",
-                cursor_state.position.x,
-                cursor_state.position.y,
-                cursor_state.active
+                cursor_state.position.x, cursor_state.position.y, cursor_state.active
             );
         }
     }

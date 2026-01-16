@@ -1,8 +1,8 @@
 //! Controller icons example showing how to display button prompts.
 
 use bevy::prelude::*;
-use bevy_archie::prelude::*;
 use bevy_archie::icons::ButtonIcon;
+use bevy_archie::prelude::*;
 
 fn main() {
     App::new()
@@ -18,6 +18,7 @@ struct LayoutText;
 
 #[derive(Component)]
 struct ButtonPrompt {
+    #[allow(dead_code)]
     icon: ButtonIcon,
 }
 
@@ -89,7 +90,9 @@ fn setup(mut commands: Commands) {
 
             // Instructions
             parent.spawn((
-                Text::new("Press 1-4 to change layout:\n1=Xbox, 2=PlayStation, 3=Nintendo, 4=Generic"),
+                Text::new(
+                    "Press 1-4 to change layout:\n1=Xbox, 2=PlayStation, 3=Nintendo, 4=Generic",
+                ),
                 TextFont {
                     font_size: 18.0,
                     ..default()
@@ -99,7 +102,7 @@ fn setup(mut commands: Commands) {
         });
 }
 
-fn spawn_button_prompt(parent: &mut ChildBuilder, icon: ButtonIcon, label: &str) {
+fn spawn_button_prompt(parent: &mut ChildSpawnerCommands, icon: ButtonIcon, label: &str) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -107,7 +110,7 @@ fn spawn_button_prompt(parent: &mut ChildBuilder, icon: ButtonIcon, label: &str)
             row_gap: Val::Px(5.0),
             ..default()
         })
-        .with_children(|col| {
+        .with_children(|col: &mut ChildSpawnerCommands| {
             // Icon placeholder (in a real app, this would be an image)
             col.spawn((
                 Node {
@@ -121,7 +124,7 @@ fn spawn_button_prompt(parent: &mut ChildBuilder, icon: ButtonIcon, label: &str)
                 BorderRadius::all(Val::Px(8.0)),
                 ButtonPrompt { icon },
             ))
-            .with_children(|button| {
+            .with_children(|button: &mut ChildSpawnerCommands| {
                 // Text fallback for the icon
                 button.spawn((
                     Text::new(icon.label(ControllerLayout::Xbox)),
@@ -145,6 +148,7 @@ fn spawn_button_prompt(parent: &mut ChildBuilder, icon: ButtonIcon, label: &str)
         });
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn update_layout_display(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut config: ResMut<ControllerConfig>,
@@ -168,8 +172,8 @@ fn update_layout_display(
 
     if changed {
         let layout = config.layout();
-        for mut text in layout_query.iter_mut() {
-            **text = format!("Layout: {:?}", layout);
+        for mut text in &mut layout_query {
+            **text = format!("Layout: {layout:?}");
         }
     }
 }
