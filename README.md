@@ -16,7 +16,7 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 
 ### Controller Support
 
-- **Controller Icon System**: Display appropriate button icons based on controller type (Xbox, PlayStation, Nintendo, Steam, Stadia, Generic)
+- **Controller Icon System**: Asset-agnostic icon mapping system that adapts to controller type (Xbox, PlayStation, Nintendo, Steam, Stadia, Generic). Bring your own icon assets or use any compatible pack.
 - **Controller Profiles**: Automatic detection and profile loading based on vendor/product IDs
 - **Multi-controller Support**: Handle multiple connected controllers with player assignment
 - **Controller Layout Detection**: Auto-detect and adapt UI to controller type
@@ -128,6 +128,22 @@ fn setup_actions(mut action_map: ResMut<ActionMap>) {
 
 ## Controller Icons
 
+**Note**: bevy-archie is asset-agnostic. You must provide your own icon assets or use a compatible icon pack like:
+
+- [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts) (400+ icons, Xbox/PS/Switch/Steam Deck)
+- [Kenney Input Prompts](https://kenney.nl/assets/input-prompts)
+- Custom artwork
+
+The icon system provides platform-aware filename generation and asset loading infrastructure. Point it to your icon directory:
+
+```rust
+fn setup_icons(mut commands: Commands) {
+    commands.insert_resource(
+        ControllerIconAssets::new("assets/icons")  // Your icon directory
+    );
+}
+```
+
 Display controller-appropriate button icons in your UI:
 
 ```rust
@@ -147,6 +163,19 @@ fn spawn_button_prompt(
     });
 }
 ```
+
+### Icon Naming Conventions
+
+The system expects icons named according to platform conventions:
+
+- **Xbox**: `xbox_a.png`, `xbox_b.png`, `xbox_lb.png`, `xbox_lt.png`
+- **PlayStation**: `ps_cross.png`, `ps_circle.png`, `ps_l1.png`, `ps_l2.png`
+- **Nintendo**: `switch_b.png`, `switch_a.png`, `switch_l.png`, `switch_zl.png`
+- **Generic**: `left_stick.png`, `right_stick.png`, `dpad.png`
+
+Icon sizes are supported via suffixes: `xbox_a_small.png` (32x32), `xbox_a.png` (48x48), `xbox_a_large.png` (64x64).
+
+If your icon pack uses different naming, create a thin wrapper or use symbolic links to match the expected names.
 
 ## Remapping
 
@@ -768,6 +797,61 @@ fn reader(mut events: MessageReader<MyEvent>) { }
 ```
 
 All events in bevy_archie have been migrated to Messages.
+
+## Testing
+
+### Running Tests
+
+```bash
+# Run all unit tests
+cargo test --lib
+
+# Run all tests including integration tests
+cargo test
+
+# Run specific test module
+cargo test --lib config::tests
+
+# Run with all features enabled
+cargo test --all-features
+```
+
+### Test Coverage
+
+The project includes comprehensive unit and integration tests covering:
+
+- **Core Modules** (`actions`, `config`, `detection`): Input device detection, action mapping, configuration management
+- **Icon System** (`icons`): Icon filename generation, platform-specific labels, asset loading
+- **Integration Tests**: Plugin initialization, resource management, end-to-end workflows
+
+**Coverage Goal**: 80% code coverage across all modules.
+
+### Running Coverage Analysis
+
+Install `tarpaulin` for coverage reports:
+
+```bash
+cargo install cargo-tarpaulin
+```
+
+Generate coverage report:
+
+```bash
+# HTML report in coverage/ directory
+cargo tarpaulin --out Html --output-dir coverage
+
+# Both HTML and console output
+cargo tarpaulin --out Html --out Stdout --output-dir coverage
+
+# With all features
+cargo tarpaulin --all-features --out Html --output-dir coverage
+```
+
+### Test Structure
+
+- `src/*/tests`: Unit tests for each module
+- `tests/integration_tests.rs`: Integration tests for full plugin functionality
+- `.cargo/config.toml`: Test configuration and aliases
 
 ## Credits
 

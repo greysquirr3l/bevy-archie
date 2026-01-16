@@ -262,3 +262,186 @@ pub(crate) fn register_haptics_types(app: &mut App) {
 pub(crate) fn add_haptics_systems(app: &mut App) {
     app.add_systems(Update, (handle_rumble_requests, update_rumble).chain());
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    // ========== RumbleIntensity Tests ==========
+
+    #[test]
+    fn test_rumble_intensity_new() {
+        let intensity = RumbleIntensity::new(0.5, 0.8);
+        assert_relative_eq!(intensity.low_frequency, 0.5);
+        assert_relative_eq!(intensity.high_frequency, 0.8);
+    }
+
+    #[test]
+    fn test_rumble_intensity_new_clamps_low() {
+        let intensity = RumbleIntensity::new(-0.5, 0.5);
+        assert_relative_eq!(intensity.low_frequency, 0.0);
+    }
+
+    #[test]
+    fn test_rumble_intensity_new_clamps_high() {
+        let intensity = RumbleIntensity::new(0.5, 1.5);
+        assert_relative_eq!(intensity.high_frequency, 1.0);
+    }
+
+    #[test]
+    fn test_rumble_intensity_uniform() {
+        let intensity = RumbleIntensity::uniform(0.7);
+        assert_relative_eq!(intensity.low_frequency, 0.7);
+        assert_relative_eq!(intensity.high_frequency, 0.7);
+    }
+
+    #[test]
+    fn test_rumble_intensity_uniform_clamps() {
+        let intensity = RumbleIntensity::uniform(2.0);
+        assert_relative_eq!(intensity.low_frequency, 1.0);
+        assert_relative_eq!(intensity.high_frequency, 1.0);
+    }
+
+    #[test]
+    fn test_rumble_intensity_none() {
+        let intensity = RumbleIntensity::none();
+        assert_relative_eq!(intensity.low_frequency, 0.0);
+        assert_relative_eq!(intensity.high_frequency, 0.0);
+    }
+
+    #[test]
+    fn test_rumble_intensity_default() {
+        let intensity = RumbleIntensity::default();
+        assert_relative_eq!(intensity.low_frequency, 0.0);
+        assert_relative_eq!(intensity.high_frequency, 0.0);
+    }
+
+    #[test]
+    fn test_rumble_intensity_equality() {
+        let a = RumbleIntensity::new(0.5, 0.5);
+        let b = RumbleIntensity::uniform(0.5);
+        assert_eq!(a, b);
+    }
+
+    // ========== RumblePattern Tests ==========
+
+    #[test]
+    fn test_rumble_pattern_equality() {
+        assert_eq!(RumblePattern::Constant, RumblePattern::Constant);
+        assert_ne!(RumblePattern::Pulse, RumblePattern::Constant);
+    }
+
+    #[test]
+    fn test_rumble_pattern_variants() {
+        let patterns = [
+            RumblePattern::Constant,
+            RumblePattern::Pulse,
+            RumblePattern::Explosion,
+            RumblePattern::DamageTap,
+            RumblePattern::HeavyImpact,
+            RumblePattern::Engine,
+            RumblePattern::Heartbeat,
+        ];
+        assert_eq!(patterns.len(), 7);
+    }
+
+    // ========== RumbleController Tests ==========
+
+    #[test]
+    fn test_rumble_controller_new() {
+        let controller = RumbleController::new(Entity::PLACEHOLDER);
+        assert_eq!(controller.gamepad, Entity::PLACEHOLDER);
+        assert_eq!(controller.intensity, RumbleIntensity::none());
+        assert_eq!(controller.duration, Duration::ZERO);
+        assert!(controller.pattern.is_none());
+        assert_relative_eq!(controller.pattern_timer, 0.0);
+    }
+
+    #[test]
+    fn test_rumble_controller_rumble() {
+        let mut controller = RumbleController::new(Entity::PLACEHOLDER);
+        let intensity = RumbleIntensity::new(0.6, 0.8);
+        let duration = Duration::from_secs(1);
+
+        controller.rumble(intensity, duration);
+
+        assert_eq!(controller.intensity, intensity);
+        assert_eq!(controller.duration, duration);
+        assert_eq!(controller.pattern, Some(RumblePattern::Constant));
+    }
+
+    #[test]
+    fn test_rumble_controller_rumble_pattern() {
+        let mut controller = RumbleController::new(Entity::PLACEHOLDER);
+        let duration = Duration::from_millis(500);
+
+        controller.rumble_pattern(RumblePattern::Heartbeat, 0.9, duration);
+
+        assert_eq!(controller.intensity, RumbleIntensity::uniform(0.9));
+        assert_eq!(controller.duration, duration);
+        assert_eq!(controller.pattern, Some(RumblePattern::Heartbeat));
+        assert_relative_eq!(controller.pattern_timer, 0.0);
+    }
+
+    #[test]
+    fn test_rumble_controller_stop() {
+        let mut controller = RumbleController::new(Entity::PLACEHOLDER);
+        controller.rumble(RumbleIntensity::uniform(1.0), Duration::from_secs(2));
+
+        controller.stop();
+
+        assert_eq!(controller.intensity, RumbleIntensity::none());
+        assert_eq!(controller.duration, Duration::ZERO);
+        assert!(controller.pattern.is_none());
+    }
+
+    // ========== RumbleRequest Tests ==========
+
+    #[test]
+    fn test_rumble_request_new() {
+        let request = RumbleRequest::new(Entity::PLACEHOLDER, 0.8, Duration::from_millis(200));
+
+        assert_eq!(request.gamepad, Entity::PLACEHOLDER);
+        assert_eq!(request.intensity, RumbleIntensity::uniform(0.8));
+        assert_eq!(request.duration, Duration::from_millis(200));
+        assert_eq!(request.pattern, Some(RumblePattern::Constant));
+    }
+
+    #[test]
+    fn test_rumble_request_with_pattern() {
+        let request = RumbleRequest::with_pattern(
+            Entity::PLACEHOLDER,
+            RumblePattern::Explosion,
+            0.9,
+            Duration::from_secs(1),
+        );
+
+        assert_eq!(request.gamepad, Entity::PLACEHOLDER);
+        assert_eq!(request.intensity, RumbleIntensity::uniform(0.9));
+        assert_eq!(request.duration, Duration::from_secs(1));
+        assert_eq!(request.pattern, Some(RumblePattern::Explosion));
+    }
+
+    #[test]
+    fn test_rumble_request_intensity_clamps() {
+        let request = RumbleRequest::new(Entity::PLACEHOLDER, 2.0, Duration::from_secs(1));
+        assert_relative_eq!(request.intensity.low_frequency, 1.0);
+        assert_relative_eq!(request.intensity.high_frequency, 1.0);
+    }
+
+    // ========== Duration Tests ==========
+
+    #[test]
+    fn test_duration_saturation() {
+        let mut controller = RumbleController::new(Entity::PLACEHOLDER);
+        controller.duration = Duration::from_millis(100);
+
+        // Simulate update that goes over duration
+        controller.duration = controller
+            .duration
+            .saturating_sub(Duration::from_millis(150));
+
+        assert_eq!(controller.duration, Duration::ZERO);
+    }
+}

@@ -267,3 +267,426 @@ pub(crate) fn add_profile_systems(app: &mut App) {
         (detect_controller_models, auto_load_profiles).chain(),
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_controller_model_variants() {
+        assert_ne!(ControllerModel::Xbox360, ControllerModel::XboxOne);
+        assert_ne!(ControllerModel::PS4, ControllerModel::PS5);
+        assert_ne!(ControllerModel::SwitchPro, ControllerModel::SwitchJoyCon);
+    }
+
+    #[test]
+    fn test_controller_model_default_layout() {
+        assert_eq!(
+            ControllerModel::Xbox360.default_layout(),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerModel::XboxOne.default_layout(),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerModel::PS4.default_layout(),
+            ControllerLayout::PlayStation
+        );
+        assert_eq!(
+            ControllerModel::PS5.default_layout(),
+            ControllerLayout::PlayStation
+        );
+        assert_eq!(
+            ControllerModel::SwitchPro.default_layout(),
+            ControllerLayout::Nintendo
+        );
+        assert_eq!(
+            ControllerModel::Steam.default_layout(),
+            ControllerLayout::Xbox
+        );
+    }
+
+    #[test]
+    fn test_controller_model_supports_gyro() {
+        assert!(ControllerModel::PS4.supports_gyro());
+        assert!(ControllerModel::PS5.supports_gyro());
+        assert!(ControllerModel::SwitchPro.supports_gyro());
+        assert!(!ControllerModel::Xbox360.supports_gyro());
+        assert!(!ControllerModel::XboxOne.supports_gyro());
+    }
+
+    #[test]
+    fn test_controller_model_supports_touchpad() {
+        assert!(ControllerModel::PS4.supports_touchpad());
+        assert!(ControllerModel::PS5.supports_touchpad());
+        assert!(ControllerModel::Steam.supports_touchpad());
+        assert!(!ControllerModel::Xbox360.supports_touchpad());
+        assert!(!ControllerModel::SwitchPro.supports_touchpad());
+    }
+
+    #[test]
+    fn test_controller_model_supports_adaptive_triggers() {
+        assert!(ControllerModel::PS5.supports_adaptive_triggers());
+        assert!(!ControllerModel::PS4.supports_adaptive_triggers());
+        assert!(!ControllerModel::Xbox360.supports_adaptive_triggers());
+        assert!(!ControllerModel::SwitchPro.supports_adaptive_triggers());
+    }
+
+    #[test]
+    fn test_detected_controller_creation() {
+        let detected = DetectedController {
+            model: ControllerModel::PS5,
+            vendor_id: 0x054C,
+            product_id: 0x0CE6,
+        };
+
+        assert_eq!(detected.model, ControllerModel::PS5);
+        assert_eq!(detected.vendor_id, 0x054C);
+        assert_eq!(detected.product_id, 0x0CE6);
+    }
+
+    #[test]
+    fn test_controller_profile_creation() {
+        let profile = ControllerProfile {
+            name: "Custom Xbox".to_string(),
+            model: ControllerModel::XboxOne,
+            action_map: Some(ActionMap::default()),
+            layout: Some(ControllerLayout::Xbox),
+        };
+
+        assert_eq!(profile.name, "Custom Xbox");
+        assert_eq!(profile.model, ControllerModel::XboxOne);
+        assert!(profile.action_map.is_some());
+        assert_eq!(profile.layout, Some(ControllerLayout::Xbox));
+    }
+
+    #[test]
+    fn test_profile_registry_default() {
+        let registry = ProfileRegistry::default();
+        assert_eq!(registry.profiles.len(), 0);
+        assert!(!registry.auto_load);
+    }
+
+    #[test]
+    fn test_controller_detected_event() {
+        let gamepad = Entity::from_bits(99);
+        let event = ControllerDetected {
+            gamepad,
+            model: ControllerModel::PS4,
+        };
+
+        assert_eq!(event.gamepad, gamepad);
+        assert_eq!(event.model, ControllerModel::PS4);
+    }
+
+    #[test]
+    fn test_controller_model_default_layout_all() {
+        assert_eq!(
+            ControllerModel::Xbox360.default_layout(),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerModel::XboxOne.default_layout(),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerModel::XboxSeriesXS.default_layout(),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerModel::PS4.default_layout(),
+            ControllerLayout::PlayStation
+        );
+        assert_eq!(
+            ControllerModel::PS5.default_layout(),
+            ControllerLayout::PlayStation
+        );
+        assert_eq!(
+            ControllerModel::SwitchPro.default_layout(),
+            ControllerLayout::Nintendo
+        );
+        assert_eq!(
+            ControllerModel::SwitchJoyCon.default_layout(),
+            ControllerLayout::Nintendo
+        );
+        assert_eq!(
+            ControllerModel::Steam.default_layout(),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerModel::Generic.default_layout(),
+            ControllerLayout::Xbox
+        );
+    }
+
+    #[test]
+    fn test_controller_model_supports_gyro_all() {
+        assert!(!ControllerModel::Xbox360.supports_gyro());
+        assert!(!ControllerModel::XboxOne.supports_gyro());
+        assert!(!ControllerModel::XboxSeriesXS.supports_gyro());
+        assert!(ControllerModel::PS4.supports_gyro());
+        assert!(ControllerModel::PS5.supports_gyro());
+        assert!(ControllerModel::SwitchPro.supports_gyro());
+        assert!(ControllerModel::SwitchJoyCon.supports_gyro());
+        assert!(!ControllerModel::Steam.supports_gyro());
+        assert!(!ControllerModel::Generic.supports_gyro());
+    }
+
+    #[test]
+    fn test_controller_model_supports_touchpad_all() {
+        assert!(!ControllerModel::Xbox360.supports_touchpad());
+        assert!(!ControllerModel::XboxOne.supports_touchpad());
+        assert!(!ControllerModel::XboxSeriesXS.supports_touchpad());
+        assert!(ControllerModel::PS4.supports_touchpad());
+        assert!(ControllerModel::PS5.supports_touchpad());
+        assert!(!ControllerModel::SwitchPro.supports_touchpad());
+        assert!(!ControllerModel::SwitchJoyCon.supports_touchpad());
+        assert!(ControllerModel::Steam.supports_touchpad());
+        assert!(!ControllerModel::Generic.supports_touchpad());
+    }
+
+    #[test]
+    fn test_controller_model_supports_adaptive_triggers_all() {
+        assert!(!ControllerModel::Xbox360.supports_adaptive_triggers());
+        assert!(!ControllerModel::XboxOne.supports_adaptive_triggers());
+        assert!(!ControllerModel::XboxSeriesXS.supports_adaptive_triggers());
+        assert!(!ControllerModel::PS4.supports_adaptive_triggers());
+        assert!(ControllerModel::PS5.supports_adaptive_triggers());
+        assert!(!ControllerModel::SwitchPro.supports_adaptive_triggers());
+        assert!(!ControllerModel::SwitchJoyCon.supports_adaptive_triggers());
+        assert!(!ControllerModel::Steam.supports_adaptive_triggers());
+        assert!(!ControllerModel::Generic.supports_adaptive_triggers());
+    }
+
+    #[test]
+    fn test_profile_registry_register() {
+        let mut registry = ProfileRegistry::default();
+        let profile = ControllerProfile {
+            name: "Test Profile".to_string(),
+            model: ControllerModel::PS5,
+            action_map: None,
+            layout: None,
+        };
+
+        registry.register(profile.clone());
+        assert_eq!(registry.profiles.len(), 1);
+        assert!(registry.profiles.contains_key(&ControllerModel::PS5));
+    }
+
+    #[test]
+    fn test_profile_registry_get() {
+        let mut registry = ProfileRegistry::default();
+        let profile = ControllerProfile {
+            name: "PS5 Profile".to_string(),
+            model: ControllerModel::PS5,
+            action_map: None,
+            layout: Some(ControllerLayout::PlayStation),
+        };
+
+        registry.register(profile);
+
+        let retrieved = registry.get(ControllerModel::PS5);
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().name, "PS5 Profile");
+    }
+
+    #[test]
+    fn test_detected_controller_check_methods() {
+        let detected_ps5 = DetectedController {
+            model: ControllerModel::PS5,
+            vendor_id: 0x054C,
+            product_id: 0x0CE6,
+        };
+
+        assert!(detected_ps5.model.supports_gyro());
+        assert!(detected_ps5.model.supports_touchpad());
+        assert!(detected_ps5.model.supports_adaptive_triggers());
+
+        let detected_xbox = DetectedController {
+            model: ControllerModel::XboxOne,
+            vendor_id: 0x045E,
+            product_id: 0x02DD,
+        };
+
+        assert!(!detected_xbox.model.supports_gyro());
+        assert!(!detected_xbox.model.supports_touchpad());
+        assert!(!detected_xbox.model.supports_adaptive_triggers());
+    }
+
+    #[test]
+    fn test_controller_model_all_variants() {
+        let all_models = [
+            ControllerModel::Xbox360,
+            ControllerModel::XboxOne,
+            ControllerModel::XboxSeriesXS,
+            ControllerModel::PS4,
+            ControllerModel::PS5,
+            ControllerModel::SwitchPro,
+            ControllerModel::SwitchJoyCon,
+            ControllerModel::Steam,
+            ControllerModel::Generic,
+        ];
+
+        // Ensure all are unique
+        for (i, &model1) in all_models.iter().enumerate() {
+            for (j, &model2) in all_models.iter().enumerate() {
+                if i != j {
+                    assert_ne!(model1, model2);
+                }
+            }
+        }
+    }
+
+    // ========== Additional DetectedController Tests ==========
+
+    #[test]
+    fn test_detected_controller_new() {
+        let detected = DetectedController::new(0x054c, 0x0ce6);
+        assert_eq!(detected.model, ControllerModel::PS5);
+        assert_eq!(detected.vendor_id, 0x054c);
+        assert_eq!(detected.product_id, 0x0ce6);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_xbox360() {
+        let detected = DetectedController::new(0x045e, 0x028e);
+        assert_eq!(detected.model, ControllerModel::Xbox360);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_xboxone() {
+        let detected = DetectedController::new(0x045e, 0x02d1);
+        assert_eq!(detected.model, ControllerModel::XboxOne);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_xbox_series() {
+        let detected = DetectedController::new(0x045e, 0x0b13);
+        assert_eq!(detected.model, ControllerModel::XboxSeriesXS);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_ps4() {
+        let detected = DetectedController::new(0x054c, 0x05c4);
+        assert_eq!(detected.model, ControllerModel::PS4);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_ps4_slim() {
+        let detected = DetectedController::new(0x054c, 0x09cc);
+        assert_eq!(detected.model, ControllerModel::PS4);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_switch_pro() {
+        let detected = DetectedController::new(0x057e, 0x2009);
+        assert_eq!(detected.model, ControllerModel::SwitchPro);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_joycon_left() {
+        let detected = DetectedController::new(0x057e, 0x2006);
+        assert_eq!(detected.model, ControllerModel::SwitchJoyCon);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_joycon_right() {
+        let detected = DetectedController::new(0x057e, 0x2007);
+        assert_eq!(detected.model, ControllerModel::SwitchJoyCon);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_steam() {
+        let detected = DetectedController::new(0x28de, 0x1142);
+        assert_eq!(detected.model, ControllerModel::Steam);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_generic() {
+        let detected = DetectedController::new(0x1234, 0x5678);
+        assert_eq!(detected.model, ControllerModel::Generic);
+    }
+
+    // ========== Additional ControllerProfile Tests ==========
+
+    #[test]
+    fn test_controller_profile_new() {
+        let profile = ControllerProfile::new("My Profile", ControllerModel::PS5);
+        assert_eq!(profile.name, "My Profile");
+        assert_eq!(profile.model, ControllerModel::PS5);
+        assert!(profile.action_map.is_none());
+        assert!(profile.layout.is_none());
+    }
+
+    #[test]
+    fn test_controller_profile_with_action_map() {
+        let profile = ControllerProfile::new("Test", ControllerModel::XboxOne)
+            .with_action_map(ActionMap::default());
+
+        assert!(profile.action_map.is_some());
+    }
+
+    #[test]
+    fn test_controller_profile_with_layout() {
+        let profile = ControllerProfile::new("Test", ControllerModel::XboxOne)
+            .with_layout(ControllerLayout::PlayStation);
+
+        assert_eq!(profile.layout, Some(ControllerLayout::PlayStation));
+    }
+
+    #[test]
+    fn test_controller_profile_builder_chain() {
+        let profile = ControllerProfile::new("Full Profile", ControllerModel::PS4)
+            .with_action_map(ActionMap::default())
+            .with_layout(ControllerLayout::PlayStation);
+
+        assert!(profile.action_map.is_some());
+        assert_eq!(profile.layout, Some(ControllerLayout::PlayStation));
+    }
+
+    // ========== ProfileRegistry Additional Tests ==========
+
+    #[test]
+    fn test_profile_registry_get_nonexistent() {
+        let registry = ProfileRegistry::default();
+        let result = registry.get(ControllerModel::PS5);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_profile_registry_multiple_profiles() {
+        let mut registry = ProfileRegistry::default();
+
+        registry.register(ControllerProfile::new("PS4", ControllerModel::PS4));
+        registry.register(ControllerProfile::new("PS5", ControllerModel::PS5));
+        registry.register(ControllerProfile::new("Xbox", ControllerModel::XboxOne));
+
+        assert_eq!(registry.profiles.len(), 3);
+        assert!(registry.get(ControllerModel::PS4).is_some());
+        assert!(registry.get(ControllerModel::PS5).is_some());
+        assert!(registry.get(ControllerModel::XboxOne).is_some());
+    }
+
+    #[test]
+    fn test_profile_registry_replace_profile() {
+        let mut registry = ProfileRegistry::default();
+
+        registry.register(ControllerProfile::new("First", ControllerModel::PS5));
+        registry.register(ControllerProfile::new("Second", ControllerModel::PS5));
+
+        // Second should replace first
+        assert_eq!(registry.profiles.len(), 1);
+        let profile = registry.get(ControllerModel::PS5).unwrap();
+        assert_eq!(profile.name, "Second");
+    }
+
+    #[test]
+    fn test_profile_registry_auto_load_flag() {
+        let mut registry = ProfileRegistry::default();
+        assert!(!registry.auto_load);
+
+        registry.auto_load = true;
+        assert!(registry.auto_load);
+    }
+}

@@ -26,7 +26,7 @@ pub enum ControllerLayout {
 
 impl ControllerLayout {
     /// Detect controller layout from controller name.
-    #[must_use] 
+    #[must_use]
     pub fn from_name(name: &str) -> Self {
         let name_lower = name.to_lowercase();
 
@@ -73,7 +73,7 @@ impl ControllerLayout {
     }
 
     /// Get the display name for a button on this layout.
-    #[must_use] 
+    #[must_use]
     pub fn button_name(&self, button: GamepadButton) -> &'static str {
         match (self, button) {
             // Face buttons
@@ -244,33 +244,33 @@ impl Default for ControllerConfig {
 
 impl ControllerConfig {
     /// Get the effective deadzone value clamped to valid range.
-    #[must_use] 
+    #[must_use]
     pub fn effective_deadzone(&self) -> f32 {
         self.deadzone.clamp(self.min_deadzone, self.max_deadzone)
     }
 
     /// Get the effective left stick sensitivity value clamped to valid range.
-    #[must_use] 
+    #[must_use]
     pub fn effective_left_sensitivity(&self) -> f32 {
         self.left_stick_sensitivity
             .clamp(self.min_sensitivity, self.max_sensitivity)
     }
 
     /// Get the effective right stick sensitivity value clamped to valid range.
-    #[must_use] 
+    #[must_use]
     pub fn effective_right_sensitivity(&self) -> f32 {
         self.right_stick_sensitivity
             .clamp(self.min_sensitivity, self.max_sensitivity)
     }
 
     /// Get the current layout (forced or detected).
-    #[must_use] 
+    #[must_use]
     pub fn layout(&self) -> ControllerLayout {
         self.forced_layout.unwrap_or(self.current_layout)
     }
 
     /// Apply deadzone and sensitivity to an axis value for the left stick.
-    #[must_use] 
+    #[must_use]
     pub fn apply_deadzone_left(&self, value: f32) -> f32 {
         let deadzone = self.effective_deadzone();
         if value.abs() < deadzone {
@@ -284,7 +284,7 @@ impl ControllerConfig {
     }
 
     /// Apply deadzone and sensitivity to an axis value for the right stick.
-    #[must_use] 
+    #[must_use]
     pub fn apply_deadzone_right(&self, value: f32) -> f32 {
         let deadzone = self.effective_deadzone();
         if value.abs() < deadzone {
@@ -297,7 +297,7 @@ impl ControllerConfig {
     }
 
     /// Apply deadzone to a 2D axis (stick) with per-stick sensitivity.
-    #[must_use] 
+    #[must_use]
     pub fn apply_deadzone_2d(&self, x: f32, y: f32, is_left_stick: bool) -> Vec2 {
         let deadzone = self.effective_deadzone();
         let magnitude = (x * x + y * y).sqrt();
@@ -319,7 +319,7 @@ impl ControllerConfig {
     }
 
     /// Apply inversion to stick input based on configuration.
-    #[must_use] 
+    #[must_use]
     pub fn apply_inversion(&self, mut value: Vec2, is_left_stick: bool) -> Vec2 {
         if is_left_stick {
             if self.invert_left_x {
@@ -341,8 +341,7 @@ impl ControllerConfig {
 
     /// Save configuration to a JSON file.
     pub fn save_to_file(&self, path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
-        let json = serde_json::to_string_pretty(self)
-            .map_err(|e| std::io::Error::other(e))?;
+        let json = serde_json::to_string_pretty(self).map_err(|e| std::io::Error::other(e))?;
         std::fs::write(path, json)
     }
 
@@ -354,7 +353,7 @@ impl ControllerConfig {
     }
 
     /// Get the default config file path for the current platform.
-    #[must_use] 
+    #[must_use]
     pub fn default_config_path() -> std::path::PathBuf {
         if let Some(config_dir) = dirs::config_dir() {
             config_dir.join("bevy_archie").join("controller.json")
@@ -364,7 +363,7 @@ impl ControllerConfig {
     }
 
     /// Load configuration from the default path, or return default if not found.
-    #[must_use] 
+    #[must_use]
     pub fn load_or_default() -> Self {
         let path = Self::default_config_path();
         Self::load_from_file(&path).unwrap_or_default()
@@ -405,4 +404,377 @@ pub(crate) fn register_config_types(app: &mut App) {
         .register_type::<ControllerLayout>()
         .init_resource::<ControllerConfig>()
         .add_message::<ControllerConfigChanged>();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    // ========== ControllerLayout Tests ==========
+
+    #[test]
+    fn test_controller_layout_default() {
+        let layout = ControllerLayout::default();
+        assert_eq!(layout, ControllerLayout::Xbox);
+    }
+
+    #[test]
+    fn test_controller_layout_from_name_xbox() {
+        assert_eq!(
+            ControllerLayout::from_name("Xbox Controller"),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Microsoft Wireless"),
+            ControllerLayout::Xbox
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_from_name_playstation() {
+        assert_eq!(
+            ControllerLayout::from_name("PS4 Controller"),
+            ControllerLayout::PlayStation
+        );
+        assert_eq!(
+            ControllerLayout::from_name("PS5 DualSense"),
+            ControllerLayout::PlayStation
+        );
+        assert_eq!(
+            ControllerLayout::from_name("DualShock 4"),
+            ControllerLayout::PlayStation
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Sony Controller"),
+            ControllerLayout::PlayStation
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_from_name_nintendo() {
+        assert_eq!(
+            ControllerLayout::from_name("Nintendo Switch Pro"),
+            ControllerLayout::Nintendo
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Joy-Con"),
+            ControllerLayout::Nintendo
+        );
+        assert_eq!(
+            ControllerLayout::from_name("JoyCon L"),
+            ControllerLayout::Nintendo
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Pro Controller"),
+            ControllerLayout::Nintendo
+        );
+        assert_eq!(
+            ControllerLayout::from_name("GameCube"),
+            ControllerLayout::Nintendo
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Wii Remote"),
+            ControllerLayout::Nintendo
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_from_name_steam() {
+        assert_eq!(
+            ControllerLayout::from_name("Steam Controller"),
+            ControllerLayout::Steam
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Valve Index"),
+            ControllerLayout::Steam
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_from_name_stadia() {
+        assert_eq!(
+            ControllerLayout::from_name("Stadia Controller"),
+            ControllerLayout::Stadia
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Google Gamepad"),
+            ControllerLayout::Stadia
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_from_name_generic() {
+        assert_eq!(
+            ControllerLayout::from_name("Unknown Controller"),
+            ControllerLayout::Generic
+        );
+        assert_eq!(
+            ControllerLayout::from_name("8BitDo Pro 2"),
+            ControllerLayout::Generic
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_from_name_case_insensitive() {
+        assert_eq!(ControllerLayout::from_name("XBOX"), ControllerLayout::Xbox);
+        assert_eq!(
+            ControllerLayout::from_name("playstation"),
+            ControllerLayout::PlayStation
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_button_name_playstation() {
+        let layout = ControllerLayout::PlayStation;
+        assert_eq!(layout.button_name(GamepadButton::South), "Cross");
+        assert_eq!(layout.button_name(GamepadButton::East), "Circle");
+        assert_eq!(layout.button_name(GamepadButton::West), "Square");
+        assert_eq!(layout.button_name(GamepadButton::North), "Triangle");
+    }
+
+    #[test]
+    fn test_controller_layout_button_name_nintendo() {
+        let layout = ControllerLayout::Nintendo;
+        assert_eq!(layout.button_name(GamepadButton::South), "B");
+        assert_eq!(layout.button_name(GamepadButton::East), "A");
+        assert_eq!(layout.button_name(GamepadButton::West), "Y");
+        assert_eq!(layout.button_name(GamepadButton::North), "X");
+    }
+
+    #[test]
+    fn test_controller_layout_button_name_xbox() {
+        let layout = ControllerLayout::Xbox;
+        assert_eq!(layout.button_name(GamepadButton::South), "A");
+        assert_eq!(layout.button_name(GamepadButton::East), "B");
+        assert_eq!(layout.button_name(GamepadButton::West), "X");
+        assert_eq!(layout.button_name(GamepadButton::North), "Y");
+    }
+
+    #[test]
+    fn test_controller_layout_button_name_triggers() {
+        assert_eq!(
+            ControllerLayout::Xbox.button_name(GamepadButton::LeftTrigger),
+            "LB"
+        );
+        assert_eq!(
+            ControllerLayout::Xbox.button_name(GamepadButton::RightTrigger),
+            "RB"
+        );
+        assert_eq!(
+            ControllerLayout::PlayStation.button_name(GamepadButton::LeftTrigger),
+            "L1"
+        );
+        assert_eq!(
+            ControllerLayout::Nintendo.button_name(GamepadButton::LeftTrigger),
+            "L"
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_button_name_system() {
+        assert_eq!(
+            ControllerLayout::PlayStation.button_name(GamepadButton::Select),
+            "Share"
+        );
+        assert_eq!(
+            ControllerLayout::PlayStation.button_name(GamepadButton::Start),
+            "Options"
+        );
+        assert_eq!(
+            ControllerLayout::Xbox.button_name(GamepadButton::Select),
+            "View"
+        );
+        assert_eq!(
+            ControllerLayout::Xbox.button_name(GamepadButton::Start),
+            "Menu"
+        );
+    }
+
+    // ========== ControllerConfig Tests ==========
+
+    #[test]
+    fn test_controller_config_default() {
+        let config = ControllerConfig::default();
+        assert_relative_eq!(config.deadzone, 0.15);
+        assert_relative_eq!(config.left_stick_sensitivity, 1.0);
+        assert_relative_eq!(config.right_stick_sensitivity, 1.0);
+        assert!(config.vibration_enabled);
+        assert_relative_eq!(config.vibration_intensity, 1.0);
+        assert!(config.auto_detect_layout);
+        assert!(!config.invert_left_x);
+        assert!(!config.invert_left_y);
+        assert!(!config.swap_sticks);
+    }
+
+    #[test]
+    fn test_controller_config_effective_deadzone() {
+        let mut config = ControllerConfig::default();
+
+        // Normal deadzone
+        config.deadzone = 0.2;
+        assert_relative_eq!(config.effective_deadzone(), 0.2);
+
+        // Clamped to min
+        config.deadzone = 0.01;
+        assert_relative_eq!(config.effective_deadzone(), config.min_deadzone);
+
+        // Clamped to max
+        config.deadzone = 0.9;
+        assert_relative_eq!(config.effective_deadzone(), config.max_deadzone);
+    }
+
+    #[test]
+    fn test_controller_config_effective_sensitivity() {
+        let mut config = ControllerConfig::default();
+
+        config.left_stick_sensitivity = 1.5;
+        assert_relative_eq!(config.effective_left_sensitivity(), 1.5);
+
+        config.right_stick_sensitivity = 2.5;
+        assert_relative_eq!(config.effective_right_sensitivity(), 2.5);
+
+        // Clamped values
+        config.left_stick_sensitivity = 0.1;
+        assert_relative_eq!(config.effective_left_sensitivity(), config.min_sensitivity);
+
+        config.right_stick_sensitivity = 5.0;
+        assert_relative_eq!(config.effective_right_sensitivity(), config.max_sensitivity);
+    }
+
+    #[test]
+    fn test_controller_config_layout() {
+        let mut config = ControllerConfig::default();
+        config.current_layout = ControllerLayout::PlayStation;
+
+        // No forced layout - use current
+        assert_eq!(config.layout(), ControllerLayout::PlayStation);
+
+        // Forced layout overrides
+        config.forced_layout = Some(ControllerLayout::Nintendo);
+        assert_eq!(config.layout(), ControllerLayout::Nintendo);
+    }
+
+    #[test]
+    fn test_controller_config_apply_deadzone_left() {
+        let config = ControllerConfig::default();
+
+        // Within deadzone
+        assert_relative_eq!(config.apply_deadzone_left(0.1), 0.0);
+
+        // Outside deadzone
+        let result = config.apply_deadzone_left(0.5);
+        assert!(result > 0.0);
+
+        // Negative values
+        let result_neg = config.apply_deadzone_left(-0.5);
+        assert!(result_neg < 0.0);
+    }
+
+    #[test]
+    fn test_controller_config_apply_deadzone_right() {
+        let config = ControllerConfig::default();
+
+        // Within deadzone
+        assert_relative_eq!(config.apply_deadzone_right(0.1), 0.0);
+
+        // Outside deadzone
+        let result = config.apply_deadzone_right(0.5);
+        assert!(result > 0.0);
+    }
+
+    #[test]
+    fn test_controller_config_apply_deadzone_2d() {
+        let config = ControllerConfig::default();
+
+        // Within deadzone
+        let result = config.apply_deadzone_2d(0.05, 0.05, true);
+        assert_eq!(result, Vec2::ZERO);
+
+        // Outside deadzone
+        let result = config.apply_deadzone_2d(0.5, 0.5, true);
+        assert!(result.x > 0.0);
+        assert!(result.y > 0.0);
+    }
+
+    #[test]
+    fn test_controller_config_apply_inversion_left() {
+        let mut config = ControllerConfig::default();
+        let value = Vec2::new(0.5, 0.5);
+
+        // No inversion
+        let result = config.apply_inversion(value, true);
+        assert_eq!(result, value);
+
+        // Invert X
+        config.invert_left_x = true;
+        let result = config.apply_inversion(value, true);
+        assert_relative_eq!(result.x, -0.5);
+        assert_relative_eq!(result.y, 0.5);
+
+        // Invert Y
+        config.invert_left_x = false;
+        config.invert_left_y = true;
+        let result = config.apply_inversion(value, true);
+        assert_relative_eq!(result.x, 0.5);
+        assert_relative_eq!(result.y, -0.5);
+
+        // Invert both
+        config.invert_left_x = true;
+        let result = config.apply_inversion(value, true);
+        assert_relative_eq!(result.x, -0.5);
+        assert_relative_eq!(result.y, -0.5);
+    }
+
+    #[test]
+    fn test_controller_config_apply_inversion_right() {
+        let mut config = ControllerConfig::default();
+        let value = Vec2::new(0.5, 0.5);
+
+        config.invert_right_x = true;
+        let result = config.apply_inversion(value, false);
+        assert_relative_eq!(result.x, -0.5);
+
+        config.invert_right_y = true;
+        let result = config.apply_inversion(value, false);
+        assert_relative_eq!(result.y, -0.5);
+    }
+
+    #[test]
+    fn test_controller_config_default_path() {
+        let path = ControllerConfig::default_config_path();
+        assert!(path.to_string_lossy().contains("controller"));
+    }
+
+    // ========== ConfigField Tests ==========
+
+    #[test]
+    fn test_config_field_equality() {
+        assert_eq!(ConfigField::Deadzone, ConfigField::Deadzone);
+        assert_ne!(ConfigField::Deadzone, ConfigField::Sensitivity);
+    }
+
+    #[test]
+    fn test_config_field_variants() {
+        let fields = [
+            ConfigField::Deadzone,
+            ConfigField::Sensitivity,
+            ConfigField::Layout,
+            ConfigField::Vibration,
+            ConfigField::InvertAxis,
+            ConfigField::SwapSticks,
+            ConfigField::Timing,
+        ];
+        assert_eq!(fields.len(), 7);
+    }
+
+    // ========== ControllerConfigChanged Event Tests ==========
+
+    #[test]
+    fn test_controller_config_changed_event() {
+        let event = ControllerConfigChanged {
+            field: ConfigField::Deadzone,
+        };
+        assert_eq!(event.field, ConfigField::Deadzone);
+    }
 }

@@ -208,3 +208,202 @@ pub(crate) fn add_gyro_systems(app: &mut App) {
         (update_gyro_data, update_accel_data, detect_motion_gestures).chain(),
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_gyro_data_new() {
+        let gyro = GyroData::new(1.0, 2.0, 3.0);
+        assert_relative_eq!(gyro.pitch, 1.0);
+        assert_relative_eq!(gyro.yaw, 2.0);
+        assert_relative_eq!(gyro.roll, 3.0);
+        assert!(gyro.valid);
+    }
+
+    #[test]
+    fn test_gyro_data_magnitude() {
+        let gyro = GyroData::new(3.0, 4.0, 0.0);
+        assert_relative_eq!(gyro.magnitude(), 5.0);
+    }
+
+    #[test]
+    fn test_gyro_data_exceeds_threshold() {
+        let gyro = GyroData::new(3.0, 4.0, 0.0);
+        assert!(gyro.exceeds_threshold(4.0));
+        assert!(!gyro.exceeds_threshold(6.0));
+    }
+
+    #[test]
+    fn test_gyro_data_default() {
+        let gyro = GyroData::default();
+        assert_relative_eq!(gyro.pitch, 0.0);
+        assert_relative_eq!(gyro.yaw, 0.0);
+        assert_relative_eq!(gyro.roll, 0.0);
+        assert!(!gyro.valid);
+    }
+
+    #[test]
+    fn test_accel_data_new() {
+        let accel = AccelData::new(1.0, 2.0, 3.0);
+        assert_relative_eq!(accel.x, 1.0);
+        assert_relative_eq!(accel.y, 2.0);
+        assert_relative_eq!(accel.z, 3.0);
+        assert!(accel.valid);
+    }
+
+    #[test]
+    fn test_accel_data_magnitude() {
+        let accel = AccelData::new(3.0, 4.0, 0.0);
+        assert_relative_eq!(accel.magnitude(), 5.0);
+    }
+
+    #[test]
+    fn test_accel_data_is_shaking() {
+        let accel = AccelData::new(0.0, 20.0, 0.0); // High acceleration
+        assert!(accel.is_shaking(5.0));
+
+        let still = AccelData::new(0.0, 9.8, 0.0); // Just gravity
+        assert!(!still.is_shaking(5.0));
+    }
+
+    #[test]
+    fn test_accel_data_default() {
+        let accel = AccelData::default();
+        assert_relative_eq!(accel.x, 0.0);
+        assert_relative_eq!(accel.y, 0.0);
+        assert_relative_eq!(accel.z, 0.0);
+        assert!(!accel.valid);
+    }
+
+    #[test]
+    fn test_motion_gesture_variants() {
+        assert_ne!(MotionGesture::Shake, MotionGesture::Tilt);
+        assert_ne!(MotionGesture::Roll, MotionGesture::Flick);
+    }
+
+    #[test]
+    fn test_motion_config_default() {
+        let config = MotionConfig::default();
+        assert!(config.gyro_sensitivity > 0.0);
+        assert!(config.accel_sensitivity > 0.0);
+        assert!(config.gyro_deadzone > 0.0);
+        assert!(config.enabled);
+    }
+
+    #[test]
+    fn test_motion_gesture_detected_event() {
+        let gamepad = Entity::from_bits(77);
+        let event = MotionGestureDetected {
+            gamepad,
+            gesture: MotionGesture::Shake,
+            intensity: 0.8,
+        };
+
+        assert_eq!(event.gamepad, gamepad);
+        assert_eq!(event.gesture, MotionGesture::Shake);
+        assert_relative_eq!(event.intensity, 0.8);
+    }
+
+    // ========== Additional Tests ==========
+
+    #[test]
+    fn test_gyro_data_zero_magnitude() {
+        let gyro = GyroData::new(0.0, 0.0, 0.0);
+        assert_relative_eq!(gyro.magnitude(), 0.0);
+    }
+
+    #[test]
+    fn test_gyro_data_invalid() {
+        let mut gyro = GyroData::new(1.0, 2.0, 3.0);
+        gyro.valid = false;
+        assert!(!gyro.valid);
+    }
+
+    #[test]
+    fn test_accel_data_zero_magnitude() {
+        let accel = AccelData::new(0.0, 0.0, 0.0);
+        assert_relative_eq!(accel.magnitude(), 0.0);
+    }
+
+    #[test]
+    fn test_accel_data_invalid() {
+        let mut accel = AccelData::new(1.0, 2.0, 3.0);
+        accel.valid = false;
+        assert!(!accel.valid);
+    }
+
+    #[test]
+    fn test_motion_gesture_all_variants() {
+        let gestures = [
+            MotionGesture::Flick,
+            MotionGesture::Tilt,
+            MotionGesture::Shake,
+            MotionGesture::Roll,
+        ];
+
+        // Check all are unique
+        for (i, &g1) in gestures.iter().enumerate() {
+            for (j, &g2) in gestures.iter().enumerate() {
+                if i != j {
+                    assert_ne!(g1, g2);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_motion_config_custom_values() {
+        let config = MotionConfig {
+            gyro_sensitivity: 2.0,
+            gyro_deadzone: 0.05,
+            accel_sensitivity: 1.5,
+            enabled: false,
+        };
+
+        assert_relative_eq!(config.gyro_sensitivity, 2.0);
+        assert_relative_eq!(config.gyro_deadzone, 0.05);
+        assert_relative_eq!(config.accel_sensitivity, 1.5);
+        assert!(!config.enabled);
+    }
+
+    #[test]
+    fn test_gyro_data_different_thresholds() {
+        let gyro = GyroData::new(5.0, 0.0, 0.0);
+        assert_relative_eq!(gyro.magnitude(), 5.0);
+
+        assert!(gyro.exceeds_threshold(4.0));
+        assert!(!gyro.exceeds_threshold(5.0)); // Equal to threshold should not exceed
+        let accel = AccelData::new(0.0, 9.8, 0.0);
+        assert_relative_eq!(accel.magnitude(), 9.8, epsilon = 0.1);
+        assert!(!accel.is_shaking(1.0));
+    }
+
+    #[test]
+    fn test_accel_data_strong_shake() {
+        // Strong acceleration in addition to gravity
+        let accel = AccelData::new(10.0, 15.0, 5.0);
+        assert!(accel.is_shaking(5.0));
+    }
+
+    #[test]
+    fn test_motion_gesture_detected_different_gestures() {
+        let gamepad = Entity::from_bits(1);
+
+        let flick = MotionGestureDetected {
+            gamepad,
+            gesture: MotionGesture::Flick,
+            intensity: 1.0,
+        };
+
+        let shake = MotionGestureDetected {
+            gamepad,
+            gesture: MotionGesture::Shake,
+            intensity: 0.5,
+        };
+
+        assert_ne!(flick.gesture, shake.gesture);
+    }
+}

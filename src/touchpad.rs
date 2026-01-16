@@ -262,3 +262,234 @@ pub(crate) fn add_touchpad_systems(app: &mut App) {
         (update_touchpad_data, detect_touchpad_gestures).chain(),
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    // ========== TouchFinger Tests ==========
+
+    #[test]
+    fn test_touch_finger_new() {
+        let finger = TouchFinger::new(1, 0.5, 0.7);
+        assert_eq!(finger.id, 1);
+        assert_relative_eq!(finger.x, 0.5);
+        assert_relative_eq!(finger.y, 0.7);
+        assert!(finger.active);
+    }
+
+    #[test]
+    fn test_touch_finger_new_clamps_values() {
+        let finger = TouchFinger::new(0, -0.5, 1.5);
+        assert_relative_eq!(finger.x, 0.0);
+        assert_relative_eq!(finger.y, 1.0);
+    }
+
+    #[test]
+    fn test_touch_finger_position() {
+        let finger = TouchFinger::new(0, 0.3, 0.8);
+        let pos = finger.position();
+        assert_relative_eq!(pos.x, 0.3);
+        assert_relative_eq!(pos.y, 0.8);
+    }
+
+    #[test]
+    fn test_touch_finger_default() {
+        let finger = TouchFinger::default();
+        assert_eq!(finger.id, 0);
+        assert_relative_eq!(finger.x, 0.0);
+        assert_relative_eq!(finger.y, 0.0);
+        assert!(!finger.active);
+    }
+
+    // ========== TouchpadData Tests ==========
+
+    #[test]
+    fn test_touchpad_data_default() {
+        let data = TouchpadData::default();
+        assert!(!data.finger1.active);
+        assert!(!data.finger2.active);
+        assert!(!data.button_pressed);
+        assert_eq!(data.prev_finger1, Vec2::ZERO);
+        assert_eq!(data.prev_finger2, Vec2::ZERO);
+    }
+
+    #[test]
+    fn test_touchpad_data_finger1_delta_inactive() {
+        let data = TouchpadData::default();
+        assert_eq!(data.finger1_delta(), Vec2::ZERO);
+    }
+
+    #[test]
+    fn test_touchpad_data_finger1_delta_active() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.5, 0.5);
+        data.prev_finger1 = Vec2::new(0.3, 0.3);
+
+        let delta = data.finger1_delta();
+        assert_relative_eq!(delta.x, 0.2, epsilon = 0.001);
+        assert_relative_eq!(delta.y, 0.2, epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_touchpad_data_finger2_delta_inactive() {
+        let data = TouchpadData::default();
+        assert_eq!(data.finger2_delta(), Vec2::ZERO);
+    }
+
+    #[test]
+    fn test_touchpad_data_finger2_delta_active() {
+        let mut data = TouchpadData::default();
+        data.finger2 = TouchFinger::new(1, 0.8, 0.6);
+        data.prev_finger2 = Vec2::new(0.4, 0.2);
+
+        let delta = data.finger2_delta();
+        assert_relative_eq!(delta.x, 0.4, epsilon = 0.001);
+        assert_relative_eq!(delta.y, 0.4, epsilon = 0.001);
+    }
+
+    #[test]
+    fn test_touchpad_data_is_swiping_true() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.8, 0.5);
+        data.prev_finger1 = Vec2::new(0.3, 0.5);
+
+        assert!(data.is_swiping(0.1));
+    }
+
+    #[test]
+    fn test_touchpad_data_is_swiping_false() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.35, 0.5);
+        data.prev_finger1 = Vec2::new(0.3, 0.5);
+
+        assert!(!data.is_swiping(0.1));
+    }
+
+    #[test]
+    fn test_touchpad_data_is_pinching_none_when_single_finger() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.5, 0.5);
+        // finger2 not active
+
+        assert!(data.is_pinching().is_none());
+    }
+
+    #[test]
+    fn test_touchpad_data_is_pinching_out() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.2, 0.5);
+        data.finger2 = TouchFinger::new(1, 0.8, 0.5);
+        data.prev_finger1 = Vec2::new(0.3, 0.5);
+        data.prev_finger2 = Vec2::new(0.7, 0.5);
+
+        let pinch = data.is_pinching();
+        assert!(pinch.is_some());
+        assert!(pinch.unwrap() > 0.0); // Pinch out
+    }
+
+    #[test]
+    fn test_touchpad_data_is_pinching_in() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.4, 0.5);
+        data.finger2 = TouchFinger::new(1, 0.6, 0.5);
+        data.prev_finger1 = Vec2::new(0.2, 0.5);
+        data.prev_finger2 = Vec2::new(0.8, 0.5);
+
+        let pinch = data.is_pinching();
+        assert!(pinch.is_some());
+        assert!(pinch.unwrap() < 0.0); // Pinch in
+    }
+
+    #[test]
+    fn test_touchpad_data_is_pinching_none_when_no_movement() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.3, 0.5);
+        data.finger2 = TouchFinger::new(1, 0.7, 0.5);
+        data.prev_finger1 = Vec2::new(0.3, 0.5);
+        data.prev_finger2 = Vec2::new(0.7, 0.5);
+
+        assert!(data.is_pinching().is_none());
+    }
+
+    #[test]
+    fn test_touchpad_data_active_fingers_none() {
+        let data = TouchpadData::default();
+        assert_eq!(data.active_fingers(), 0);
+    }
+
+    #[test]
+    fn test_touchpad_data_active_fingers_one() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.5, 0.5);
+        assert_eq!(data.active_fingers(), 1);
+    }
+
+    #[test]
+    fn test_touchpad_data_active_fingers_two() {
+        let mut data = TouchpadData::default();
+        data.finger1 = TouchFinger::new(0, 0.5, 0.5);
+        data.finger2 = TouchFinger::new(1, 0.7, 0.7);
+        assert_eq!(data.active_fingers(), 2);
+    }
+
+    // ========== TouchpadGesture Tests ==========
+
+    #[test]
+    fn test_touchpad_gesture_equality() {
+        assert_eq!(TouchpadGesture::Tap, TouchpadGesture::Tap);
+        assert_ne!(TouchpadGesture::Tap, TouchpadGesture::TwoFingerTap);
+    }
+
+    #[test]
+    fn test_touchpad_gesture_variants() {
+        let gestures = [
+            TouchpadGesture::Tap,
+            TouchpadGesture::TwoFingerTap,
+            TouchpadGesture::SwipeLeft,
+            TouchpadGesture::SwipeRight,
+            TouchpadGesture::SwipeUp,
+            TouchpadGesture::SwipeDown,
+            TouchpadGesture::PinchIn,
+            TouchpadGesture::PinchOut,
+        ];
+        assert_eq!(gestures.len(), 8);
+    }
+
+    // ========== TouchpadConfig Tests ==========
+
+    #[test]
+    fn test_touchpad_config_default() {
+        let config = TouchpadConfig::default();
+        assert_relative_eq!(config.swipe_threshold, 0.15);
+        assert_relative_eq!(config.tap_time_window, 0.2);
+        assert!(config.enabled);
+    }
+
+    #[test]
+    fn test_touchpad_config_custom() {
+        let config = TouchpadConfig {
+            swipe_threshold: 0.25,
+            tap_time_window: 0.3,
+            enabled: false,
+        };
+        assert_relative_eq!(config.swipe_threshold, 0.25);
+        assert_relative_eq!(config.tap_time_window, 0.3);
+        assert!(!config.enabled);
+    }
+
+    // ========== TouchpadGestureEvent Tests ==========
+
+    #[test]
+    fn test_touchpad_gesture_event_creation() {
+        let event = TouchpadGestureEvent {
+            gamepad: Entity::PLACEHOLDER,
+            gesture: TouchpadGesture::SwipeRight,
+            position: Vec2::new(0.5, 0.5),
+            intensity: 0.3,
+        };
+        assert_eq!(event.gesture, TouchpadGesture::SwipeRight);
+        assert_relative_eq!(event.intensity, 0.3);
+    }
+}

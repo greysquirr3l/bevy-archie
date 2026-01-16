@@ -166,3 +166,131 @@ pub(crate) fn register_action_modifier_types(app: &mut App) {
 pub(crate) fn add_action_modifier_systems(app: &mut App) {
     app.add_systems(Update, detect_action_modifiers);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_action_modifier_variants() {
+        assert_ne!(ActionModifier::Tap, ActionModifier::Hold);
+        assert_ne!(ActionModifier::DoubleTap, ActionModifier::LongPress);
+        assert_ne!(ActionModifier::Released, ActionModifier::Tap);
+    }
+
+    #[test]
+    fn test_modifier_config_default() {
+        let config = ModifierConfig::default();
+        assert!(config.hold_duration > 0.0);
+        assert!(config.long_press_duration > 0.0);
+        assert!(config.double_tap_window > 0.0);
+        assert!(config.tap_duration > 0.0);
+        assert!(config.long_press_duration > config.hold_duration);
+    }
+
+    #[test]
+    fn test_action_modifier_state_default() {
+        let state = ActionModifierState::default();
+        assert_eq!(state.held_actions.len(), 0);
+        assert_eq!(state.recent_taps.len(), 0);
+    }
+
+    #[test]
+    fn test_action_modifier_state_record_press() {
+        let mut state = ActionModifierState::default();
+        state.record_press(GameAction::Confirm, 1.0);
+        state.record_press(GameAction::Cancel, 1.5);
+
+        assert_eq!(state.held_actions.len(), 2);
+        assert_eq!(state.held_actions[0].0, GameAction::Confirm);
+        assert_eq!(state.held_actions[1].0, GameAction::Cancel);
+    }
+
+    #[test]
+    fn test_modified_action_event_creation() {
+        let event = ModifiedActionEvent {
+            action: GameAction::Primary,
+            modifier: ActionModifier::DoubleTap,
+            gamepad: Some(Entity::from_bits(42)),
+            duration: 0.15,
+        };
+
+        assert_eq!(event.modifier, ActionModifier::DoubleTap);
+        assert_eq!(event.gamepad, Some(Entity::from_bits(42)));
+        assert_eq!(event.duration, 0.15);
+    }
+
+    #[test]
+    fn test_action_modifier_state_record_release_tap() {
+        let mut state = ActionModifierState::default();
+        state.record_press(GameAction::Primary, 1.0);
+        let modifiers = state.record_release(GameAction::Primary, 1.15); // 0.15s - within tap duration
+
+        assert_eq!(modifiers.len(), 2); // Tap + Released
+        assert!(modifiers.contains(&ActionModifier::Tap));
+        assert!(modifiers.contains(&ActionModifier::Released));
+        assert_eq!(state.recent_taps.len(), 1);
+    }
+
+    #[test]
+    fn test_action_modifier_state_record_release_double_tap() {
+        let mut state = ActionModifierState::default();
+
+        // First tap
+        state.record_press(GameAction::Primary, 1.0);
+        state.record_release(GameAction::Primary, 1.15);
+
+        // Second tap within window
+        state.record_press(GameAction::Primary, 1.2);
+        let modifiers = state.record_release(GameAction::Primary, 1.35);
+
+        assert_eq!(modifiers.len(), 2); // DoubleTap + Released
+        assert!(modifiers.contains(&ActionModifier::DoubleTap));
+        assert!(modifiers.contains(&ActionModifier::Released));
+        state.record_press(GameAction::Primary, 1.0);
+        let modifiers = state.record_release(GameAction::Primary, 1.25); // 0.25s - longer than tap, matches hold
+
+        assert!(modifiers.contains(&ActionModifier::Hold));
+    }
+
+    #[test]
+    fn test_action_modifier_state_record_release_long_press() {
+        let mut state = ActionModifierState::default();
+        state.record_press(GameAction::Primary, 1.0);
+        let modifiers = state.record_release(GameAction::Primary, 1.9); // 0.9s - exceeds long_press_duration
+
+        assert!(modifiers.contains(&ActionModifier::LongPress));
+    }
+
+    #[test]
+    fn test_action_modifier_state_check_long_press() {
+        let mut state = ActionModifierState::default();
+        state.record_press(GameAction::Primary, 1.0);
+        state.record_press(GameAction::Secondary, 1.2);
+
+        let long_presses = state.check_long_press(2.0); // 0.8s default long press duration
+
+        // Primary has been held for 1.0s - should be detected
+        assert!(long_presses.contains(&GameAction::Primary));
+    }
+
+    #[test]
+    fn test_action_modifier_all_variants() {
+        let all_modifiers = [
+            ActionModifier::Tap,
+            ActionModifier::Hold,
+            ActionModifier::DoubleTap,
+            ActionModifier::LongPress,
+            ActionModifier::Released,
+        ];
+
+        // Ensure all are unique
+        for (i, &mod1) in all_modifiers.iter().enumerate() {
+            for (j, &mod2) in all_modifiers.iter().enumerate() {
+                if i != j {
+                    assert_ne!(mod1, mod2);
+                }
+            }
+        }
+    }
+}

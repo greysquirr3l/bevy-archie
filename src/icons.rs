@@ -356,3 +356,312 @@ pub(crate) fn add_icon_systems(app: &mut App) {
 
 #[cfg(not(feature = "icons"))]
 pub(crate) fn add_icon_systems(_app: &mut App) {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_icon_size_pixels() {
+        assert_eq!(IconSize::Small.pixels(), 32);
+        assert_eq!(IconSize::Medium.pixels(), 48);
+        assert_eq!(IconSize::Large.pixels(), 64);
+    }
+
+    #[test]
+    fn test_icon_size_suffix() {
+        assert_eq!(IconSize::Small.suffix(), "_small");
+        assert_eq!(IconSize::Medium.suffix(), "");
+        assert_eq!(IconSize::Large.suffix(), "_large");
+    }
+
+    #[test]
+    fn test_icon_size_default() {
+        assert_eq!(IconSize::default(), IconSize::Medium);
+    }
+
+    #[test]
+    fn test_button_icon_from_button_type() {
+        assert_eq!(
+            ButtonIcon::from_button_type(GamepadButton::South),
+            Some(ButtonIcon::FaceDown)
+        );
+        assert_eq!(
+            ButtonIcon::from_button_type(GamepadButton::East),
+            Some(ButtonIcon::FaceRight)
+        );
+        assert_eq!(
+            ButtonIcon::from_button_type(GamepadButton::West),
+            Some(ButtonIcon::FaceLeft)
+        );
+        assert_eq!(
+            ButtonIcon::from_button_type(GamepadButton::North),
+            Some(ButtonIcon::FaceUp)
+        );
+        assert_eq!(
+            ButtonIcon::from_button_type(GamepadButton::LeftTrigger),
+            Some(ButtonIcon::LeftBumper)
+        );
+        assert_eq!(
+            ButtonIcon::from_button_type(GamepadButton::DPadUp),
+            Some(ButtonIcon::DPadUp)
+        );
+    }
+
+    #[test]
+    fn test_button_icon_filename_xbox() {
+        assert_eq!(
+            ButtonIcon::FaceDown.filename(ControllerLayout::Xbox, IconSize::Medium),
+            "xbox_a.png"
+        );
+        assert_eq!(
+            ButtonIcon::FaceRight.filename(ControllerLayout::Xbox, IconSize::Small),
+            "xbox_b_small.png"
+        );
+        assert_eq!(
+            ButtonIcon::LeftBumper.filename(ControllerLayout::Xbox, IconSize::Large),
+            "xbox_lb_large.png"
+        );
+    }
+
+    #[test]
+    fn test_button_icon_filename_playstation() {
+        assert_eq!(
+            ButtonIcon::FaceDown.filename(ControllerLayout::PlayStation, IconSize::Medium),
+            "ps_cross.png"
+        );
+        assert_eq!(
+            ButtonIcon::FaceRight.filename(ControllerLayout::PlayStation, IconSize::Medium),
+            "ps_circle.png"
+        );
+        assert_eq!(
+            ButtonIcon::FaceLeft.filename(ControllerLayout::PlayStation, IconSize::Medium),
+            "ps_square.png"
+        );
+        assert_eq!(
+            ButtonIcon::FaceUp.filename(ControllerLayout::PlayStation, IconSize::Medium),
+            "ps_triangle.png"
+        );
+    }
+
+    #[test]
+    fn test_button_icon_filename_nintendo() {
+        assert_eq!(
+            ButtonIcon::FaceDown.filename(ControllerLayout::Nintendo, IconSize::Medium),
+            "switch_b.png"
+        );
+        assert_eq!(
+            ButtonIcon::FaceRight.filename(ControllerLayout::Nintendo, IconSize::Medium),
+            "switch_a.png"
+        );
+        assert_eq!(
+            ButtonIcon::LeftTrigger.filename(ControllerLayout::Nintendo, IconSize::Medium),
+            "switch_zl.png"
+        );
+    }
+
+    #[test]
+    fn test_button_icon_filename_common() {
+        assert_eq!(
+            ButtonIcon::LeftStick.filename(ControllerLayout::Xbox, IconSize::Medium),
+            "left_stick.png"
+        );
+        assert_eq!(
+            ButtonIcon::DPad.filename(ControllerLayout::PlayStation, IconSize::Medium),
+            "dpad.png"
+        );
+    }
+
+    #[test]
+    fn test_button_icon_label_xbox() {
+        assert_eq!(ButtonIcon::FaceDown.label(ControllerLayout::Xbox), "A");
+        assert_eq!(ButtonIcon::FaceRight.label(ControllerLayout::Xbox), "B");
+        assert_eq!(ButtonIcon::LeftBumper.label(ControllerLayout::Xbox), "LB");
+        assert_eq!(ButtonIcon::LeftTrigger.label(ControllerLayout::Xbox), "LT");
+    }
+
+    #[test]
+    fn test_button_icon_label_playstation() {
+        assert_eq!(
+            ButtonIcon::FaceDown.label(ControllerLayout::PlayStation),
+            "✕"
+        );
+        assert_eq!(
+            ButtonIcon::FaceRight.label(ControllerLayout::PlayStation),
+            "○"
+        );
+        assert_eq!(
+            ButtonIcon::FaceLeft.label(ControllerLayout::PlayStation),
+            "□"
+        );
+        assert_eq!(ButtonIcon::FaceUp.label(ControllerLayout::PlayStation), "△");
+        assert_eq!(
+            ButtonIcon::Start.label(ControllerLayout::PlayStation),
+            "Options"
+        );
+        assert_eq!(
+            ButtonIcon::Select.label(ControllerLayout::PlayStation),
+            "Share"
+        );
+    }
+
+    #[test]
+    fn test_button_icon_label_nintendo() {
+        assert_eq!(ButtonIcon::FaceDown.label(ControllerLayout::Nintendo), "B");
+        assert_eq!(ButtonIcon::FaceRight.label(ControllerLayout::Nintendo), "A");
+        assert_eq!(ButtonIcon::FaceLeft.label(ControllerLayout::Nintendo), "Y");
+        assert_eq!(ButtonIcon::FaceUp.label(ControllerLayout::Nintendo), "X");
+        assert_eq!(
+            ButtonIcon::LeftTrigger.label(ControllerLayout::Nintendo),
+            "ZL"
+        );
+        assert_eq!(ButtonIcon::Start.label(ControllerLayout::Nintendo), "+");
+        assert_eq!(ButtonIcon::Select.label(ControllerLayout::Nintendo), "-");
+    }
+
+    #[test]
+    fn test_controller_icon_assets_new() {
+        let assets = ControllerIconAssets::new("assets/icons");
+        assert_eq!(assets.base_path, "assets/icons");
+    }
+
+    #[test]
+    fn test_controller_icon_display_default() {
+        let display = ControllerIconDisplay::default();
+        assert_eq!(display.icon, ButtonIcon::FaceDown);
+        assert_eq!(display.size, IconSize::Medium);
+        assert!(display.auto_update);
+    }
+
+    #[test]
+    fn test_button_icon_filename_all_layouts() {
+        // Test Xbox layout
+        assert_eq!(
+            ButtonIcon::FaceDown.filename(ControllerLayout::Xbox, IconSize::Medium),
+            "xbox_a.png"
+        );
+        assert_eq!(
+            ButtonIcon::LeftBumper.filename(ControllerLayout::Xbox, IconSize::Small),
+            "xbox_lb_small.png"
+        );
+        assert_eq!(
+            ButtonIcon::LeftTrigger.filename(ControllerLayout::Xbox, IconSize::Large),
+            "xbox_lt_large.png"
+        );
+
+        // Test PlayStation layout
+        assert_eq!(
+            ButtonIcon::FaceDown.filename(ControllerLayout::PlayStation, IconSize::Medium),
+            "ps_cross.png"
+        );
+        assert_eq!(
+            ButtonIcon::FaceRight.filename(ControllerLayout::PlayStation, IconSize::Medium),
+            "ps_circle.png"
+        );
+        assert_eq!(
+            ButtonIcon::Start.filename(ControllerLayout::PlayStation, IconSize::Medium),
+            "ps_options.png"
+        );
+
+        // Test Nintendo layout
+        assert_eq!(
+            ButtonIcon::FaceDown.filename(ControllerLayout::Nintendo, IconSize::Medium),
+            "switch_b.png"
+        );
+        assert_eq!(
+            ButtonIcon::Start.filename(ControllerLayout::Nintendo, IconSize::Medium),
+            "switch_plus.png"
+        );
+
+        // Test Stadia layout
+        assert_eq!(
+            ButtonIcon::Home.filename(ControllerLayout::Stadia, IconSize::Medium),
+            "stadia_home.png"
+        );
+    }
+
+    #[test]
+    fn test_button_icon_label_all_variants() {
+        // Test shoulder buttons
+        assert_eq!(ButtonIcon::LeftBumper.label(ControllerLayout::Xbox), "LB");
+        assert_eq!(ButtonIcon::RightBumper.label(ControllerLayout::Xbox), "RB");
+        assert_eq!(
+            ButtonIcon::LeftBumper.label(ControllerLayout::PlayStation),
+            "L1"
+        );
+        assert_eq!(
+            ButtonIcon::LeftBumper.label(ControllerLayout::Nintendo),
+            "L"
+        );
+
+        // Test triggers
+        assert_eq!(ButtonIcon::LeftTrigger.label(ControllerLayout::Xbox), "LT");
+        assert_eq!(
+            ButtonIcon::LeftTrigger.label(ControllerLayout::Nintendo),
+            "ZL"
+        );
+        assert_eq!(
+            ButtonIcon::RightTrigger.label(ControllerLayout::Nintendo),
+            "ZR"
+        );
+
+        // Test sticks
+        assert_eq!(ButtonIcon::LeftStick.label(ControllerLayout::Xbox), "LS");
+        assert_eq!(ButtonIcon::RightStick.label(ControllerLayout::Xbox), "RS");
+        assert_eq!(
+            ButtonIcon::LeftStickPress.label(ControllerLayout::PlayStation),
+            "L3"
+        );
+
+        // Test D-pad
+        assert_eq!(ButtonIcon::DPadUp.label(ControllerLayout::Xbox), "↑");
+        assert_eq!(ButtonIcon::DPadDown.label(ControllerLayout::Xbox), "↓");
+        assert_eq!(ButtonIcon::DPadLeft.label(ControllerLayout::Xbox), "←");
+        assert_eq!(ButtonIcon::DPadRight.label(ControllerLayout::Xbox), "→");
+        assert_eq!(ButtonIcon::DPad.label(ControllerLayout::Xbox), "D-Pad");
+
+        // Test system buttons
+        assert_eq!(ButtonIcon::Start.label(ControllerLayout::Xbox), "Menu");
+        assert_eq!(ButtonIcon::Select.label(ControllerLayout::Xbox), "View");
+        assert_eq!(ButtonIcon::Home.label(ControllerLayout::Xbox), "Home");
+    }
+
+    #[test]
+    fn test_button_icon_all_variants() {
+        let all_icons = [
+            ButtonIcon::FaceDown,
+            ButtonIcon::FaceRight,
+            ButtonIcon::FaceLeft,
+            ButtonIcon::FaceUp,
+            ButtonIcon::LeftBumper,
+            ButtonIcon::RightBumper,
+            ButtonIcon::LeftTrigger,
+            ButtonIcon::RightTrigger,
+            ButtonIcon::LeftStick,
+            ButtonIcon::RightStick,
+            ButtonIcon::LeftStickPress,
+            ButtonIcon::RightStickPress,
+            ButtonIcon::DPadUp,
+            ButtonIcon::DPadDown,
+            ButtonIcon::DPadLeft,
+            ButtonIcon::DPadRight,
+            ButtonIcon::DPad,
+            ButtonIcon::Start,
+            ButtonIcon::Select,
+            ButtonIcon::Home,
+        ];
+
+        // Verify all generate valid filenames
+        for &icon in &all_icons {
+            let filename = icon.filename(ControllerLayout::Xbox, IconSize::Medium);
+            assert!(filename.ends_with(".png"));
+            assert!(!filename.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_controller_icon_assets_with_custom_path() {
+        let assets = ControllerIconAssets::new("custom/path/icons");
+        assert_eq!(assets.base_path, "custom/path/icons");
+    }
+}

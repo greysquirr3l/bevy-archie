@@ -57,11 +57,13 @@ This library processes controller input from hardware devices. While the library
 ### Dependencies
 
 This project depends on:
+
 * Bevy Engine (0.17.x) - A data-driven game engine
 * serde/serde_json - For configuration serialization
 * dirs - For platform-specific directory paths
 
 We monitor our dependencies for security advisories through:
+
 * GitHub Dependabot
 * cargo-audit
 * Regular dependency updates

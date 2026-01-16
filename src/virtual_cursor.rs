@@ -265,3 +265,89 @@ pub(crate) fn add_virtual_cursor_systems(app: &mut App) {
             .chain(),
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_virtual_cursor_default() {
+        let cursor = VirtualCursor::default();
+        assert_eq!(cursor.position, Vec2::ZERO);
+        assert_eq!(cursor.speed, 600.0);
+        assert!(!cursor.visible);
+        assert!(!cursor.use_left_stick);
+    }
+
+    #[test]
+    fn test_click_state_variants() {
+        assert_ne!(ClickState::Idle, ClickState::JustPressed);
+        assert_ne!(ClickState::Held, ClickState::JustReleased);
+    }
+
+    #[test]
+    fn test_click_state_default() {
+        let state = ClickState::default();
+        assert_eq!(state, ClickState::Idle);
+    }
+
+    #[test]
+    fn test_virtual_cursor_state_default() {
+        let state = VirtualCursorState::default();
+        assert!(!state.active);
+        assert_eq!(state.position, Vec2::ZERO);
+        assert_eq!(state.click_state, ClickState::Idle);
+    }
+
+    #[test]
+    fn test_virtual_cursor_state_reset_frame_state() {
+        let mut state = VirtualCursorState::default();
+
+        state.click_state = ClickState::JustPressed;
+        state.reset_frame_state();
+        assert_eq!(state.click_state, ClickState::Held);
+
+        state.click_state = ClickState::JustReleased;
+        state.reset_frame_state();
+        assert_eq!(state.click_state, ClickState::Idle);
+
+        state.click_state = ClickState::Held;
+        state.reset_frame_state();
+        assert_eq!(state.click_state, ClickState::Held);
+    }
+
+    #[test]
+    fn test_virtual_cursor_state_start_click() {
+        let mut state = VirtualCursorState::default();
+        state.start_click();
+        assert_eq!(state.click_state, ClickState::JustPressed);
+
+        // Should not change if already pressed
+        state.click_state = ClickState::Held;
+        state.start_click();
+        assert_eq!(state.click_state, ClickState::Held);
+    }
+
+    #[test]
+    fn test_virtual_cursor_state_end_click() {
+        let mut state = VirtualCursorState::default();
+        state.click_state = ClickState::Held;
+        state.end_click();
+        assert_eq!(state.click_state, ClickState::JustReleased);
+
+        // Should not change if already idle
+        state.click_state = ClickState::Idle;
+        state.end_click();
+        assert_eq!(state.click_state, ClickState::Idle);
+    }
+
+    #[test]
+    fn test_virtual_cursor_click_event() {
+        let event = VirtualCursorClick {
+            position: Vec2::new(100.0, 200.0),
+        };
+
+        assert_eq!(event.position.x, 100.0);
+        assert_eq!(event.position.y, 200.0);
+    }
+}

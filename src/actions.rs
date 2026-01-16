@@ -520,3 +520,167 @@ pub(crate) fn register_action_types(app: &mut App) {
 pub(crate) fn add_action_systems(app: &mut App) {
     app.add_systems(PreUpdate, update_action_state);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_game_action_all_contains_all_variants() {
+        let all_actions = GameAction::all();
+        assert!(all_actions.contains(&GameAction::Confirm));
+        assert!(all_actions.contains(&GameAction::Cancel));
+        assert!(all_actions.contains(&GameAction::Custom4));
+        assert_eq!(all_actions.len(), 24);
+    }
+
+    #[test]
+    fn test_game_action_display_names() {
+        assert_eq!(GameAction::Confirm.display_name(), "Confirm");
+        assert_eq!(GameAction::LeftTrigger.display_name(), "Left Trigger");
+        assert_eq!(GameAction::Custom1.display_name(), "Custom 1");
+    }
+
+    #[test]
+    fn test_game_action_remappable() {
+        assert!(GameAction::Confirm.is_remappable());
+        assert!(GameAction::Primary.is_remappable());
+        // Pause is typically not remappable (system action)
+        assert!(!GameAction::Pause.is_remappable());
+    }
+
+    #[test]
+    fn test_game_action_required() {
+        assert!(GameAction::Confirm.is_required());
+        assert!(GameAction::Cancel.is_required());
+        assert!(!GameAction::Custom1.is_required());
+        assert!(!GameAction::Custom4.is_required());
+    }
+
+    #[test]
+    fn test_action_binding_new() {
+        let binding = InputBinding::GamepadButton(GamepadButton::South);
+        assert!(matches!(binding, InputBinding::GamepadButton(_)));
+    }
+
+    #[test]
+    fn test_action_binding_matches_button() {
+        let binding = InputBinding::GamepadButton(GamepadButton::South);
+        if let InputBinding::GamepadButton(btn) = binding {
+            assert_eq!(btn, GamepadButton::South);
+        }
+    }
+
+    #[test]
+    fn test_action_binding_matches_key() {
+        let binding = InputBinding::Key(KeyCode::Space);
+        if let InputBinding::Key(key) = binding {
+            assert_eq!(key, KeyCode::Space);
+        }
+    }
+
+    #[test]
+    fn test_action_map_default_bindings() {
+        let map = ActionMap::default();
+
+        // Check that default bindings exist for core actions
+        assert!(map.primary_gamepad_button(GameAction::Confirm).is_some());
+        assert!(map.primary_gamepad_button(GameAction::Cancel).is_some());
+    }
+
+    #[test]
+    fn test_action_map_bind_gamepad() {
+        let mut map = ActionMap::default();
+        map.bind_gamepad(GameAction::Custom1, GamepadButton::West);
+
+        let button = map.primary_gamepad_button(GameAction::Custom1);
+        assert_eq!(button, Some(GamepadButton::West));
+    }
+
+    #[test]
+    fn test_action_map_bind_key() {
+        let mut map = ActionMap::default();
+        map.bind_key(GameAction::Custom2, KeyCode::KeyG);
+
+        let bindings = &map.key_bindings[&GameAction::Custom2];
+        assert!(bindings.contains(&KeyCode::KeyG));
+    }
+
+    #[test]
+    fn test_action_map_bind_mouse() {
+        let mut map = ActionMap::default();
+        map.bind_mouse(GameAction::Primary, MouseButton::Left);
+
+        assert!(map.mouse_bindings.contains_key(&GameAction::Primary));
+    }
+
+    #[test]
+    fn test_action_map_clear_bindings() {
+        let mut map = ActionMap::default();
+        map.bind_key(GameAction::Custom3, KeyCode::KeyH);
+
+        map.clear_bindings(GameAction::Custom3);
+        // After clearing, the action should have no bindings
+        assert!(
+            map.key_bindings
+                .get(&GameAction::Custom3)
+                .map_or(true, |v| v.is_empty())
+        );
+    }
+
+    #[test]
+    fn test_action_state_pressed() {
+        let mut state = ActionState::default();
+
+        state.set_pressed(GameAction::Confirm, true);
+        assert!(state.pressed(GameAction::Confirm));
+        assert!(!state.pressed(GameAction::Cancel));
+    }
+
+    #[test]
+    fn test_action_state_just_pressed() {
+        let mut state = ActionState::default();
+
+        state.just_pressed.insert(GameAction::Primary, true);
+        assert!(state.just_pressed(GameAction::Primary));
+        assert!(!state.just_pressed(GameAction::Secondary));
+    }
+
+    #[test]
+    fn test_action_state_just_released() {
+        let mut state = ActionState::default();
+
+        state.just_released.insert(GameAction::LeftShoulder, true);
+        assert!(state.just_released(GameAction::LeftShoulder));
+        assert!(!state.just_released(GameAction::RightShoulder));
+    }
+
+    #[test]
+    fn test_action_state_value() {
+        let mut state = ActionState::default();
+
+        state.set_value(GameAction::LeftTrigger, 0.75);
+        assert_eq!(state.value(GameAction::LeftTrigger), 0.75);
+        assert_eq!(state.value(GameAction::RightTrigger), 0.0);
+    }
+
+    #[test]
+    fn test_action_state_set_pressed_updates_state() {
+        let mut state = ActionState::default();
+
+        // First press should set pressed
+        state.set_pressed(GameAction::Confirm, true);
+        assert!(state.pressed(GameAction::Confirm));
+
+        // Release should clear pressed
+        state.set_pressed(GameAction::Confirm, false);
+        assert!(!state.pressed(GameAction::Confirm));
+    }
+
+    #[test]
+    fn test_axis_direction_variants() {
+        let pos = AxisDirection::Positive;
+        let neg = AxisDirection::Negative;
+        assert_ne!(pos, neg);
+    }
+}

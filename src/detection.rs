@@ -19,25 +19,25 @@ pub enum InputDevice {
 
 impl InputDevice {
     /// Returns true if this is a gamepad device.
-    #[must_use] 
+    #[must_use]
     pub fn is_gamepad(&self) -> bool {
         matches!(self, Self::Gamepad(_))
     }
 
     /// Returns true if this is the mouse.
-    #[must_use] 
+    #[must_use]
     pub fn is_mouse(&self) -> bool {
         matches!(self, Self::Mouse)
     }
 
     /// Returns true if this is the keyboard.
-    #[must_use] 
+    #[must_use]
     pub fn is_keyboard(&self) -> bool {
         matches!(self, Self::Keyboard)
     }
 
     /// Get the gamepad entity if this is a gamepad device.
-    #[must_use] 
+    #[must_use]
     pub fn gamepad(&self) -> Option<Entity> {
         match self {
             Self::Gamepad(entity) => Some(*entity),
@@ -88,31 +88,31 @@ impl Default for InputDeviceState {
 
 impl InputDeviceState {
     /// Returns true if the player is currently using a mouse.
-    #[must_use] 
+    #[must_use]
     pub fn using_mouse(&self) -> bool {
         self.active_device.is_mouse()
     }
 
     /// Returns true if the player is currently using a keyboard.
-    #[must_use] 
+    #[must_use]
     pub fn using_keyboard(&self) -> bool {
         self.active_device.is_keyboard()
     }
 
     /// Returns true if the player is currently using a gamepad.
-    #[must_use] 
+    #[must_use]
     pub fn using_gamepad(&self) -> bool {
         self.active_device.is_gamepad()
     }
 
     /// Returns true if using keyboard or gamepad (non-mouse).
-    #[must_use] 
+    #[must_use]
     pub fn using_non_mouse(&self) -> bool {
         !self.using_mouse()
     }
 
     /// Get the active gamepad entity, if any.
-    #[must_use] 
+    #[must_use]
     pub fn active_gamepad(&self) -> Option<Entity> {
         self.active_device.gamepad()
     }
@@ -271,4 +271,215 @@ pub(crate) fn add_detection_systems(app: &mut App) {
         PreUpdate,
         (track_gamepad_connections, detect_input_device).chain(),
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ========== InputDevice Tests ==========
+
+    #[test]
+    fn test_input_device_default() {
+        let device = InputDevice::default();
+        assert_eq!(device, InputDevice::Mouse);
+    }
+
+    #[test]
+    fn test_input_device_is_gamepad() {
+        assert!(InputDevice::Gamepad(Entity::PLACEHOLDER).is_gamepad());
+        assert!(!InputDevice::Mouse.is_gamepad());
+        assert!(!InputDevice::Keyboard.is_gamepad());
+    }
+
+    #[test]
+    fn test_input_device_is_mouse() {
+        assert!(InputDevice::Mouse.is_mouse());
+        assert!(!InputDevice::Keyboard.is_mouse());
+        assert!(!InputDevice::Gamepad(Entity::PLACEHOLDER).is_mouse());
+    }
+
+    #[test]
+    fn test_input_device_is_keyboard() {
+        assert!(InputDevice::Keyboard.is_keyboard());
+        assert!(!InputDevice::Mouse.is_keyboard());
+        assert!(!InputDevice::Gamepad(Entity::PLACEHOLDER).is_keyboard());
+    }
+
+    #[test]
+    fn test_input_device_gamepad_returns_entity() {
+        let entity = Entity::PLACEHOLDER;
+        let device = InputDevice::Gamepad(entity);
+        assert_eq!(device.gamepad(), Some(entity));
+    }
+
+    #[test]
+    fn test_input_device_gamepad_returns_none_for_mouse() {
+        assert!(InputDevice::Mouse.gamepad().is_none());
+    }
+
+    #[test]
+    fn test_input_device_gamepad_returns_none_for_keyboard() {
+        assert!(InputDevice::Keyboard.gamepad().is_none());
+    }
+
+    #[test]
+    fn test_input_device_equality() {
+        assert_eq!(InputDevice::Mouse, InputDevice::Mouse);
+        assert_eq!(InputDevice::Keyboard, InputDevice::Keyboard);
+        assert_ne!(InputDevice::Mouse, InputDevice::Keyboard);
+
+        let entity = Entity::PLACEHOLDER;
+        assert_eq!(InputDevice::Gamepad(entity), InputDevice::Gamepad(entity));
+    }
+
+    // ========== InputDeviceState Tests ==========
+
+    #[test]
+    fn test_input_device_state_default() {
+        let state = InputDeviceState::default();
+        assert_eq!(state.active_device, InputDevice::Mouse);
+        assert_eq!(state.previous_device, InputDevice::Mouse);
+        assert!(!state.device_changed);
+        assert!(state.connected_gamepads.is_empty());
+        assert!(state.primary_gamepad.is_none());
+        assert!(state.auto_switch);
+    }
+
+    #[test]
+    fn test_input_device_state_using_mouse() {
+        let mut state = InputDeviceState::default();
+        state.active_device = InputDevice::Mouse;
+        assert!(state.using_mouse());
+        assert!(!state.using_keyboard());
+        assert!(!state.using_gamepad());
+    }
+
+    #[test]
+    fn test_input_device_state_using_keyboard() {
+        let mut state = InputDeviceState::default();
+        state.active_device = InputDevice::Keyboard;
+        assert!(!state.using_mouse());
+        assert!(state.using_keyboard());
+        assert!(!state.using_gamepad());
+    }
+
+    #[test]
+    fn test_input_device_state_using_gamepad() {
+        let mut state = InputDeviceState::default();
+        state.active_device = InputDevice::Gamepad(Entity::PLACEHOLDER);
+        assert!(!state.using_mouse());
+        assert!(!state.using_keyboard());
+        assert!(state.using_gamepad());
+    }
+
+    #[test]
+    fn test_input_device_state_using_non_mouse() {
+        let mut state = InputDeviceState::default();
+
+        state.active_device = InputDevice::Mouse;
+        assert!(!state.using_non_mouse());
+
+        state.active_device = InputDevice::Keyboard;
+        assert!(state.using_non_mouse());
+
+        state.active_device = InputDevice::Gamepad(Entity::PLACEHOLDER);
+        assert!(state.using_non_mouse());
+    }
+
+    #[test]
+    fn test_input_device_state_active_gamepad() {
+        let mut state = InputDeviceState::default();
+        assert!(state.active_gamepad().is_none());
+
+        let entity = Entity::PLACEHOLDER;
+        state.active_device = InputDevice::Gamepad(entity);
+        assert_eq!(state.active_gamepad(), Some(entity));
+    }
+
+    #[test]
+    fn test_input_device_state_set_active_changes_device() {
+        let mut state = InputDeviceState::default();
+        state.set_active(InputDevice::Keyboard);
+
+        assert_eq!(state.active_device, InputDevice::Keyboard);
+        assert_eq!(state.previous_device, InputDevice::Mouse);
+        assert!(state.device_changed);
+    }
+
+    #[test]
+    fn test_input_device_state_set_active_same_device() {
+        let mut state = InputDeviceState::default();
+        state.device_changed = false;
+        state.set_active(InputDevice::Mouse); // Same as default
+
+        assert_eq!(state.active_device, InputDevice::Mouse);
+        assert!(!state.device_changed);
+    }
+
+    #[test]
+    fn test_input_device_state_mouse_movement_threshold() {
+        let state = InputDeviceState::default();
+        assert!(state.mouse_movement_threshold > 0.0);
+    }
+
+    // ========== Event Tests ==========
+
+    #[test]
+    fn test_input_device_changed_event() {
+        let event = InputDeviceChanged {
+            previous: InputDevice::Mouse,
+            current: InputDevice::Keyboard,
+        };
+        assert_eq!(event.previous, InputDevice::Mouse);
+        assert_eq!(event.current, InputDevice::Keyboard);
+    }
+
+    #[test]
+    fn test_gamepad_connected_event() {
+        let event = GamepadConnected {
+            gamepad: Entity::PLACEHOLDER,
+            name: Some("Xbox Controller".to_string()),
+        };
+        assert_eq!(event.gamepad, Entity::PLACEHOLDER);
+        assert_eq!(event.name, Some("Xbox Controller".to_string()));
+    }
+
+    #[test]
+    fn test_gamepad_connected_event_no_name() {
+        let event = GamepadConnected {
+            gamepad: Entity::PLACEHOLDER,
+            name: None,
+        };
+        assert!(event.name.is_none());
+    }
+
+    #[test]
+    fn test_gamepad_disconnected_event() {
+        let event = GamepadDisconnected {
+            gamepad: Entity::PLACEHOLDER,
+        };
+        assert_eq!(event.gamepad, Entity::PLACEHOLDER);
+    }
+
+    // ========== Connected Gamepads Tests ==========
+
+    #[test]
+    fn test_connected_gamepads_tracking() {
+        let mut state = InputDeviceState::default();
+        let entity = Entity::PLACEHOLDER;
+
+        state.connected_gamepads.push(entity);
+        assert!(state.connected_gamepads.contains(&entity));
+        assert_eq!(state.connected_gamepads.len(), 1);
+    }
+
+    #[test]
+    fn test_primary_gamepad_assignment() {
+        let mut state = InputDeviceState::default();
+        let entity = Entity::PLACEHOLDER;
+
+        state.primary_gamepad = Some(entity);
+        assert_eq!(state.primary_gamepad, Some(entity));
+    }
 }

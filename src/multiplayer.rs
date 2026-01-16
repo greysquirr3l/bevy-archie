@@ -235,3 +235,142 @@ pub(crate) fn add_multiplayer_systems(app: &mut App) {
             .chain(),
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_player_id_new() {
+        let id = PlayerId::new(3);
+        assert_eq!(id.id(), 3);
+    }
+
+    #[test]
+    fn test_player_new() {
+        let player = Player::new(2);
+        assert_eq!(player.id.id(), 2);
+        assert!(player.active);
+    }
+
+    #[test]
+    fn test_player_one_two() {
+        let p1 = Player::one();
+        let p2 = Player::two();
+
+        assert_eq!(p1.id.id(), 0);
+        assert_eq!(p2.id.id(), 1);
+        assert!(p1.active);
+        assert!(p2.active);
+    }
+
+    #[test]
+    fn test_controller_ownership_default() {
+        let ownership = ControllerOwnership::default();
+        assert_eq!(ownership.owners.len(), 0);
+        assert_eq!(ownership.assignments.len(), 0);
+        assert!(ownership.auto_assign);
+    }
+
+    #[test]
+    fn test_controller_ownership_assign() {
+        let mut ownership = ControllerOwnership::default();
+        let gamepad = Entity::from_bits(100);
+        let player = PlayerId::new(0);
+
+        ownership.assign(gamepad, player);
+
+        assert_eq!(ownership.get_owner(gamepad), Some(player));
+        assert_eq!(ownership.get_gamepad(player), Some(gamepad));
+    }
+
+    #[test]
+    fn test_controller_ownership_reassign() {
+        let mut ownership = ControllerOwnership::default();
+        let gamepad1 = Entity::from_bits(100);
+        let gamepad2 = Entity::from_bits(200);
+        let player = PlayerId::new(0);
+
+        ownership.assign(gamepad1, player);
+        ownership.assign(gamepad2, player);
+
+        // Player should now have gamepad2
+        assert_eq!(ownership.get_gamepad(player), Some(gamepad2));
+        // gamepad1 should no longer be assigned
+        assert_eq!(ownership.get_owner(gamepad1), None);
+    }
+
+    #[test]
+    fn test_controller_ownership_unassign_gamepad() {
+        let mut ownership = ControllerOwnership::default();
+        let gamepad = Entity::from_bits(100);
+        let player = PlayerId::new(0);
+
+        ownership.assign(gamepad, player);
+        ownership.unassign_gamepad(gamepad);
+
+        assert_eq!(ownership.get_owner(gamepad), None);
+        assert_eq!(ownership.get_gamepad(player), None);
+    }
+
+    #[test]
+    fn test_controller_ownership_unassign_player() {
+        let mut ownership = ControllerOwnership::default();
+        let gamepad = Entity::from_bits(100);
+        let player = PlayerId::new(0);
+
+        ownership.assign(gamepad, player);
+        ownership.unassign_player(player);
+
+        assert_eq!(ownership.get_owner(gamepad), None);
+        assert_eq!(ownership.get_gamepad(player), None);
+    }
+
+    #[test]
+    fn test_controller_ownership_get_methods() {
+        let mut ownership = ControllerOwnership::default();
+        let gamepad = Entity::from_bits(123);
+        let player = PlayerId::new(1);
+
+        ownership.assign(gamepad, player);
+
+        assert_eq!(ownership.get_owner(gamepad), Some(player));
+        assert_eq!(ownership.get_gamepad(player), Some(gamepad));
+
+        // Test non-existent queries
+        let other_gamepad = Entity::from_bits(999);
+        let other_player = PlayerId::new(99);
+        assert_eq!(ownership.get_owner(other_gamepad), None);
+        assert_eq!(ownership.get_gamepad(other_player), None);
+    }
+
+    #[test]
+    fn test_controller_assigned_event() {
+        let gamepad = Entity::from_bits(50);
+        let player = PlayerId::new(2);
+        let event = ControllerAssigned { gamepad, player };
+
+        assert_eq!(event.gamepad, gamepad);
+        assert_eq!(event.player, player);
+    }
+
+    #[test]
+    fn test_controller_unassigned_event() {
+        let gamepad = Entity::from_bits(50);
+        let player = PlayerId::new(2);
+        let event = ControllerUnassigned { gamepad, player };
+
+        assert_eq!(event.gamepad, gamepad);
+        assert_eq!(event.player, player);
+    }
+
+    #[test]
+    fn test_assign_controller_request() {
+        let gamepad = Entity::from_bits(75);
+        let player = PlayerId::new(3);
+        let request = AssignControllerRequest { gamepad, player };
+
+        assert_eq!(request.gamepad, gamepad);
+        assert_eq!(request.player, player);
+    }
+}
