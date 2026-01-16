@@ -30,6 +30,16 @@ impl GyroData {
         }
     }
 
+    /// Set raw gyro values from a platform-specific source.
+    ///
+    /// This marks the data as valid after setting values.
+    pub fn set_raw(&mut self, pitch: f32, yaw: f32, roll: f32) {
+        self.pitch = pitch;
+        self.yaw = yaw;
+        self.roll = roll;
+        self.valid = true;
+    }
+
     /// Get the magnitude of rotation.
     #[must_use]
     pub fn magnitude(&self) -> f32 {
@@ -40,6 +50,15 @@ impl GyroData {
     #[must_use]
     pub fn exceeds_threshold(&self, threshold: f32) -> bool {
         self.magnitude() > threshold
+    }
+
+    /// Update from a motion backend's data.
+    ///
+    /// This integrates with the `motion::backend::MotionData` type to receive
+    /// motion input from platform-specific backends like `DualSense` HID.
+    #[cfg(feature = "motion-backends")]
+    pub fn update_from_backend(&mut self, data: &crate::motion::backend::MotionData) {
+        self.set_raw(data.gyro_pitch, data.gyro_yaw, data.gyro_roll);
     }
 }
 
@@ -68,6 +87,16 @@ impl AccelData {
         }
     }
 
+    /// Set raw accelerometer values from a platform-specific source.
+    ///
+    /// This marks the data as valid after setting values.
+    pub fn set_raw(&mut self, x: f32, y: f32, z: f32) {
+        self.x = x;
+        self.y = y;
+        self.z = z;
+        self.valid = true;
+    }
+
     /// Get acceleration magnitude.
     #[must_use]
     pub fn magnitude(&self) -> f32 {
@@ -80,6 +109,15 @@ impl AccelData {
         // Subtract gravity (9.8 m/s²) and check if remaining acceleration is high
         let accel_without_gravity = self.magnitude() - 9.8;
         accel_without_gravity.abs() > threshold
+    }
+
+    /// Update from a motion backend's data.
+    ///
+    /// This integrates with the `motion::backend::MotionData` type to receive
+    /// accelerometer input from platform-specific backends like `DualSense` HID.
+    #[cfg(feature = "motion-backends")]
+    pub fn update_from_backend(&mut self, data: &crate::motion::backend::MotionData) {
+        self.set_raw(data.accel_x, data.accel_y, data.accel_z);
     }
 }
 
@@ -131,22 +169,50 @@ pub struct MotionGestureDetected {
     pub intensity: f32,
 }
 
-/// System to update gyro data (placeholder - needs platform-specific implementation).
+/// System to update gyro data.
+///
+/// # Platform Support
+///
+/// Bevy 0.17 does not expose gyroscope data from controllers directly.
+/// To use real gyro data, you need to:
+///
+/// 1. Access gilrs raw events to get gyro data from SDL2-supported controllers
+/// 2. Or inject data manually via `GyroData::set_raw()` from a platform-specific source
+///
+/// This system initializes the `GyroData` component on gamepads that don't have it.
+/// To inject real gyro data, implement a custom system that writes to `GyroData`.
+///
+/// # Example Custom Integration
+///
+/// ```ignore
+/// fn custom_gyro_system(mut gamepads: Query<&mut GyroData>) {
+///     // Get raw gyro data from your platform-specific source
+///     let (pitch, yaw, roll) = get_controller_gyro_data();
+///     
+///     for mut gyro in &mut gamepads {
+///         gyro.set_raw(pitch, yaw, roll);
+///     }
+/// }
+/// ```
 pub fn update_gyro_data(
     mut gamepads: Query<(Entity, &Gamepad, Option<&mut GyroData>)>,
     mut commands: Commands,
 ) {
     for (entity, _gamepad, gyro) in &mut gamepads {
-        // Note: Bevy 0.17 doesn't have built-in gyro support
-        // This would need platform-specific implementation via SDL2 or gilrs
-        // For now, add the component if missing
         if gyro.is_none() {
             commands.entity(entity).insert(GyroData::default());
         }
+        // Real gyro data must be injected by a platform-specific system.
+        // The gesture detection systems will work once valid data is provided.
     }
 }
 
-/// System to update accelerometer data (placeholder).
+/// System to update accelerometer data.
+///
+/// # Platform Support
+///
+/// Similar to gyro data, Bevy 0.17 does not expose accelerometer data directly.
+/// Inject real data via `AccelData::set_raw()` from a platform-specific source.
 pub fn update_accel_data(
     mut gamepads: Query<(Entity, &Gamepad, Option<&mut AccelData>)>,
     mut commands: Commands,
@@ -155,6 +221,7 @@ pub fn update_accel_data(
         if accel.is_none() {
             commands.entity(entity).insert(AccelData::default());
         }
+        // Real accelerometer data must be injected by a platform-specific system.
     }
 }
 

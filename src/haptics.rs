@@ -3,6 +3,7 @@
 //! This module provides vibration/rumble functionality for gamepads,
 //! including simple rumble, complex patterns, and `DualSense` advanced haptics.
 
+use bevy::input::gamepad::{GamepadRumbleIntensity, GamepadRumbleRequest};
 use bevy::prelude::*;
 use std::time::Duration;
 
@@ -209,7 +210,7 @@ pub fn handle_rumble_requests(
 /// System to update rumble controllers and apply patterns.
 pub fn update_rumble(
     mut controllers: Query<&mut RumbleController>,
-    mut gamepads: Query<&mut Gamepad>,
+    mut rumble_requests: MessageWriter<GamepadRumbleRequest>,
     time: Res<Time>,
 ) {
     for mut controller in &mut controllers {
@@ -230,7 +231,7 @@ pub fn update_rumble(
                 RumblePattern::Constant => 1.0,
                 RumblePattern::Pulse => (controller.pattern_timer * 8.0).sin().abs(),
                 RumblePattern::Explosion => {
-                    let t = controller.pattern_timer / controller.duration.as_secs_f32();
+                    let t = controller.pattern_timer / controller.duration.as_secs_f32().max(0.001);
                     (1.0 - t).max(0.0)
                 }
                 RumblePattern::DamageTap => {
@@ -259,16 +260,23 @@ pub fn update_rumble(
             intensity.high_frequency *= modifier;
         }
 
-        // Apply to gamepad
-        if let Ok(gamepad) = gamepads.get_mut(controller.gamepad) {
-            // Note: Bevy's Gamepad doesn't have direct rumble API in 0.17
-            // This would need to use bevy_gamepads or platform-specific APIs
-            // For now, this is the structure. Implementation depends on platform.
-            let _ = (gamepad, intensity); // Placeholder
-        }
+        // Send rumble request to Bevy's gamepad system
+        // We send a short duration since we're updating every frame
+        let frame_duration = Duration::from_millis(100);
+        rumble_requests.write(GamepadRumbleRequest::Add {
+            gamepad: controller.gamepad,
+            intensity: GamepadRumbleIntensity {
+                strong_motor: intensity.low_frequency,
+                weak_motor: intensity.high_frequency,
+            },
+            duration: frame_duration,
+        });
 
         // Stop if duration expired
         if controller.duration.is_zero() {
+            rumble_requests.write(GamepadRumbleRequest::Stop {
+                gamepad: controller.gamepad,
+            });
             controller.stop();
         }
     }

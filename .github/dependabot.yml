@@ -1,0 +1,96 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+#
+# Branch Strategy:
+# - main: Latest Bevy version (currently 0.17, will be 0.18)
+# - bevy-0.17: Maintenance branch for Bevy 0.17.x
+# - bevy-0.18: Development branch for Bevy 0.18.x (becomes main when stable)
+
+version: 2
+updates:
+  # Rust/Cargo dependencies - main branch
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps(cargo)"
+    labels:
+      - "dependencies"
+      - "rust"
+    # Ignore Bevy updates - these require manual migration
+    ignore:
+      - dependency-name: "bevy"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "bevy-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    groups:
+      # Only allow Bevy patch updates
+      bevy-patches:
+        patterns:
+          - "bevy*"
+        update-types:
+          - "patch"
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      production-minor:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "bevy*"
+
+  # Dependabot for bevy-0.17 maintenance branch
+  - package-ecosystem: "cargo"
+    directory: "/"
+    target-branch: "bevy-0.17"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(cargo)"
+    labels:
+      - "dependencies"
+      - "rust"
+      - "bevy-0.17"
+    ignore:
+      - dependency-name: "bevy"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "bevy-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    groups:
+      all-patches:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci(actions)"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      actions:
+        patterns:
+          - "*"

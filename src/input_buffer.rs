@@ -6,7 +6,7 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-use crate::actions::GameAction;
+use crate::actions::{ActionState, GameAction};
 
 /// Maximum size of input buffer.
 const MAX_BUFFER_SIZE: usize = 32;
@@ -203,15 +203,20 @@ pub struct ComboDetected {
 /// System to update input buffer with new inputs.
 pub fn update_input_buffer(
     mut buffer: ResMut<InputBuffer>,
-    _keyboard: Res<ButtonInput<KeyCode>>,
-    _mouse: Res<ButtonInput<MouseButton>>,
-    _gamepads: Query<&Gamepad>,
+    action_state: Res<ActionState>,
     time: Res<Time>,
 ) {
     buffer.current_time = time.elapsed_secs_f64();
 
-    // This would integrate with the action system to detect which actions were pressed
-    // For now, this is a placeholder structure
+    // Add newly pressed actions to the buffer
+    for action in GameAction::all() {
+        let action = *action;
+
+        if action_state.just_pressed(action) {
+            // Push the action as pressed (held = true initially)
+            buffer.push(action, true);
+        }
+    }
 }
 
 /// System to detect combos.

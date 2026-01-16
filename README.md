@@ -10,6 +10,25 @@
 
 A comprehensive game controller support module for the Bevy engine, inspired by the RenPy Controller GUI project.
 
+## Controller Support Matrix
+
+| Controller           | Gyroscope | Touchpad | Adaptive Triggers | Rumble | Layout      |
+|----------------------|:---------:|:--------:|:-----------------:|:------:|-------------|
+| Xbox 360             | 🔴        | 🔴       | 🔴                | ✅     | Xbox        |
+| Xbox One             | 🔴        | 🔴       | 🔴                | ✅     | Xbox        |
+| Xbox Series X\|S     | 🔴        | 🔴       | 🔴                | ✅     | Xbox        |
+| PlayStation 4        | ✅        | ✅       | 🔴                | ✅     | PlayStation |
+| PlayStation 5        | ✅        | ✅       | ✅                | ✅     | PlayStation |
+| Switch Pro           | ✅        | 🔴       | 🔴                | ✅     | Nintendo    |
+| Switch Joy-Con       | ✅        | 🔴       | 🔴                | ✅     | Nintendo    |
+| Steam Controller     | ✅        | ✅       | 🔴                | ✅     | Xbox        |
+| Stadia               | ✅        | 🔴       | 🔴                | ✅     | Xbox        |
+| Generic              | 🔶        | 🔶       | 🔴                | ✅     | Xbox        |
+
+> **Legend**: ✅ Supported | 🔴 Hardware limitation | 🔶 Unknown (varies by device)
+>
+> **Note**: Gyroscope, touchpad, and adaptive triggers require platform-specific implementations. See [Advanced Features](#advanced-features) for details.
+
 ## Features
 
 ### Core Input System
@@ -29,11 +48,11 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 
 ### Advanced Input Features
 
-- **Haptic Feedback**: Rumble and vibration patterns (Constant, Pulse, Explosion, DamageTap, HeavyImpact, Engine, Heartbeat)
+- **Haptic Feedback**: Rumble and vibration patterns (Constant, Pulse, Explosion, DamageTap, HeavyImpact, Engine, Heartbeat) - fully implemented
 - **Input Buffering**: Record and analyze input sequences for fighting game-style combo detection
 - **Action Modifiers**: Detect Tap, Hold, DoubleTap, LongPress, and Released events on actions
-- **Gyroscope Support**: Motion controls for PS4/PS5/Switch controllers (placeholder - platform-specific implementation required)
-- **Touchpad Support**: PS4/PS5 touchpad input with multi-touch and gesture detection (swipe, pinch, tap)
+- **Gyroscope Support**: Motion controls for PS4/PS5/Switch/Stadia/Steam controllers - complete gesture detection and data structures, needs hardware driver integration (HID/SDL2). See [ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs) and [switch_pro_gyro.rs](examples/switch_pro_gyro.rs)
+- **Touchpad Support**: PS4/PS5/Steam touchpad input with multi-touch and gesture detection (swipe, pinch, tap) - complete gesture detection and data structures, needs hardware driver integration (HID/SDL2). See [ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs) and [steam_touchpad.rs](examples/steam_touchpad.rs)
 
 ### Multiplayer
 
@@ -275,6 +294,42 @@ Config files are saved to platform-specific directories:
 - **Linux**: `~/.config/bevy_archie/controller.json`
 - **macOS**: `~/Library/Application Support/bevy_archie/controller.json`
 - **Windows**: `%APPDATA%\bevy_archie\controller.json`
+
+## Examples
+
+Bevy-archie includes several examples to help you get started:
+
+### Basic Examples
+
+- **[basic_input.rs](examples/basic_input.rs)**: Simple input handling
+- **[controller_icons.rs](examples/controller_icons.rs)**: Display controller-specific icons
+- **[remapping.rs](examples/remapping.rs)**: Runtime button remapping
+- **[virtual_cursor.rs](examples/virtual_cursor.rs)**: Gamepad-controlled cursor
+- **[config_persistence.rs](examples/config_persistence.rs)**: Save/load settings
+
+### Advanced Hardware Integration
+
+These examples show how to integrate real hardware for gyro and touchpad:
+
+- **[ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs)**: DualSense gyro + touchpad via hidapi
+  - Complete HID report parsing reference
+  - Both USB and Bluetooth modes
+  - Calibration and data injection patterns
+  
+- **[switch_pro_gyro.rs](examples/switch_pro_gyro.rs)**: Switch Pro Controller gyro via SDL2
+  - Cross-platform gyro support
+  - Alternative: Direct HID approach
+  
+- **[steam_touchpad.rs](examples/steam_touchpad.rs)**: Steam Deck/Steam Controller touchpad
+  - Steam Input API integration (recommended)
+  - Alternative: Direct HID for advanced users
+
+Run examples with:
+
+```bash
+cargo run --example basic_input
+cargo run --example ps5_dualsense_motion --features motion-backends
+```
 
 ## Supported Controller Layouts
 
@@ -762,27 +817,51 @@ All events are now `Message` types. Use `MessageReader` and `MessageWriter`:
 
 ### Haptic Feedback
 
-Currently a placeholder. Platform-specific implementations needed:
-
-- **Windows**: XInput for Xbox controllers
-- **Linux**: evdev or SDL2
-- **macOS**: IOKit or SDL2
-- **Cross-platform**: Use `gilrs` crate with rumble support
+Fully implemented using Bevy's native `GamepadRumbleRequest`. Works out of the box on all platforms that support rumble through `gilrs`.
 
 ### Motion Controls
 
-Placeholder implementation. Requires platform-specific drivers:
+**What's implemented:** Complete gesture detection (shake, tilt, flick, roll), data structures (`GyroData`, `AccelData`), and event system.
 
-- **PS4/PS5**: Use `hidapi` to read HID reports
-- **Switch**: Joy-Con/Pro controller via Bluetooth
-- **Cross-platform**: SDL2 with sensor support
+**What's needed:** Hardware drivers to read sensor data from controllers. See the [Hardware Integration Guide](docs/HARDWARE_INTEGRATION_GUIDE.md) for detailed instructions.
+
+**Quick example** (see [ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs) for full code):
+
+```rust
+fn inject_gyro_data(mut gamepads: Query<&mut GyroData>) {
+    // Use hidapi, SDL2, or platform-specific drivers
+    let (pitch, yaw, roll) = read_controller_sensors();
+    for mut gyro in &mut gamepads {
+        gyro.set_raw(pitch, yaw, roll);
+    }
+}
+```
 
 ### Touchpad
 
-Placeholder for PS4/PS5 touchpad. Requires:
+**What's implemented:** Complete gesture detection (swipe, pinch, tap, multi-touch), data structures (`TouchpadData`), and event system.
 
-- Platform-specific HID report parsing
-- Or use SDL2 with touchpad support when available
+**What's needed:** Hardware drivers to read touchpad data from controllers. See the [Hardware Integration Guide](docs/HARDWARE_INTEGRATION_GUIDE.md) for detailed instructions.
+
+**Quick example** (see [ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs) for full code):
+
+```rust
+fn inject_touchpad_data(mut gamepads: Query<&mut TouchpadData>) {
+    // Use hidapi, SDL2, or platform-specific drivers
+    let (x, y, pressed) = read_touchpad();
+    for mut touchpad in &mut gamepads {
+        touchpad.set_finger(0, x, y, pressed);
+        touchpad.update_frame();
+    }
+}
+```
+
+**Hardware integration resources:**
+
+- 📘 [Hardware Integration Guide](docs/HARDWARE_INTEGRATION_GUIDE.md) - Complete guide with controller-specific details
+- 🎮 [PS5 DualSense Example](examples/ps5_dualsense_motion.rs) - Both gyro and touchpad
+- 🎮 [Switch Pro Example](examples/switch_pro_gyro.rs) - Gyro via SDL2
+- 🎮 [Steam Deck Example](examples/steam_touchpad.rs) - Touchpad via Steam Input API
 
 ## Migration from Bevy 0.16
 

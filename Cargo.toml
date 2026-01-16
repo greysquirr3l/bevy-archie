@@ -1,11 +1,14 @@
 [package]
 name = "bevy_archie"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 rust-version = "1.85"
 description = "A comprehensive game controller support module for Bevy"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/yourusername/bevy_archie"
+repository = "https://github.com/greysquirr3l/bevy-archie"
+documentation = "https://docs.rs/bevy_archie"
+homepage = "https://github.com/greysquirr3l/bevy-archie"
+readme = "README.md"
 keywords = ["bevy", "gamepad", "controller", "input", "gamedev"]
 categories = ["game-development", "game-engines"]
 
@@ -17,6 +20,10 @@ icons = []
 virtual_keyboard = []
 # Enable controller remapping UI
 remapping = []
+# Enable motion backend abstractions (required for any motion backend)
+motion-backends = []
+# Enable DualSense (PS5) controller support via HID
+dualsense = ["motion-backends", "dep:dualsense-rs"]
 # All features
 full = ["icons", "virtual_keyboard", "remapping"]
 
@@ -30,9 +37,18 @@ bevy = { version = "0.17", default-features = false, features = [
     "bevy_sprite",
     "bevy_state",
 ] }
+log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dirs = "5.0"
+# Optional: DualSense controller support via HID
+dualsense-rs = { version = "0.6", optional = true }
+
+# Optional dependencies for examples (not included in library)
+# Users who want to run hardware integration examples should add these:
+# hidapi = "2.6"  # For ps5_dualsense_motion and direct HID examples
+# sdl2 = { version = "0.37", features = ["bundled"] }  # For switch_pro_gyro
+# steamworks = "0.11"  # For steam_touchpad (requires Steam client)
 
 [dev-dependencies]
 bevy = { version = "0.17", default-features = true }
@@ -50,3 +66,18 @@ path = "examples/controller_icons.rs"
 name = "remapping"
 path = "examples/remapping.rs"
 required-features = ["remapping"]
+
+[[example]]
+name = "ps5_dualsense_motion"
+path = "examples/ps5_dualsense_motion.rs"
+required-features = ["motion-backends"]
+
+[[example]]
+name = "switch_pro_gyro"
+path = "examples/switch_pro_gyro.rs"
+required-features = ["motion-backends"]
+
+[[example]]
+name = "steam_touchpad"
+path = "examples/steam_touchpad.rs"
+required-features = ["motion-backends"]

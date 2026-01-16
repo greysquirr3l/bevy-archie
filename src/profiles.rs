@@ -28,6 +28,8 @@ pub enum ControllerModel {
     SwitchJoyCon,
     /// Steam Controller.
     Steam,
+    /// Google Stadia Controller (Bluetooth mode).
+    Stadia,
     /// Generic/unknown controller.
     Generic,
 }
@@ -40,7 +42,7 @@ impl ControllerModel {
             Self::Xbox360 | Self::XboxOne | Self::XboxSeriesXS => ControllerLayout::Xbox,
             Self::PS4 | Self::PS5 => ControllerLayout::PlayStation,
             Self::SwitchPro | Self::SwitchJoyCon => ControllerLayout::Nintendo,
-            Self::Steam | Self::Generic => ControllerLayout::Xbox,
+            Self::Steam | Self::Stadia | Self::Generic => ControllerLayout::Xbox,
         }
     }
 
@@ -49,7 +51,12 @@ impl ControllerModel {
     pub const fn supports_gyro(self) -> bool {
         matches!(
             self,
-            Self::PS4 | Self::PS5 | Self::SwitchPro | Self::SwitchJoyCon
+            Self::PS4
+                | Self::PS5
+                | Self::SwitchPro
+                | Self::SwitchJoyCon
+                | Self::Stadia
+                | Self::Steam
         )
     }
 
@@ -104,6 +111,8 @@ impl DetectedController {
             (0x057e, 0x2006 | 0x2007) => ControllerModel::SwitchJoyCon,
             // Valve Steam Controller
             (0x28de, 0x1142) => ControllerModel::Steam,
+            // Google Stadia Controller (Bluetooth mode after shutdown)
+            (0x18d1, 0x9400) => ControllerModel::Stadia,
             _ => ControllerModel::Generic,
         }
     }
@@ -415,6 +424,10 @@ mod tests {
             ControllerLayout::Xbox
         );
         assert_eq!(
+            ControllerModel::Stadia.default_layout(),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
             ControllerModel::Generic.default_layout(),
             ControllerLayout::Xbox
         );
@@ -429,7 +442,8 @@ mod tests {
         assert!(ControllerModel::PS5.supports_gyro());
         assert!(ControllerModel::SwitchPro.supports_gyro());
         assert!(ControllerModel::SwitchJoyCon.supports_gyro());
-        assert!(!ControllerModel::Steam.supports_gyro());
+        assert!(ControllerModel::Steam.supports_gyro());
+        assert!(ControllerModel::Stadia.supports_gyro());
         assert!(!ControllerModel::Generic.supports_gyro());
     }
 
@@ -443,6 +457,7 @@ mod tests {
         assert!(!ControllerModel::SwitchPro.supports_touchpad());
         assert!(!ControllerModel::SwitchJoyCon.supports_touchpad());
         assert!(ControllerModel::Steam.supports_touchpad());
+        assert!(!ControllerModel::Stadia.supports_touchpad());
         assert!(!ControllerModel::Generic.supports_touchpad());
     }
 
@@ -456,6 +471,7 @@ mod tests {
         assert!(!ControllerModel::SwitchPro.supports_adaptive_triggers());
         assert!(!ControllerModel::SwitchJoyCon.supports_adaptive_triggers());
         assert!(!ControllerModel::Steam.supports_adaptive_triggers());
+        assert!(!ControllerModel::Stadia.supports_adaptive_triggers());
         assert!(!ControllerModel::Generic.supports_adaptive_triggers());
     }
 
@@ -525,6 +541,7 @@ mod tests {
             ControllerModel::SwitchPro,
             ControllerModel::SwitchJoyCon,
             ControllerModel::Steam,
+            ControllerModel::Stadia,
             ControllerModel::Generic,
         ];
 
@@ -600,6 +617,12 @@ mod tests {
     fn test_detected_controller_identify_steam() {
         let detected = DetectedController::new(0x28de, 0x1142);
         assert_eq!(detected.model, ControllerModel::Steam);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_stadia() {
+        let detected = DetectedController::new(0x18d1, 0x9400);
+        assert_eq!(detected.model, ControllerModel::Stadia);
     }
 
     #[test]

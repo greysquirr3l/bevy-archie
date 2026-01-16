@@ -1,0 +1,43 @@
+# Copilot PR Review Configuration
+# This file configures GitHub Copilot for automated PR reviews
+
+# Enable Copilot to review PRs
+reviews:
+  # Auto-review all PRs
+  auto_review: true
+  
+  # Review scope
+  review_scope:
+    - "**/*.rs"
+    - "**/Cargo.toml"
+    - "**/*.md"
+    
+  # Ignore patterns
+  ignore:
+    - "**/target/**"
+    - "**/*.lock"
+
+# Copilot suggestions
+suggestions:
+  # Enable inline suggestions
+  inline: true
+  
+  # Enable security suggestions
+  security: true
+  
+  # Enable performance suggestions  
+  performance: true
+
+# Auto-merge configuration for Copilot-assisted workflows
+auto_merge:
+  # Allow auto-merge for dependency updates
+  dependency_updates:
+    patch: true
+    minor: true
+    major: false
+    
+  # Require CI to pass
+  require_ci: true
+  
+  # Require review approval
+  require_approval: true

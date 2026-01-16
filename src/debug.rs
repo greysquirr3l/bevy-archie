@@ -4,6 +4,7 @@
 //! input, recording/playback, and automated testing.
 
 use bevy::prelude::*;
+use log::{debug, trace};
 use std::collections::VecDeque;
 
 use crate::actions::GameAction;
@@ -207,12 +208,53 @@ pub fn handle_debug_commands(
     }
 }
 
-/// System to render debug overlay (would need egui or similar).
-pub fn render_debug_overlay(debugger: Res<InputDebugger>, _gamepads: Query<&Gamepad>) {
-    if !debugger.enabled {}
+/// System to render debug overlay.
+///
+/// This outputs debug information to the log. For visual overlay, integrate with
+/// `bevy_egui` or a custom UI system.
+pub fn render_debug_overlay(debugger: Res<InputDebugger>, gamepads: Query<(Entity, &Gamepad)>) {
+    if !debugger.enabled {
+        return;
+    }
 
-    // This would render debug information using egui or a custom UI system
-    // For now, this is a placeholder
+    // Log gamepad state when debug is enabled
+    for (entity, gamepad) in &gamepads {
+        if debugger.show_buttons {
+            // Log digital button states
+            for button in [
+                GamepadButton::South,
+                GamepadButton::East,
+                GamepadButton::West,
+                GamepadButton::North,
+                GamepadButton::LeftTrigger,
+                GamepadButton::RightTrigger,
+                GamepadButton::LeftTrigger2,
+                GamepadButton::RightTrigger2,
+                GamepadButton::Start,
+                GamepadButton::Select,
+            ] {
+                if gamepad.just_pressed(button) {
+                    debug!("Gamepad {entity:?}: {button:?} pressed");
+                }
+            }
+        }
+
+        if debugger.show_sticks {
+            // Log significant stick movement
+            let left_x = gamepad.get(GamepadAxis::LeftStickX).unwrap_or(0.0);
+            let left_y = gamepad.get(GamepadAxis::LeftStickY).unwrap_or(0.0);
+            let right_x = gamepad.get(GamepadAxis::RightStickX).unwrap_or(0.0);
+            let right_y = gamepad.get(GamepadAxis::RightStickY).unwrap_or(0.0);
+
+            // Only log if sticks are significantly moved
+            if left_x.abs() > 0.5 || left_y.abs() > 0.5 {
+                trace!("Gamepad {entity:?}: Left stick ({left_x:.2}, {left_y:.2})");
+            }
+            if right_x.abs() > 0.5 || right_y.abs() > 0.5 {
+                trace!("Gamepad {entity:?}: Right stick ({right_x:.2}, {right_y:.2})");
+            }
+        }
+    }
 }
 
 /// Plugin for registering debug types.

@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-01-16
+
+### Added
+
+- Hardware integration examples:
+  - `ps5_dualsense_motion.rs` - DualSense gyro/touchpad via HID
+  - `switch_pro_gyro.rs` - Switch Pro Controller gyro via SDL2
+  - `steam_touchpad.rs` - Steam Deck/Controller touchpad via Steam Input API
+- Motion backend abstraction system (`src/motion/`):
+  - `MotionBackend` trait for platform-specific implementations
+  - `DualSenseBackend` implementation using `dualsense-rs` crate
+  - Stub backend for platforms without motion support
+- New Cargo features:
+  - `motion-backends` - Enable motion backend abstractions
+  - `dualsense` - Enable DualSense HID support via `dualsense-rs`
+- Documentation:
+  - `docs/HARDWARE_INTEGRATION_GUIDE.md` - Comprehensive hardware integration guide
+  - `examples/README.md` - Examples documentation with feature matrix
+  - `CONTRIBUTING.md` - Contribution guidelines
+  - `CONTRIBUTORS.md` - Maintainer attribution
+  - `VERSIONING.md` - Branch strategy and versioning documentation
+- CI/CD infrastructure:
+  - GitHub Actions workflows (CI, security audit, release, CodeQL)
+  - Dependabot configuration with auto-merge for patches
+  - Multi-branch support for Bevy version maintenance (0.17, 0.18)
+
+### Changed
+
+- Dependabot now ignores Bevy minor/major updates (requires manual migration)
+- CI workflows run on `main`, `bevy-0.17`, and `bevy-0.18` branches
+- Repository metadata updated with correct URLs and documentation links
+
 ## [0.1.2] - 2026-01-16
 
 ### Fixed
@@ -126,6 +158,7 @@ When contributing, please:
 
 ---
 
+[0.1.3]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.3
 [0.1.2]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.2
 [0.1.1]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.1
 [0.1.0]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.0

@@ -64,6 +64,7 @@ pub mod gyro;
 pub mod haptics;
 pub mod icons;
 pub mod input_buffer;
+pub mod motion;
 pub mod multiplayer;
 pub mod plugin;
 pub mod profiles;

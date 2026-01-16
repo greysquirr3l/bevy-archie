@@ -5,7 +5,7 @@
 
 use bevy::prelude::*;
 
-use crate::actions::GameAction;
+use crate::actions::{ActionState, GameAction};
 
 /// Action modifier types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
@@ -134,18 +134,46 @@ impl ActionModifierState {
 /// System to detect action modifiers.
 pub fn detect_action_modifiers(
     mut modifier_state: ResMut<ActionModifierState>,
-    _keyboard: Res<ButtonInput<KeyCode>>,
-    _mouse: Res<ButtonInput<MouseButton>>,
-    _gamepads: Query<&Gamepad>,
+    action_state: Res<ActionState>,
     time: Res<Time>,
     mut modifier_events: MessageWriter<ModifiedActionEvent>,
 ) {
     let current_time = time.elapsed_secs_f64();
 
-    // This would integrate with the action system to detect which actions were pressed/released
-    // For now, this is a placeholder structure
+    // Check all actions for press/release events
+    for action in GameAction::all() {
+        let action = *action;
 
-    // Check for long presses
+        // Handle newly pressed actions
+        if action_state.just_pressed(action) {
+            modifier_state.held_actions.push((action, current_time));
+        }
+
+        // Handle released actions
+        if action_state.just_released(action) {
+            let modifiers = modifier_state.record_release(action, current_time);
+            for modifier in modifiers {
+                #[allow(clippy::cast_possible_truncation)]
+                let duration = modifier_state
+                    .held_actions
+                    .iter()
+                    .find(|(a, _)| *a == action)
+                    .map_or(0.0, |(_, t)| (current_time - t) as f32);
+
+                modifier_events.write(ModifiedActionEvent {
+                    action,
+                    modifier,
+                    gamepad: None,
+                    duration,
+                });
+            }
+
+            // Remove from held actions
+            modifier_state.held_actions.retain(|(a, _)| *a != action);
+        }
+    }
+
+    // Check for long presses on currently held actions
     for action in modifier_state.check_long_press(current_time) {
         modifier_events.write(ModifiedActionEvent {
             action,

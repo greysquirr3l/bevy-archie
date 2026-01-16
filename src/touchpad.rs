@@ -118,6 +118,62 @@ impl TouchpadData {
         }
         count
     }
+
+    /// Set finger data from a platform-specific source.
+    ///
+    /// # Arguments
+    /// * `finger_index` - 0 for finger1, 1 for finger2
+    /// * `x` - Normalized X position (0.0-1.0)
+    /// * `y` - Normalized Y position (0.0-1.0)
+    /// * `active` - Whether the finger is touching
+    pub fn set_finger(&mut self, finger_index: usize, x: f32, y: f32, active: bool) {
+        let finger = if finger_index == 0 {
+            &mut self.finger1
+        } else {
+            &mut self.finger2
+        };
+        finger.x = x.clamp(0.0, 1.0);
+        finger.y = y.clamp(0.0, 1.0);
+        finger.active = active;
+    }
+
+    /// Update frame state - call this at the end of your custom system.
+    ///
+    /// This saves current finger positions to prev_ fields for delta calculation.
+    pub fn update_frame(&mut self) {
+        self.prev_finger1 = self.finger1.position();
+        self.prev_finger2 = self.finger2.position();
+    }
+
+    /// Update from a motion backend's touchpad data.
+    ///
+    /// This integrates with the `motion::backend::TouchpadData` type to receive
+    /// touchpad input from platform-specific backends like `DualSense` HID.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// if let Some(backend_data) = touchpad_backend.poll() {
+    ///     touchpad.update_from_backend(&backend_data);
+    /// }
+    /// ```
+    #[cfg(feature = "motion-backends")]
+    pub fn update_from_backend(&mut self, data: &crate::motion::backend::TouchpadData) {
+        // Update finger 1
+        self.finger1.x = data.finger1.x.clamp(0.0, 1.0);
+        self.finger1.y = data.finger1.y.clamp(0.0, 1.0);
+        self.finger1.active = data.finger1.active;
+        self.finger1.id = data.finger1.id;
+
+        // Update finger 2
+        self.finger2.x = data.finger2.x.clamp(0.0, 1.0);
+        self.finger2.y = data.finger2.y.clamp(0.0, 1.0);
+        self.finger2.active = data.finger2.active;
+        self.finger2.id = data.finger2.id;
+
+        // Update button state
+        self.button_pressed = data.button_pressed;
+    }
 }
 
 /// Touchpad gesture detection.
@@ -175,18 +231,45 @@ impl Default for TouchpadConfig {
     }
 }
 
-/// System to update touchpad data (placeholder - needs platform implementation).
+/// System to update touchpad data.
+///
+/// # Platform Support
+///
+/// Bevy 0.17 does not expose touchpad data from controllers directly.
+/// This is primarily available on PS4/PS5 DualShock/DualSense controllers.
+///
+/// To use real touchpad data, you need to:
+///
+/// 1. Access gilrs raw events to get touchpad data from SDL2-supported controllers
+/// 2. Or inject data manually via `TouchpadData::set_finger()` from a platform-specific source
+///
+/// This system initializes the `TouchpadData` component on gamepads that don't have it.
+///
+/// # Example Custom Integration
+///
+/// ```ignore
+/// fn custom_touchpad_system(mut gamepads: Query<&mut TouchpadData>) {
+///     // Get raw touchpad data from your platform-specific source
+///     let (f1_x, f1_y, f1_pressed) = get_touchpad_finger1();
+///     let (f2_x, f2_y, f2_pressed) = get_touchpad_finger2();
+///     
+///     for mut touchpad in &mut gamepads {
+///         touchpad.set_finger(0, f1_x, f1_y, f1_pressed);
+///         touchpad.set_finger(1, f2_x, f2_y, f2_pressed);
+///         touchpad.update_frame();
+///     }
+/// }
+/// ```
 pub fn update_touchpad_data(
     mut gamepads: Query<(Entity, &Gamepad, Option<&mut TouchpadData>)>,
     mut commands: Commands,
 ) {
     for (entity, _gamepad, touchpad) in &mut gamepads {
-        // Note: Bevy 0.17 doesn't have built-in touchpad support
-        // This would need platform-specific implementation via SDL2 or custom gamepad backend
-        // For now, add the component if missing
         if touchpad.is_none() {
             commands.entity(entity).insert(TouchpadData::default());
         }
+        // Real touchpad data must be injected by a platform-specific system.
+        // The gesture detection systems will work once valid data is provided.
     }
 }
 

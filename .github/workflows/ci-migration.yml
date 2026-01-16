@@ -1,0 +1,89 @@
+# CI workflow for bevy-0.18 migration branch
+# This workflow is more lenient during active migration work
+# Once migration is complete, this file should be deleted and the branch
+# should use the standard ci.yml
+
+name: CI (Migration)
+
+on:
+  push:
+    branches: [bevy-0.18]
+  pull_request:
+    branches: [bevy-0.18]
+
+env:
+  CARGO_TERM_COLOR: always
+  # Don't treat warnings as errors during migration
+  # RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  check:
+    name: Check (Migration)
+    runs-on: ubuntu-latest
+    # Allow failures during migration
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libasound2-dev
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-migration-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-migration-
+
+      - name: Run cargo check
+        run: cargo check --all-features 2>&1 || echo "::warning::Cargo check failed - migration in progress"
+
+  migration-status:
+    name: Migration Status
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libasound2-dev
+
+      - name: Check migration progress
+        run: |
+          echo "## Bevy 0.18 Migration Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Try to compile and count errors
+          if cargo check --all-features 2>&1; then
+            echo "✅ **Compilation: PASSING**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Migration appears complete! Consider:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Running full test suite" >> $GITHUB_STEP_SUMMARY
+            echo "2. Updating CHANGELOG.md" >> $GITHUB_STEP_SUMMARY
+            echo "3. Merging to main" >> $GITHUB_STEP_SUMMARY
+            echo "4. Deleting this workflow file" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🔄 **Compilation: IN PROGRESS**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Compilation Errors" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            cargo check --all-features 2>&1 | head -100 >> $GITHUB_STEP_SUMMARY || true
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Migration Guide" >> $GITHUB_STEP_SUMMARY
+          echo "See [BEVY_0.17_TO_0.18_MIGRATION.md](docs/dev/BEVY_0.17_TO_0.18_MIGRATION.md)" >> $GITHUB_STEP_SUMMARY
