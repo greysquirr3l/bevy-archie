@@ -451,9 +451,7 @@ pub fn update_action_state(
         }
 
         // Check mouse bindings
-        if !pressed
-            && let Some(buttons) = action_map.mouse_bindings.get(action)
-        {
+        if !pressed && let Some(buttons) = action_map.mouse_bindings.get(action) {
             for button in buttons {
                 if mouse_buttons.pressed(*button) {
                     pressed = true;
@@ -478,9 +476,7 @@ pub fn update_action_state(
                 }
 
                 // Check axis bindings
-                if !pressed
-                    && let Some(axes) = action_map.axis_bindings.get(action)
-                {
+                if !pressed && let Some(axes) = action_map.axis_bindings.get(action) {
                     for (axis_type, direction, threshold) in axes {
                         if let Some(axis_value) = gamepad.get(*axis_type) {
                             let check_value = match direction {
