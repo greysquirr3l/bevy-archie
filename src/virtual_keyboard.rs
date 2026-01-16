@@ -137,15 +137,15 @@ impl VirtualKeyboard {
     /// Check if a character is allowed.
     #[must_use]
     pub fn is_char_allowed(&self, c: char) -> bool {
-        if let Some(ref allow) = self.allow {
-            if !allow.contains(c) {
-                return false;
-            }
+        if let Some(ref allow) = self.allow
+            && !allow.contains(c)
+        {
+            return false;
         }
-        if let Some(ref exclude) = self.exclude {
-            if exclude.contains(c) {
-                return false;
-            }
+        if let Some(ref exclude) = self.exclude
+            && exclude.contains(c)
+        {
+            return false;
         }
         true
     }
@@ -156,10 +156,10 @@ impl VirtualKeyboard {
             return;
         }
 
-        if let Some(max) = self.max_length {
-            if self.buffer.len() >= max {
-                return;
-            }
+        if let Some(max) = self.max_length
+            && self.buffer.len() >= max
+        {
+            return;
         }
 
         let c = if self.shift_active {
