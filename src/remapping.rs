@@ -221,13 +221,12 @@ pub fn handle_remap_input(
                 // Check for conflicts
                 let mut conflict = None;
                 for other_action in GameAction::all() {
-                    if *other_action != action {
-                        if let Some(buttons) = action_map.gamepad_bindings.get(other_action) {
-                            if buttons.contains(&button) {
-                                conflict = Some(*other_action);
-                                break;
-                            }
-                        }
+                    if *other_action != action
+                        && let Some(buttons) = action_map.gamepad_bindings.get(other_action)
+                        && buttons.contains(&button)
+                    {
+                        conflict = Some(*other_action);
+                        break;
                     }
                 }
 

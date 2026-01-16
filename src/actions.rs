@@ -451,14 +451,14 @@ pub fn update_action_state(
         }
 
         // Check mouse bindings
-        if !pressed {
-            if let Some(buttons) = action_map.mouse_bindings.get(action) {
-                for button in buttons {
-                    if mouse_buttons.pressed(*button) {
-                        pressed = true;
-                        value = 1.0;
-                        break;
-                    }
+        if !pressed
+            && let Some(buttons) = action_map.mouse_bindings.get(action)
+        {
+            for button in buttons {
+                if mouse_buttons.pressed(*button) {
+                    pressed = true;
+                    value = 1.0;
+                    break;
                 }
             }
         }
@@ -478,19 +478,19 @@ pub fn update_action_state(
                 }
 
                 // Check axis bindings
-                if !pressed {
-                    if let Some(axes) = action_map.axis_bindings.get(action) {
-                        for (axis_type, direction, threshold) in axes {
-                            if let Some(axis_value) = gamepad.get(*axis_type) {
-                                let check_value = match direction {
-                                    AxisDirection::Positive => axis_value,
-                                    AxisDirection::Negative => -axis_value,
-                                };
+                if !pressed
+                    && let Some(axes) = action_map.axis_bindings.get(action)
+                {
+                    for (axis_type, direction, threshold) in axes {
+                        if let Some(axis_value) = gamepad.get(*axis_type) {
+                            let check_value = match direction {
+                                AxisDirection::Positive => axis_value,
+                                AxisDirection::Negative => -axis_value,
+                            };
 
-                                if check_value > *threshold {
-                                    pressed = true;
-                                    value = value.max(check_value);
-                                }
+                            if check_value > *threshold {
+                                pressed = true;
+                                value = value.max(check_value);
                             }
                         }
                     }

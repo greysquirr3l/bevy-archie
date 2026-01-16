@@ -80,16 +80,16 @@ impl InputBuffer {
         let mut seq_idx = 0;
 
         for input in self.inputs.iter().rev() {
-            if let Some(&seq_action) = sequence.get(seq_idx) {
-                if input.action == seq_action {
-                    seq_idx += 1;
-                    if seq_idx == sequence.len() {
-                        // Check if all within window
-                        if let Some(first_input) = self.inputs.get(self.inputs.len() - seq_idx) {
-                            let first_time = first_input.timestamp;
-                            let last_time = input.timestamp;
-                            return (last_time - first_time) <= window_secs;
-                        }
+            if let Some(&seq_action) = sequence.get(seq_idx)
+                && input.action == seq_action
+            {
+                seq_idx += 1;
+                if seq_idx == sequence.len() {
+                    // Check if all within window
+                    if let Some(first_input) = self.inputs.get(self.inputs.len() - seq_idx) {
+                        let first_time = first_input.timestamp;
+                        let last_time = input.timestamp;
+                        return (last_time - first_time) <= window_secs;
                     }
                 }
             }
