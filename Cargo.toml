@@ -28,7 +28,7 @@ dualsense = ["motion-backends", "dep:dualsense-rs"]
 full = ["icons", "virtual_keyboard", "remapping"]
 
 [dependencies]
-bevy = { version = "0.17", default-features = false, features = [
+bevy = { version = "0.18", default-features = false, features = [
     "bevy_gilrs",
     "bevy_render",
     "bevy_asset",
@@ -51,7 +51,7 @@ dualsense-rs = { version = "0.6", optional = true }
 # steamworks = "0.11"  # For steam_touchpad (requires Steam client)
 
 [dev-dependencies]
-bevy = { version = "0.17", default-features = true }
+bevy = { version = "0.18", default-features = true }
 approx = "0.5"  # For floating point comparisons in tests
 
 [[example]]
