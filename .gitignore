@@ -81,4 +81,4 @@ temp/
 *.cache
 
 # Development Documents
-docs/dev/
+docs/dev/docs/dev/BRANCH_WORKFLOW.md
