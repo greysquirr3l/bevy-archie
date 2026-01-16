@@ -1,0 +1,137 @@
+# Automatically sync commits between main and bevy-0.17 branches
+# When a commit is pushed to main, it will be cherry-picked to bevy-0.17
+# If conflicts occur, a PR is created for manual resolution
+
+name: Sync Branches
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Source branch to cherry-pick from'
+        required: true
+        default: 'main'
+      target_branch:
+        description: 'Target branch to cherry-pick to'
+        required: true
+        default: 'bevy-0.17'
+      commit_sha:
+        description: 'Specific commit SHA to cherry-pick (leave empty for latest)'
+        required: false
+
+jobs:
+  sync:
+    name: Sync to bevy-0.17
+    runs-on: ubuntu-latest
+    # Don't sync commits that came from this workflow (avoid loops)
+    if: "!contains(github.event.head_commit.message, '[skip-sync]') && !contains(github.event.head_commit.message, 'Merge branch')"
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine commit to cherry-pick
+        id: commit
+        run: |
+          if [ -n "${{ github.event.inputs.commit_sha }}" ]; then
+            echo "sha=${{ github.event.inputs.commit_sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+          
+          SOURCE="${{ github.event.inputs.source_branch || 'main' }}"
+          TARGET="${{ github.event.inputs.target_branch || 'bevy-0.17' }}"
+          echo "source=$SOURCE" >> $GITHUB_OUTPUT
+          echo "target=$TARGET" >> $GITHUB_OUTPUT
+
+      - name: Cherry-pick commit to target branch
+        id: cherry-pick
+        run: |
+          git checkout ${{ steps.commit.outputs.target }}
+          git pull origin ${{ steps.commit.outputs.target }}
+          
+          COMMIT_SHA="${{ steps.commit.outputs.sha }}"
+          COMMIT_MSG=$(git log -1 --format=%s $COMMIT_SHA)
+          
+          echo "Cherry-picking commit: $COMMIT_SHA"
+          echo "Message: $COMMIT_MSG"
+          
+          if git cherry-pick $COMMIT_SHA --no-commit; then
+            # Check if there are actual changes
+            if git diff --cached --quiet; then
+              echo "No changes to commit (already applied or empty)"
+              echo "status=skip" >> $GITHUB_OUTPUT
+            else
+              git commit -m "$COMMIT_MSG [skip-sync]"
+              echo "status=success" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "status=conflict" >> $GITHUB_OUTPUT
+            git cherry-pick --abort || true
+          fi
+
+      - name: Push changes
+        if: steps.cherry-pick.outputs.status == 'success'
+        run: |
+          git push origin ${{ steps.commit.outputs.target }}
+
+      - name: Create PR for conflicts
+        if: steps.cherry-pick.outputs.status == 'conflict'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commit = '${{ steps.commit.outputs.sha }}';
+            const target = '${{ steps.commit.outputs.target }}';
+            const source = '${{ steps.commit.outputs.source }}';
+            
+            const { data: commitData } = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: commit
+            });
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Sync Conflict] Cherry-pick to ${target} failed`,
+              body: `## Cherry-pick conflict detected
+              
+            The following commit from \`${source}\` could not be automatically cherry-picked to \`${target}\`:
+            
+            **Commit:** ${commit}
+            **Message:** ${commitData.commit.message.split('\n')[0]}
+            **Author:** ${commitData.commit.author.name}
+            
+            ### Manual resolution required
+            
+            \`\`\`bash
+            git checkout ${target}
+            git cherry-pick ${commit}
+            # Resolve conflicts
+            git add .
+            git cherry-pick --continue
+            git push origin ${target}
+            \`\`\`
+            
+            Or skip this commit if it's not needed on \`${target}\`.`,
+              labels: ['sync-conflict', 'needs-attention']
+            });
+
+      - name: Summary
+        run: |
+          echo "## Branch Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source:** ${{ steps.commit.outputs.source }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target:** ${{ steps.commit.outputs.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ steps.commit.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.cherry-pick.outputs.status }}" >> $GITHUB_STEP_SUMMARY
