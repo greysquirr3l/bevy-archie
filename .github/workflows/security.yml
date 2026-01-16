@@ -38,13 +38,13 @@ jobs:
         run: cargo install cargo-deny
 
       - name: Check licenses
-        run: cargo deny --config deny.toml check licenses
+        run: cargo deny check --config deny.toml licenses
 
       - name: Check bans
-        run: cargo deny --config deny.toml check bans
+        run: cargo deny check --config deny.toml bans
 
       - name: Check advisories
-        run: cargo deny --config deny.toml check advisories
+        run: cargo deny check --config deny.toml advisories
 
       - name: Check sources
-        run: cargo deny --config deny.toml check sources
+        run: cargo deny check --config deny.toml sources
