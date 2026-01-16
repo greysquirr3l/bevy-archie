@@ -21,7 +21,16 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libudev-dev libasound2-dev
+          sudo apt-get install -y \
+            libudev-dev \
+            libasound2-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            libx11-dev \
+            libxi-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxinerama-dev
 
       - name: Cache cargo registry
         uses: actions/cache@v4
