@@ -330,9 +330,14 @@ impl Default for ControllerIconDisplay {
 pub fn update_icon_displays(
     mut icons: ResMut<ControllerIconAssets>,
     config: Res<crate::config::ControllerConfig>,
-    asset_server: Res<AssetServer>,
+    asset_server: Option<Res<AssetServer>>,
     mut query: Query<(&ControllerIconDisplay, &mut ImageNode), Changed<ControllerIconDisplay>>,
 ) {
+    // Skip if asset server is not available (e.g., in tests without asset plugin)
+    let Some(asset_server) = asset_server else {
+        return;
+    };
+
     let layout = config.layout();
 
     for (display, mut image) in &mut query {

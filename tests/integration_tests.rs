@@ -3,6 +3,7 @@
 //! Integration tests for bevy_archie.
 
 use bevy::prelude::*;
+use bevy::state::app::StatesPlugin;
 use bevy_archie::action_modifiers::ActionModifier;
 use bevy_archie::gyro::MotionGesture;
 use bevy_archie::haptics::{RumbleController, RumbleIntensity, RumblePattern};
@@ -17,7 +18,7 @@ use std::time::Duration;
 #[test]
 fn test_plugin_initialization() {
     let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
+    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin, StatesPlugin))
         .add_plugins(ControllerPlugin::default());
 
     app.update();
@@ -32,7 +33,7 @@ fn test_plugin_initialization() {
 #[test]
 fn test_action_state_updates() {
     let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
+    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin, StatesPlugin))
         .add_plugins(ControllerPlugin::default());
 
     app.update();
@@ -46,7 +47,7 @@ fn test_action_state_updates() {
 #[test]
 fn test_input_device_state_switch() {
     let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
+    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin, StatesPlugin))
         .add_plugins(ControllerPlugin::default());
 
     {
@@ -63,7 +64,7 @@ fn test_input_device_state_switch() {
 #[test]
 fn test_controller_config_modifications() {
     let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
+    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin, StatesPlugin))
         .add_plugins(ControllerPlugin::default());
 
     {
@@ -82,7 +83,7 @@ fn test_controller_config_modifications() {
 #[test]
 fn test_action_bindings() {
     let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
+    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin, StatesPlugin))
         .add_plugins(ControllerPlugin::default());
 
     {
@@ -102,7 +103,7 @@ fn test_action_bindings() {
 #[test]
 fn test_multiplayer_controller_assignment() {
     let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
+    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin, StatesPlugin))
         .add_plugins(ControllerPlugin::default());
 
     let gamepad = app.world_mut().spawn_empty().id();

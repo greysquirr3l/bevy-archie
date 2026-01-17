@@ -81,10 +81,10 @@ fn setup(mut commands: Commands) {
                         margin: UiRect::top(Val::Px(20.0)),
                         padding: UiRect::axes(Val::Px(20.0), Val::Px(10.0)),
                         justify_content: JustifyContent::Center,
+                        border_radius: BorderRadius::all(Val::Px(5.0)),
                         ..default()
                     },
                     BackgroundColor(Color::srgb(0.5, 0.2, 0.2)),
-                    BorderRadius::all(Val::Px(5.0)),
                     Button,
                 ))
                 .with_children(|btn| {
@@ -143,10 +143,10 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
                 Node {
                     padding: UiRect::axes(Val::Px(15.0), Val::Px(8.0)),
                     justify_content: JustifyContent::Center,
+                    border_radius: BorderRadius::all(Val::Px(5.0)),
                     ..default()
                 },
                 BackgroundColor(Color::srgb(0.2, 0.3, 0.5)),
-                BorderRadius::all(Val::Px(5.0)),
                 Button,
                 RemapActionButton(action),
             ))

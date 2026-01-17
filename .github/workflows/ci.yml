@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, bevy-0.17]
+    branches: [main, bevy-0.17, bevy-0.18]
   pull_request:
-    branches: [main, bevy-0.17]
+    branches: [main, bevy-0.17, bevy-0.18]
 
 env:
   CARGO_TERM_COLOR: always
@@ -193,7 +193,7 @@ jobs:
       - name: Install Rust toolchain (MSRV)
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.88"
+          toolchain: "1.89"
 
       - name: Install system dependencies
         run: |

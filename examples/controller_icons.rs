@@ -22,6 +22,14 @@ struct ButtonPrompt {
     icon: ButtonIcon,
 }
 
+/// Bundle for button prompt UI nodes
+#[derive(Bundle)]
+struct ButtonPromptBundle {
+    node: Node,
+    background: BackgroundColor,
+    prompt: ButtonPrompt,
+}
+
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 
@@ -112,18 +120,18 @@ fn spawn_button_prompt(parent: &mut ChildSpawnerCommands, icon: ButtonIcon, labe
         })
         .with_children(|col: &mut ChildSpawnerCommands| {
             // Icon placeholder (in a real app, this would be an image)
-            col.spawn((
-                Node {
+            col.spawn(ButtonPromptBundle {
+                node: Node {
                     width: Val::Px(64.0),
                     height: Val::Px(64.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(8.0)),
                     ..default()
                 },
-                BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
-                BorderRadius::all(Val::Px(8.0)),
-                ButtonPrompt { icon },
-            ))
+                background: BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
+                prompt: ButtonPrompt { icon },
+            })
             .with_children(|button: &mut ChildSpawnerCommands| {
                 // Text fallback for the icon
                 button.spawn((
