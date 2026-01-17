@@ -16,6 +16,10 @@ env:
   # Don't treat warnings as errors during migration
   # RUSTFLAGS: "-Dwarnings"
 
+# Restrict permissions to minimum required
+permissions:
+  contents: read
+
 jobs:
   check:
     name: Check (Migration)

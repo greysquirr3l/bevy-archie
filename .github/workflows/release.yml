@@ -8,6 +8,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# Top-level permissions - individual jobs may override
+permissions:
+  contents: read
+
 jobs:
   publish:
     name: Publish to crates.io
