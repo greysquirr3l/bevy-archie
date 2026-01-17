@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.cherry-pick.outputs.status == 'success'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const target = '${{ steps.commit.outputs.target }}';
@@ -165,7 +165,7 @@ jobs:
 
       - name: Create issue for conflicts
         if: steps.cherry-pick.outputs.status == 'conflict'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const commit = '${{ steps.commit.outputs.sha }}';
