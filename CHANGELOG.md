@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - Unreleased
+
+### Breaking Changes
+
+- **Bevy 0.18 required** - This release targets Bevy 0.18 and is not compatible with earlier versions
+- **Minimum Rust version bumped to 1.89** - Required by Bevy 0.18
+
+### Changed
+
+- Updated all dependencies to Bevy 0.18
+- `BorderRadius` is now set via `Node.border_radius` field instead of as a separate component
+- Integration tests now require `StatesPlugin` to be added before `ControllerPlugin`
+- Icon system gracefully handles missing `AssetServer` (returns early instead of panicking)
+
+### Fixed
+
+- Fixed `Bundle` trait changes - tuples of 4+ components now use explicit Bundle structs
+- Fixed virtual keyboard test assertions for symbol layout
+
+### Migration Guide
+
+See `docs/dev/BEVY_0.17_TO_0.18_MIGRATION.md` for detailed migration instructions.
+
 ## [0.1.3] - 2026-01-16
 
 ### Added

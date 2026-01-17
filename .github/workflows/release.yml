@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Fetch the tag's commit, not just the default branch
+          ref: ${{ github.ref }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -68,6 +71,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Fetch the tag's commit for correct CHANGELOG extraction
+          ref: ${{ github.ref }}
 
       - name: Extract changelog for this version
         id: changelog
