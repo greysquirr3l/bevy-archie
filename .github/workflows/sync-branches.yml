@@ -1,6 +1,6 @@
 # Automatically sync commits between main and bevy-0.17 branches
-# When a commit is pushed to main, it will be cherry-picked to bevy-0.17
-# If conflicts occur, a PR is created for manual resolution
+# When a commit is pushed to main, creates a PR to cherry-pick to bevy-0.17
+# PRs go through normal CI before merging
 
 name: Sync Branches
 
@@ -25,12 +25,16 @@ jobs:
   sync:
     name: Sync to bevy-0.17
     runs-on: ubuntu-latest
-    # Don't sync commits that came from this workflow (avoid loops)
-    if: "!contains(github.event.head_commit.message, '[skip-sync]') && !contains(github.event.head_commit.message, 'Merge branch')"
+    # Don't sync commits that came from this workflow or merge commits
+    if: |
+      !contains(github.event.head_commit.message, '[skip-sync]') &&
+      !contains(github.event.head_commit.message, 'Merge branch') &&
+      !contains(github.event.head_commit.message, 'Merge pull request')
     permissions:
       contents: write
+      pull-requests: write
       issues: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,31 +55,42 @@ jobs:
           else
             echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
-          
+
           SOURCE="${{ github.event.inputs.source_branch || 'main' }}"
           TARGET="${{ github.event.inputs.target_branch || 'bevy-0.17' }}"
           echo "source=$SOURCE" >> $GITHUB_OUTPUT
           echo "target=$TARGET" >> $GITHUB_OUTPUT
 
-      - name: Cherry-pick commit to target branch
+          # Create a short SHA for branch naming
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Cherry-pick commit to new branch
         id: cherry-pick
         run: |
-          git checkout ${{ steps.commit.outputs.target }}
-          git pull origin ${{ steps.commit.outputs.target }}
-          
+          TARGET="${{ steps.commit.outputs.target }}"
           COMMIT_SHA="${{ steps.commit.outputs.sha }}"
+          SHORT_SHA="${{ steps.commit.outputs.short_sha }}"
+          BRANCH_NAME="sync/${TARGET}/${SHORT_SHA}"
+
+          # Checkout target branch and create sync branch
+          git checkout $TARGET
+          git pull origin $TARGET
+          git checkout -b "$BRANCH_NAME"
+
           COMMIT_MSG=$(git log -1 --format=%s $COMMIT_SHA)
-          
+
           echo "Cherry-picking commit: $COMMIT_SHA"
           echo "Message: $COMMIT_MSG"
-          
-          if git cherry-pick $COMMIT_SHA --no-commit; then
-            # Check if there are actual changes
-            if git diff --cached --quiet; then
-              echo "No changes to commit (already applied or empty)"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
+
+          if git cherry-pick $COMMIT_SHA; then
+            # Check if there are actual changes compared to target
+            if git diff --quiet origin/$TARGET; then
+              echo "No changes to sync (already applied)"
               echo "status=skip" >> $GITHUB_OUTPUT
             else
-              git commit -m "$COMMIT_MSG [skip-sync]"
               echo "status=success" >> $GITHUB_OUTPUT
             fi
           else
@@ -83,12 +98,72 @@ jobs:
             git cherry-pick --abort || true
           fi
 
-      - name: Push changes
+      - name: Push sync branch and create PR
         if: steps.cherry-pick.outputs.status == 'success'
         run: |
-          git push origin ${{ steps.commit.outputs.target }}
+          BRANCH_NAME="${{ steps.cherry-pick.outputs.branch_name }}"
+          git push origin "$BRANCH_NAME"
 
-      - name: Create PR for conflicts
+      - name: Create Pull Request
+        if: steps.cherry-pick.outputs.status == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const target = '${{ steps.commit.outputs.target }}';
+            const branchName = '${{ steps.cherry-pick.outputs.branch_name }}';
+            const commitSha = '${{ steps.commit.outputs.sha }}';
+            const commitMsg = `${{ steps.cherry-pick.outputs.commit_msg }}`;
+            const source = '${{ steps.commit.outputs.source }}';
+
+            // Check if PR already exists for this branch
+            const { data: existingPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branchName}`,
+              state: 'open'
+            });
+
+            if (existingPRs.length > 0) {
+              console.log(`PR already exists: ${existingPRs[0].html_url}`);
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Sync] ${commitMsg}`,
+              head: branchName,
+              base: target,
+              body: `## Automated Branch Sync
+
+            This PR cherry-picks a commit from \`${source}\` to \`${target}\`.
+
+            **Original Commit:** ${commitSha}
+            **Message:** ${commitMsg}
+
+            ---
+
+            This PR was automatically created by the branch sync workflow.
+            Once CI passes, you can merge it to complete the sync.
+
+            To skip syncing this commit in the future, include \`[skip-sync]\` in the commit message.`
+            });
+
+            console.log(`Created PR: ${pr.html_url}`);
+
+            // Add label
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: ['automated-sync']
+              });
+            } catch (e) {
+              console.log('Could not add label (label may not exist)');
+            }
+
+      - name: Create issue for conflicts
         if: steps.cherry-pick.outputs.status == 'conflict'
         uses: actions/github-script@v7
         with:
@@ -96,27 +171,41 @@ jobs:
             const commit = '${{ steps.commit.outputs.sha }}';
             const target = '${{ steps.commit.outputs.target }}';
             const source = '${{ steps.commit.outputs.source }}';
-            
+
             const { data: commitData } = await github.rest.repos.getCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: commit
             });
-            
+
+            // Check if issue already exists
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'sync-conflict'
+            });
+
+            const existingIssue = issues.find(i => i.title.includes(commit.substring(0, 7)));
+            if (existingIssue) {
+              console.log(`Issue already exists: ${existingIssue.html_url}`);
+              return;
+            }
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `[Sync Conflict] Cherry-pick to ${target} failed`,
+              title: `[Sync Conflict] Cherry-pick ${commit.substring(0, 7)} to ${target} failed`,
               body: `## Cherry-pick conflict detected
-              
+
             The following commit from \`${source}\` could not be automatically cherry-picked to \`${target}\`:
-            
+
             **Commit:** ${commit}
             **Message:** ${commitData.commit.message.split('\n')[0]}
             **Author:** ${commitData.commit.author.name}
-            
+
             ### Manual resolution required
-            
+
             \`\`\`bash
             git checkout ${target}
             git cherry-pick ${commit}
@@ -125,7 +214,7 @@ jobs:
             git cherry-pick --continue
             git push origin ${target}
             \`\`\`
-            
+
             Or skip this commit if it's not needed on \`${target}\`.`,
               labels: ['sync-conflict', 'needs-attention']
             });
@@ -138,3 +227,6 @@ jobs:
           echo "- **Target:** ${{ steps.commit.outputs.target }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ steps.commit.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ steps.cherry-pick.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.cherry-pick.outputs.status }}" == "success" ]; then
+            echo "- **PR Branch:** ${{ steps.cherry-pick.outputs.branch_name }}" >> $GITHUB_STEP_SUMMARY
+          fi
