@@ -153,9 +153,10 @@ fn setup_actions(mut action_map: ResMut<ActionMap>) {
 
 ## Controller Icons
 
-**Note**: bevy-archie is asset-agnostic. You must provide your own icon assets or use a compatible icon pack like:
+This library includes [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts) icon pack (CC0 licensed) in `assets/icons/mrbreakfast/`. This provides 400+ ready-to-use PNG icons for Xbox, PlayStation, Nintendo Switch, Steam Deck, keyboard, and mouse.
 
-- [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts) (400+ icons, Xbox/PS/Switch/Steam Deck)
+You can also use alternative icon packs:
+
 - [Kenney Input Prompts](https://kenney.nl/assets/input-prompts)
 - Custom artwork
 
@@ -164,7 +165,7 @@ The icon system provides platform-aware filename generation and asset loading in
 ```rust
 fn setup_icons(mut commands: Commands) {
     commands.insert_resource(
-        ControllerIconAssets::new("assets/icons")  // Your icon directory
+        ControllerIconAssets::new("assets/icons/mrbreakfast/png")  // Included icons
     );
 }
 ```
@@ -941,6 +942,10 @@ cargo tarpaulin --all-features --out Html --output-dir coverage
 ## Credits
 
 Inspired by the [RenPy Controller GUI](https://feniksdev.com) by Feniks.
+
+### Included Assets
+
+- **[Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts)** - Controller and keyboard input prompt icons by [Mr. Breakfast](https://github.com/mr-breakfast/mrbreakfasts_free_prompts). Over 400 PNG/SVG icons supporting Xbox, PlayStation, Nintendo Switch, Steam Deck, keyboard, and mouse. Licensed under [CC0 1.0 Universal](assets/icons/mrbreakfast/LICENSE) (Public Domain).
 
 ## License
 

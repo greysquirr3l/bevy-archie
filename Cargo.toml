@@ -11,6 +11,7 @@ homepage = "https://github.com/greysquirr3l/bevy-archie"
 readme = "README.md"
 keywords = ["bevy", "gamepad", "controller", "input", "gamedev"]
 categories = ["game-development", "game-engines"]
+exclude = ["assets/", "target/", "reference_projects/", "docs/"]
 
 [features]
 default = []
