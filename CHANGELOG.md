@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0-beta.2] - 2026-01-22
+
+### Added
+
+- Amazon Luna controller detection and support
+  - Automatically detected via controller name containing "luna" or "amazon"
+  - Uses Xbox-style button layout (A/B/X/Y, LB/RB, LT/RT)
+  - SDL GameControllerDB mappings available for all platforms
+
 ## [0.2.0] - Unreleased
 
 ### Breaking Changes

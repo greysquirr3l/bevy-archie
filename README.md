@@ -26,6 +26,7 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 | Switch Joy-Con       | ✅        | 🔴       | 🔴                | ✅     | Nintendo    |
 | Steam Controller     | ✅        | ✅       | 🔴                | ✅     | Xbox        |
 | Stadia               | ✅        | 🔴       | 🔴                | ✅     | Xbox        |
+| Amazon Luna          | 🔴        | 🔴       | 🔴                | ✅     | Xbox        |
 | Generic              | 🔶        | 🔶       | 🔴                | ✅     | Xbox        |
 
 > **Legend**: ✅ Supported | 🔴 Hardware limitation | 🔶 Unknown (varies by device)
@@ -90,6 +91,7 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 - **Nintendo** - Switch Pro Controller, Joy-Cons
 - **Steam** - Steam Controller, Steam Deck
 - **Stadia** - Google Stadia Controller (Bluetooth mode)
+- **Amazon Luna** - Amazon Luna Controller (Xbox-style layout)
 - **Generic** - Any other standard gamepad
 
 **Note**: Stadia controllers must be switched to Bluetooth mode (a permanent one-time operation that was available until Dec 31, 2025). In Bluetooth mode, they function as standard Xbox-style gamepads.
@@ -348,6 +350,7 @@ cargo run --example ps5_dualsense_motion --features motion-backends
 - **Nintendo**: Joy-Con, Pro Controller, GameCube
 - **Steam**: Steam Controller, Steam Deck
 - **Stadia**: Google Stadia Controller (Bluetooth mode)
+- **Amazon Luna**: Amazon Luna Controller (Xbox-style layout)
 - **Generic**: Fallback for unrecognized controllers
 
 ## Advanced Features
