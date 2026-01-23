@@ -29,6 +29,7 @@ full = ["icons", "virtual_keyboard", "remapping"]
 
 [dependencies]
 bevy = { version = "0.17", default-features = false, features = [
+    "std",
     "bevy_gilrs",
     "bevy_render",
     "bevy_asset",
