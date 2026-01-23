@@ -2,7 +2,7 @@
 name = "bevy_archie"
 version = "0.1.6"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.91"
 description = "A comprehensive game controller support module for Bevy"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/greysquirr3l/bevy-archie"

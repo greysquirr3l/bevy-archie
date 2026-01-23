@@ -76,7 +76,10 @@ impl ControllerType {
 
     /// Get all button names for this controller type.
     #[must_use]
-    #[allow(clippy::too_many_lines)]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "exhaustive controller button mapping requires comprehensive listing"
+    )]
     pub fn button_names(self) -> &'static [&'static str] {
         match self {
             Self::Xbox => &[

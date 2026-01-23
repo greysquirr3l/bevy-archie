@@ -129,6 +129,15 @@ bevy_archie = { path = "path/to/bevy-archie" }
 bevy_archie = { path = "path/to/bevy-archie", features = ["full"] }
 ```
 
+### Library Size
+
+| Configuration    | Pre-link (.rlib) | Final Binary Impact |
+| ---------------- | ---------------- | ------------------- |
+| Default features | ~8.7 MB          | ~200-400 KB         |
+| All features     | ~9.7 MB          | ~300-500 KB         |
+
+The `.rlib` size includes Rust metadata and monomorphization templates. After LTO and dead code elimination, bevy_archie adds roughly **0.5-1%** overhead on top of a typical Bevy application (~50-80 MB).
+
 ## Quick Start
 
 ```rust

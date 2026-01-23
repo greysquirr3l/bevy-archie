@@ -166,10 +166,10 @@ impl std::ops::Not for InputCondition {
 #[derive(Debug, Clone)]
 pub struct StateCondition {
     /// The `TypeId` of the state type
-    #[allow(dead_code)]
+    #[expect(dead_code, reason = "stored for future state comparison functionality")]
     state_type_id: TypeId,
     /// Function to check if the current state matches
-    #[allow(dead_code)]
+    #[expect(dead_code, reason = "stored for future state comparison functionality")]
     check_fn: fn(&World) -> bool,
     /// Name for debugging
     state_name: &'static str,
