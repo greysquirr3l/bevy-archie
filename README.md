@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.93%2B-orange.svg)](https://www.rust-lang.org)
 [![Bevy](https://img.shields.io/badge/bevy-0.18-purple.svg)](https://bevyengine.org)
 [![Coverage](https://img.shields.io/badge/coverage-66.56%25-yellowgreen.svg)](target/coverage/tarpaulin-report.html)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevy.org/learn/quick-start/plugin-development/#main-branch-tracking)
@@ -128,6 +128,15 @@ bevy_archie = { path = "path/to/bevy-archie" }
 # Or with specific features:
 bevy_archie = { path = "path/to/bevy-archie", features = ["full"] }
 ```
+
+### Library Size
+
+| Configuration    | Pre-link (.rlib) | Final Binary Impact |
+| ---------------- | ---------------- | ------------------- |
+| Default features | ~8.7 MB          | ~200-400 KB         |
+| All features     | ~9.7 MB          | ~300-500 KB         |
+
+The `.rlib` size includes Rust metadata and monomorphization templates. After LTO and dead code elimination, bevy_archie adds roughly **0.5-1%** overhead on top of a typical Bevy application (~50-80 MB).
 
 ## Quick Start
 

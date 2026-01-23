@@ -11,7 +11,10 @@ use crate::actions::GameAction;
 
 /// Debug overlay state.
 #[derive(Debug, Clone, Default, Resource)]
-#[expect(clippy::struct_excessive_bools, reason = "debug toggles are naturally boolean flags")]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "debug toggles are naturally boolean flags"
+)]
 pub struct InputDebugger {
     /// Whether debugging is enabled.
     pub enabled: bool,
