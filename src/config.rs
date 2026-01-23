@@ -69,6 +69,11 @@ impl ControllerLayout {
             return Self::Stadia;
         }
 
+        // Amazon Luna controllers (Xbox-style layout)
+        if name_lower.contains("luna") || name_lower.contains("amazon") {
+            return Self::Xbox;
+        }
+
         Self::Generic
     }
 
@@ -513,6 +518,23 @@ mod tests {
         assert_eq!(
             ControllerLayout::from_name("Google Gamepad"),
             ControllerLayout::Stadia
+        );
+    }
+
+    #[test]
+    fn test_controller_layout_from_name_luna() {
+        // Amazon Luna uses Xbox-style button layout
+        assert_eq!(
+            ControllerLayout::from_name("Luna Controller"),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Amazon Luna"),
+            ControllerLayout::Xbox
+        );
+        assert_eq!(
+            ControllerLayout::from_name("Amazon Game Controller"),
+            ControllerLayout::Xbox
         );
     }
 
