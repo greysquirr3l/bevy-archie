@@ -923,7 +923,8 @@ We recommend [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/
 1. **Download the icon pack** from [itch.io](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts)
 
 2. **Extract to your project's assets folder:**
-   ```
+
+   ```text
    your_game/
    └── assets/
        └── icons/
@@ -936,6 +937,7 @@ We recommend [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/
    ```
 
 3. **Configure the icon system:**
+
    ```rust
    fn setup_icons(mut commands: Commands) {
        commands.insert_resource(
