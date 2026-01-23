@@ -151,7 +151,7 @@ pub fn update_touchpad_from_backend(
 /// Register motion backend resources and systems.
 #[expect(
     dead_code,
-    reason = "called from plugin when motion-backends feature is enabled"
+    reason = "reserved for future motion backend integration in ControllerPlugin"
 )]
 pub(crate) fn register_motion_backend(app: &mut App) {
     app.init_resource::<ActiveMotionBackend>()
@@ -161,7 +161,7 @@ pub(crate) fn register_motion_backend(app: &mut App) {
 /// Add motion backend systems.
 #[expect(
     dead_code,
-    reason = "called from plugin when motion-backends feature is enabled"
+    reason = "reserved for future motion backend integration in ControllerPlugin"
 )]
 pub(crate) fn add_motion_backend_systems(app: &mut App) {
     app.add_systems(
