@@ -10,6 +10,7 @@
 
 use bevy::prelude::*;
 use bevy_archie::prelude::*;
+use std::fmt::Write;
 
 fn main() {
     App::new()
@@ -70,36 +71,35 @@ fn display_controller_info(
         }
 
         // Display layout
-        info.push_str(&format!(
+        let _ = write!(
+            info,
             "\nButton Layout: {:?}\n",
             detected.model.default_layout()
-        ));
+        );
 
         // Display connection type hint
-        info.push_str(&format!(
-            "Connection: {:?}\n",
-            detected.connection_type_hint()
-        ));
+        let _ = writeln!(info, "Connection: {:?}", detected.connection_type_hint());
 
         // Display quirks
         let quirks = detected.quirks();
         if !quirks.is_empty() {
             info.push_str("\nSpecial Handling Required:\n");
             for quirk in quirks {
-                info.push_str(&format!("  • {:?}\n", quirk));
+                let _ = writeln!(info, "  • {quirk:?}");
             }
         }
 
         // Update the text display
         for mut text in &mut text_query {
-            text.0 = info.clone();
+            text.0.clone_from(&info);
         }
 
-        println!("{}", info);
+        println!("{info}");
     }
 }
 
-fn demonstrate_database(_commands: Commands) {
+#[allow(clippy::missing_const_for_fn)]
+fn demonstrate_database() {
     // This function demonstrates how to use the database for controller-specific logic
     // In a real game, you might do things like:
     //
@@ -129,55 +129,49 @@ fn print_supported_controllers() {
 
     // Sony controllers
     let ps3 = DetectedController::new(0x054c, 0x0268);
-    println!("✓ {} - {:?}", "PlayStation 3 DualShock 3", ps3.model);
+    println!("✓ PlayStation 3 DualShock 3 - {:?}", ps3.model);
 
     let ps4_usb = DetectedController::new(0x054c, 0x05c4);
-    println!(
-        "✓ {} - {:?}",
-        "PlayStation 4 DualShock 4 (USB)", ps4_usb.model
-    );
+    println!("✓ PlayStation 4 DualShock 4 (USB) - {:?}", ps4_usb.model);
 
     let ps4_bt = DetectedController::new(0x054c, 0x09cc);
-    println!(
-        "✓ {} - {:?}",
-        "PlayStation 4 DualShock 4 (BT)", ps4_bt.model
-    );
+    println!("✓ PlayStation 4 DualShock 4 (BT) - {:?}", ps4_bt.model);
 
     let ps5 = DetectedController::new(0x054c, 0x0ce6);
-    println!("✓ {} - {:?}", "PlayStation 5 DualSense", ps5.model);
+    println!("✓ PlayStation 5 DualSense - {:?}", ps5.model);
 
     // Microsoft controllers
     let xbox360 = DetectedController::new(0x045e, 0x028e);
-    println!("✓ {} - {:?}", "Xbox 360", xbox360.model);
+    println!("✓ Xbox 360 - {:?}", xbox360.model);
 
     let xboxone = DetectedController::new(0x045e, 0x02d1);
-    println!("✓ {} - {:?}", "Xbox One", xboxone.model);
+    println!("✓ Xbox One - {:?}", xboxone.model);
 
     let xboxseries = DetectedController::new(0x045e, 0x0b13);
-    println!("✓ {} - {:?}", "Xbox Series X|S", xboxseries.model);
+    println!("✓ Xbox Series X|S - {:?}", xboxseries.model);
 
     // Nintendo controllers
     let switch_pro = DetectedController::new(0x057e, 0x2009);
-    println!("✓ {} - {:?}", "Switch Pro Controller", switch_pro.model);
+    println!("✓ Switch Pro Controller - {:?}", switch_pro.model);
 
     let joycon_l = DetectedController::new(0x057e, 0x2006);
-    println!("✓ {} - {:?}", "Switch Joy-Con Left", joycon_l.model);
+    println!("✓ Switch Joy-Con Left - {:?}", joycon_l.model);
 
-    let switch2_pro = DetectedController::new(0x057e, 0x2072);
-    println!("✓ {} - {:?}", "Switch 2 Pro Controller", switch2_pro.model);
+    let ns2_pro = DetectedController::new(0x057e, 0x2072);
+    println!("✓ Switch 2 Pro Controller - {:?}", ns2_pro.model);
 
     // Others
     let steam = DetectedController::new(0x28de, 0x1142);
-    println!("✓ {} - {:?}", "Steam Controller", steam.model);
+    println!("✓ Steam Controller - {:?}", steam.model);
 
     let stadia = DetectedController::new(0x18d1, 0x9400);
-    println!("✓ {} - {:?}", "Google Stadia (Bluetooth)", stadia.model);
+    println!("✓ Google Stadia (Bluetooth) - {:?}", stadia.model);
 
     let eightbitdo_m30 = DetectedController::new(0x2dc8, 0x5006);
-    println!("✓ {} - {:?}", "8BitDo M30", eightbitdo_m30.model);
+    println!("✓ 8BitDo M30 - {:?}", eightbitdo_m30.model);
 
     let eightbitdo_sn30 = DetectedController::new(0x2dc8, 0x6001);
-    println!("✓ {} - {:?}", "8BitDo SN30 Pro", eightbitdo_sn30.model);
+    println!("✓ 8BitDo SN30 Pro - {:?}", eightbitdo_sn30.model);
 
     println!("\nTotal: 15+ controllers with hardware-specific support");
 }

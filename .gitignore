@@ -81,4 +81,7 @@ temp/
 *.cache
 
 # Development Documents
-docs/dev/docs/dev/BRANCH_WORKFLOW.md
+docs/
+!docs/HARDWARE_INTEGRATION_GUIDE.md
+!docs/TEST_COVERAGE.md
+!docs/assets/

@@ -952,28 +952,7 @@ The project includes comprehensive unit and integration tests covering:
 - **Icon System** (`icons`): Icon filename generation, platform-specific labels, asset loading
 - **Integration Tests**: Plugin initialization, resource management, end-to-end workflows
 
-**Coverage Goal**: 80% code coverage across all modules.
-
-### Running Coverage Analysis
-
-Install `tarpaulin` for coverage reports:
-
-```bash
-cargo install cargo-tarpaulin
-```
-
-Generate coverage report:
-
-```bash
-# HTML report in coverage/ directory
-cargo tarpaulin --out Html --output-dir coverage
-
-# Both HTML and console output
-cargo tarpaulin --out Html --out Stdout --output-dir coverage
-
-# With all features
-cargo tarpaulin --all-features --out Html --output-dir coverage
-```
+**Coverage Goal**: 80% code coverage across all modules. See [docs/TEST_COVERAGE.md](docs/TEST_COVERAGE.md) for coverage tools and analysis.
 
 ### Test Structure
 
