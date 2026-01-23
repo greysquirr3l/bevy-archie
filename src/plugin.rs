@@ -52,6 +52,10 @@ impl Plugin for ControllerPlugin {
         crate::profiles::register_profile_types(app);
         crate::debug::register_debug_types(app);
 
+        // Register priority feature types
+        crate::virtual_input::register_virtual_input_types(app);
+        crate::chords::register_chord_types(app);
+
         // Set up icon path if provided
         if let Some(path) = &self.icon_base_path {
             app.insert_resource(crate::icons::ControllerIconAssets::new(path.clone()));

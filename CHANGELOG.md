@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-01-23
+
+### Added
+
+- **Actionlike Trait**: New trait for defining custom action types, inspired by leafwing-input-manager
+  - Implement `Actionlike` on your own enum types for type-safe action handling
+  - Automatic reflection support via Bevy's `Reflect` trait
+- **Virtual Input Composites** (`src/virtual_input.rs`): Combine multiple inputs into unified axes
+  - `VirtualAxis` - Combine two buttons into a -1.0 to 1.0 axis
+  - `VirtualDPad` - Combine four buttons into a 2D vector
+  - `VirtualDPad3D` - Combine six buttons into a 3D vector
+  - `VirtualButton` - Combine multiple buttons with OR/AND logic
+- **Button Chords & Combos** (`src/chords.rs`): Advanced chord and combo detection
+  - `ButtonChord` - Detect simultaneous button presses
+  - `ClashStrategy` - Configure how overlapping chords are resolved
+  - `ModifierKey` - Shift/Ctrl/Alt modifier support for keyboard
+  - Configurable timing windows for chord detection
+- **Input Mocking for Tests** (`src/testing.rs`): Comprehensive testing utilities
+  - `MockInput` - Builder pattern for simulating input states
+  - `MockInputPlugin` - Drop-in plugin for test environments
+  - `MockInputSequence` - Script input sequences for automated testing
+- **Touch Joystick** (`src/touch_joystick.rs`): Mobile-style virtual joysticks
+  - Configurable dead zones and sensitivity
+  - Fixed or floating anchor modes
+  - Multi-touch support for dual-stick layouts
+- **Conditional Input Bindings** (`src/conditions.rs`): Context-aware action triggering
+  - `InputCondition` trait with `Always`, `InState`, `WhenResource`, `Custom` variants
+  - Chain conditions with `and()`, `or()`, `negated()` methods
+  - State-based binding activation (menu vs gameplay)
+- **Network Input Synchronization** (`src/networking.rs`): Multiplayer input sync
+  - `ActionDiff` - Efficient delta encoding for input state changes
+  - `ActionDiffBuffer` - Rollback-friendly input history
+  - Serialization helpers for netcode integration
+- **Build Script Helpers** (`src/build_helpers.rs`): Asset pipeline utilities
+  - `ControllerIconConfig` - Configure icon asset discovery
+  - `generate_icon_manifest()` - Generate icon manifests at build time
+  - Platform-specific asset organization
+- **Input State Machine** (`src/state_machine.rs`): FSM for input-driven state transitions
+  - `InputStateMachine` - Define states and transitions based on actions
+  - `StateMachineBuilder` - Fluent API for state machine construction
+  - Automatic transition detection and state change events
+
+### Fixed
+
+- Fixed 47+ clippy pedantic warnings across all new modules
+- Added `#[must_use]` attributes to all builder methods and pure functions
+- Implemented `std::ops::Not` trait for `InputCondition` (use `!condition` instead of `condition.not()`)
+- Added proper `# Errors` and `# Panics` documentation sections
+
 ## [0.1.5] - 2026-01-23
 
 ### Added

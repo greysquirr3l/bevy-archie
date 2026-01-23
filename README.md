@@ -64,9 +64,14 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 
 ### Advanced Input Features
 
+- **Actionlike Trait**: Define custom action enums with the `Actionlike` trait for type-safe input handling
 - **Haptic Feedback**: Rumble and vibration patterns (Constant, Pulse, Explosion, DamageTap, HeavyImpact, Engine, Heartbeat) - fully implemented
 - **Input Buffering**: Record and analyze input sequences for fighting game-style combo detection
 - **Action Modifiers**: Detect Tap, Hold, DoubleTap, LongPress, and Released events on actions
+- **Button Chords**: Detect simultaneous button combinations with configurable clash resolution
+- **Virtual Input Composites**: Combine buttons into virtual axes (`VirtualAxis`, `VirtualDPad`, `VirtualDPad3D`)
+- **Conditional Bindings**: Context-aware actions that activate based on game state or custom conditions
+- **Input State Machine**: Define state machines driven by input actions with automatic transitions
 - **Gyroscope Support**: Motion controls for PS4/PS5/Switch/Stadia/Steam controllers - complete gesture detection and data structures, needs hardware driver integration (HID/SDL2). See [ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs) and [switch_pro_gyro.rs](examples/switch_pro_gyro.rs)
 - **Touchpad Support**: PS4/PS5/Steam touchpad input with multi-touch and gesture detection (swipe, pinch, tap) - complete gesture detection and data structures, needs hardware driver integration (HID/SDL2). See [ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs) and [steam_touchpad.rs](examples/steam_touchpad.rs)
 
@@ -88,6 +93,16 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 - **Input Debugging**: Visualize input states, history, and analog values
 - **Input Recording**: Record input sequences for testing and replay
 - **Input Playback**: Play back recorded inputs for automated testing
+- **Input Mocking**: `MockInput` and `MockInputPlugin` for unit testing input-dependent systems
+- **Build Helpers**: Generate icon manifests and organize controller assets at build time
+
+### Mobile & Touch
+
+- **Touch Joystick**: Virtual on-screen joysticks for mobile platforms with fixed or floating modes
+
+### Networking
+
+- **Input Synchronization**: `ActionDiff` and `ActionDiffBuffer` for efficient network input sync with rollback support
 
 ## Supported Controllers
 
@@ -623,6 +638,249 @@ fn playback_recording(
         playback_events.write(PlaybackCommand {
             inputs: recorder.recorded.clone(),
         });
+    }
+}
+```
+
+### Virtual Input Composites
+
+Combine multiple buttons into unified axes:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn setup_virtual_inputs(mut commands: Commands) {
+    // Combine W/S keys into a vertical axis (-1.0 to 1.0)
+    let vertical = VirtualAxis::new(KeyCode::KeyW, KeyCode::KeyS);
+    
+    // Combine WASD into a 2D movement vector
+    let movement = VirtualDPad::new(
+        KeyCode::KeyW,  // up
+        KeyCode::KeyS,  // down
+        KeyCode::KeyA,  // left
+        KeyCode::KeyD,  // right
+    );
+    
+    // Combine multiple buttons with OR logic
+    let any_jump = VirtualButton::any(vec![
+        KeyCode::Space,
+        KeyCode::KeyW,
+    ]);
+}
+```
+
+### Button Chords
+
+Detect simultaneous button presses:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn setup_chords(mut chord_registry: ResMut<ChordRegistry>) {
+    // Register Ctrl+S chord for saving
+    let save_chord = ButtonChord::from_buttons([KeyCode::ControlLeft, KeyCode::KeyS]);
+    chord_registry.register("save", save_chord);
+    
+    // Register gamepad chord (LB + RB for special move)
+    let special_chord = ButtonChord::from_buttons([
+        GamepadButton::LeftTrigger,
+        GamepadButton::RightTrigger,
+    ]);
+    chord_registry.register("special_move", special_chord)
+        .with_clash_strategy(ClashStrategy::PrioritizeLongest);
+}
+
+fn handle_chords(mut chord_events: MessageReader<ChordTriggered>) {
+    for event in chord_events.read() {
+        match event.chord_name.as_str() {
+            "save" => println!("Save triggered!"),
+            "special_move" => println!("Special move!"),
+            _ => {}
+        }
+    }
+}
+```
+
+### Conditional Bindings
+
+Make actions context-aware:
+
+```rust
+use bevy_archie::prelude::*;
+
+#[derive(States, Default, Clone, Eq, PartialEq, Debug, Hash)]
+enum GameState {
+    #[default]
+    Menu,
+    Playing,
+    Paused,
+}
+
+fn setup_conditional_bindings(mut bindings: ResMut<ConditionalBindings>) {
+    // "Confirm" only works in menus
+    bindings.add(
+        GameAction::Confirm,
+        KeyCode::Enter,
+        InputCondition::in_state(GameState::Menu),
+    );
+    
+    // "Attack" only works while playing
+    bindings.add(
+        GameAction::Primary,
+        KeyCode::Space,
+        InputCondition::in_state(GameState::Playing),
+    );
+    
+    // Chain conditions: works in Playing OR Paused
+    bindings.add(
+        GameAction::Pause,
+        KeyCode::Escape,
+        InputCondition::in_state(GameState::Playing)
+            .or(InputCondition::in_state(GameState::Paused)),
+    );
+}
+```
+
+### Input State Machine
+
+Define states driven by input:
+
+```rust
+use bevy_archie::prelude::*;
+
+fn setup_state_machine(mut commands: Commands) {
+    let state_machine = StateMachineBuilder::new()
+        .add_state("idle")
+        .add_state("walking")
+        .add_state("running")
+        .add_state("jumping")
+        .initial_state("idle")
+        // Transitions based on actions
+        .add_transition("idle", "walking", GameAction::Up)
+        .add_transition("idle", "walking", GameAction::Down)
+        .add_transition("walking", "running", GameAction::Primary) // Sprint
+        .add_transition("idle", "jumping", GameAction::Confirm)    // Jump
+        .add_transition("walking", "jumping", GameAction::Confirm)
+        // Return to idle when no input
+        .add_transition("walking", "idle", GameAction::Released)
+        .build();
+    
+    commands.insert_resource(state_machine);
+}
+
+fn handle_state_changes(mut state_events: MessageReader<StateMachineTransition>) {
+    for event in state_events.read() {
+        println!("State changed: {} -> {}", event.from_state, event.to_state);
+    }
+}
+```
+
+### Input Mocking for Tests
+
+Test input-dependent systems:
+
+```rust
+use bevy_archie::prelude::*;
+use bevy_archie::testing::*;
+
+#[test]
+fn test_jump_mechanic() {
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins)
+       .add_plugins(MockInputPlugin);  // Use mock input instead of real
+    
+    // Simulate pressing jump
+    let mock = MockInput::new()
+        .press(GameAction::Confirm)
+        .with_duration(Duration::from_millis(100));
+    
+    app.world.insert_resource(mock);
+    app.update();
+    
+    // Assert jump was triggered
+    let actions = app.world.resource::<ActionState>();
+    assert!(actions.just_pressed(GameAction::Confirm));
+}
+
+// Script a sequence of inputs
+fn test_combo_detection() {
+    let sequence = MockInputSequence::new()
+        .then_press(GameAction::Down, Duration::from_millis(50))
+        .then_press(GameAction::Right, Duration::from_millis(50))
+        .then_press(GameAction::Primary, Duration::from_millis(50));
+    
+    // Inject and verify combo detection
+}
+```
+
+### Touch Joystick (Mobile)
+
+Add virtual joysticks for touch screens:
+
+```rust
+use bevy_archie::prelude::*;
+use bevy_archie::touch_joystick::*;
+
+fn setup_touch_controls(mut commands: Commands) {
+    // Left stick for movement (fixed position)
+    commands.spawn(TouchJoystick {
+        position: Vec2::new(150.0, 150.0),
+        radius: 100.0,
+        dead_zone: 0.15,
+        mode: JoystickMode::Fixed,
+        output_action: Some(GameAction::Up), // Maps to movement
+    });
+    
+    // Right stick for camera (floating - appears where you touch)
+    commands.spawn(TouchJoystick {
+        position: Vec2::ZERO,
+        radius: 80.0,
+        dead_zone: 0.1,
+        mode: JoystickMode::Floating,
+        output_action: Some(GameAction::LookUp),
+    });
+}
+
+fn read_joystick(joysticks: Query<&TouchJoystick>) {
+    for joystick in joysticks.iter() {
+        let direction = joystick.direction(); // Vec2 from -1 to 1
+        let magnitude = joystick.magnitude(); // 0.0 to 1.0
+    }
+}
+```
+
+### Network Input Sync
+
+Synchronize input state across network:
+
+```rust
+use bevy_archie::prelude::*;
+use bevy_archie::networking::*;
+
+fn send_input_to_server(
+    action_state: Res<ActionState>,
+    mut diff_buffer: ResMut<ActionDiffBuffer>,
+    mut network: ResMut<NetworkClient>,
+) {
+    // Generate diff from last sent state
+    if let Some(diff) = diff_buffer.generate_diff(&action_state) {
+        // Serialize and send
+        let bytes = diff.serialize().expect("serialization failed");
+        network.send_reliable(bytes);
+        
+        // Store for potential rollback
+        diff_buffer.push(diff);
+    }
+}
+
+fn receive_input_from_client(
+    mut network_events: MessageReader<NetworkPacket>,
+    mut remote_actions: ResMut<RemoteActionStates>,
+) {
+    for packet in network_events.read() {
+        let diff = ActionDiff::deserialize(&packet.data)
+            .expect("deserialization failed");
+        remote_actions.apply_diff(packet.player_id, diff);
     }
 }
 ```

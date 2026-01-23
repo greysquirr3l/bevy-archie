@@ -57,6 +57,9 @@
 
 pub mod action_modifiers;
 pub mod actions;
+pub mod build_helpers;
+pub mod chords;
+pub mod conditions;
 pub mod config;
 pub mod constants;
 pub mod debug;
@@ -67,12 +70,17 @@ pub mod icons;
 pub mod input_buffer;
 pub mod motion;
 pub mod multiplayer;
+pub mod networking;
 pub mod plugin;
 pub mod profiles;
 #[cfg(feature = "remapping")]
 pub mod remapping;
+pub mod state_machine;
+pub mod testing;
+pub mod touch_joystick;
 pub mod touchpad;
 pub mod virtual_cursor;
+pub mod virtual_input;
 #[cfg(feature = "virtual_keyboard")]
 pub mod virtual_keyboard;
 
@@ -80,7 +88,11 @@ pub mod prelude {
     //! Convenient imports for common use cases.
 
     pub use crate::action_modifiers::{ActionModifier, ModifiedActionEvent, ModifierConfig};
-    pub use crate::actions::{ActionMap, ActionState, GameAction};
+    pub use crate::actions::{ActionMap, ActionState, Actionlike, GameAction, InputBinding};
+    pub use crate::chords::{ButtonChord, ChordBinding, ClashStrategy, ModifierKey};
+    pub use crate::conditions::{
+        ConditionContext, Conditionable, ConditionalBinding, InputCondition,
+    };
     pub use crate::config::{ControllerConfig, ControllerLayout};
     pub use crate::debug::{InputDebugger, InputPlayback, InputRecorder};
     pub use crate::detection::{InputDevice, InputDeviceState};
@@ -89,11 +101,20 @@ pub mod prelude {
     pub use crate::icons::{ControllerIconAssets, IconSize};
     pub use crate::input_buffer::{Combo, ComboRegistry, InputBuffer};
     pub use crate::multiplayer::{ControllerOwnership, Player, PlayerId};
+    pub use crate::networking::{ActionDiff, ActionDiffBuffer, NetworkedInput};
     pub use crate::plugin::ControllerPlugin;
     pub use crate::profiles::{
         ControllerModel, ControllerProfile, DetectedController, ProfileRegistry,
     };
+    pub use crate::state_machine::{
+        InputStateMachine, StateMachineBuilder, StateTransitionEvent, TriggerType,
+    };
+    pub use crate::testing::{MockInput, MockInputPlugin};
+    pub use crate::touch_joystick::{
+        JoystickSide, TouchJoystick, TouchJoystickEvent, TouchJoystickPlugin, TouchJoystickSettings,
+    };
     pub use crate::touchpad::{TouchpadConfig, TouchpadData, TouchpadGesture};
+    pub use crate::virtual_input::{VirtualAxis, VirtualButton, VirtualDPad, VirtualDPad3D};
 
     #[cfg(feature = "remapping")]
     pub use crate::remapping::{RemapButton, RemapEvent, RemappingState, StartRemapEvent};

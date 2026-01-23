@@ -7,6 +7,56 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::hash::Hash;
+
+/// Trait for types that can be used as action identifiers.
+///
+/// Implement this trait on your own enum to define custom game actions.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_archie::actions::Actionlike;
+///
+/// #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+/// enum MyAction {
+///     Jump,
+///     Attack,
+///     Interact,
+/// }
+///
+/// impl Actionlike for MyAction {
+///     fn all() -> Vec<Self> {
+///         vec![Self::Jump, Self::Attack, Self::Interact]
+///     }
+///
+///     fn display_name(&self) -> &'static str {
+///         match self {
+///             Self::Jump => "Jump",
+///             Self::Attack => "Attack",
+///             Self::Interact => "Interact",
+///         }
+///     }
+/// }
+/// ```
+pub trait Actionlike: Clone + Copy + PartialEq + Eq + Hash + Send + Sync + 'static {
+    /// Get all variants of this action type.
+    fn all() -> Vec<Self>;
+
+    /// Get the display name for this action.
+    fn display_name(&self) -> &'static str;
+
+    /// Whether this action can be remapped by the player.
+    fn is_remappable(&self) -> bool {
+        true
+    }
+
+    /// Whether this action requires a binding (cannot be unbound).
+    fn is_required(&self) -> bool {
+        false
+    }
+}
 
 /// Predefined game actions that can be mapped to inputs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect)]
@@ -72,6 +122,74 @@ pub enum GameAction {
     Custom4,
 }
 
+impl Actionlike for GameAction {
+    fn all() -> Vec<Self> {
+        vec![
+            Self::Confirm,
+            Self::Cancel,
+            Self::Pause,
+            Self::Select,
+            Self::Up,
+            Self::Down,
+            Self::Left,
+            Self::Right,
+            Self::LookUp,
+            Self::LookDown,
+            Self::LookLeft,
+            Self::LookRight,
+            Self::Primary,
+            Self::Secondary,
+            Self::LeftShoulder,
+            Self::RightShoulder,
+            Self::LeftTrigger,
+            Self::RightTrigger,
+            Self::PageLeft,
+            Self::PageRight,
+            Self::Custom1,
+            Self::Custom2,
+            Self::Custom3,
+            Self::Custom4,
+        ]
+    }
+
+    fn display_name(&self) -> &'static str {
+        match self {
+            Self::Confirm => "Confirm",
+            Self::Cancel => "Cancel",
+            Self::Pause => "Pause",
+            Self::Select => "Select",
+            Self::Up => "Up",
+            Self::Down => "Down",
+            Self::Left => "Left",
+            Self::Right => "Right",
+            Self::LookUp => "Look Up",
+            Self::LookDown => "Look Down",
+            Self::LookLeft => "Look Left",
+            Self::LookRight => "Look Right",
+            Self::Primary => "Primary Action",
+            Self::Secondary => "Secondary Action",
+            Self::LeftShoulder => "Left Shoulder",
+            Self::RightShoulder => "Right Shoulder",
+            Self::LeftTrigger => "Left Trigger",
+            Self::RightTrigger => "Right Trigger",
+            Self::PageLeft => "Page Left",
+            Self::PageRight => "Page Right",
+            Self::Custom1 => "Custom 1",
+            Self::Custom2 => "Custom 2",
+            Self::Custom3 => "Custom 3",
+            Self::Custom4 => "Custom 4",
+        }
+    }
+
+    fn is_remappable(&self) -> bool {
+        !matches!(self, Self::Pause) // Pause is usually not remappable
+    }
+
+    fn is_required(&self) -> bool {
+        matches!(self, Self::Confirm | Self::Cancel | Self::Pause)
+    }
+}
+
 impl GameAction {
     /// Get all actions as a slice.
     #[must_use]
@@ -106,7 +224,8 @@ impl GameAction {
 
     /// Get the display name for this action.
     #[must_use]
-    pub const fn display_name(self) -> &'static str {
+    #[deprecated(since = "0.2.0", note = "Use Actionlike::display_name() instead")]
+    pub const fn display_name_legacy(self) -> &'static str {
         match self {
             Self::Confirm => "Confirm",
             Self::Cancel => "Cancel",
@@ -133,18 +252,6 @@ impl GameAction {
             Self::Custom3 => "Custom 3",
             Self::Custom4 => "Custom 4",
         }
-    }
-
-    /// Whether this action can be remapped by the player.
-    #[must_use]
-    pub const fn is_remappable(self) -> bool {
-        !matches!(self, Self::Pause) // Pause is usually not remappable
-    }
-
-    /// Whether this action requires a binding (cannot be unbound).
-    #[must_use]
-    pub const fn is_required(self) -> bool {
-        matches!(self, Self::Confirm | Self::Cancel | Self::Pause)
     }
 }
 
