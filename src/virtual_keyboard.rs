@@ -752,8 +752,8 @@ mod tests {
     fn test_virtual_keyboard_config_symbols() {
         let config = VirtualKeyboardConfig::default();
         assert_eq!(config.symbols1, "!@#$%^&*()");
-        assert_eq!(config.symbols2, "-_=+[]{}|");
-        assert_eq!(config.symbols3, ";:\"<>/\\~`");
+        assert_eq!(config.symbols2, "`~_-+=:;'\"");
+        assert_eq!(config.symbols3, "<>,.?/\\|");
     }
 
     #[test]
