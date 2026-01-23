@@ -252,7 +252,7 @@ mod tests {
     use super::*;
 
     #[test]
-    #[allow(clippy::float_cmp)]
+    #[expect(clippy::float_cmp, reason = "exact float comparison is intentional in tests with known values")]
     fn test_buffered_input_creation() {
         let input = BufferedInput {
             action: GameAction::Primary,
@@ -265,7 +265,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::float_cmp)]
+    #[expect(clippy::float_cmp, reason = "exact float comparison is intentional in tests with known values")]
     fn test_input_buffer_new() {
         let buffer = InputBuffer::new(Duration::from_millis(500));
         assert_eq!(buffer.window, Duration::from_millis(500));
@@ -274,7 +274,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::float_cmp)]
+    #[expect(clippy::float_cmp, reason = "exact float comparison is intentional in tests with known values")]
     fn test_input_buffer_default() {
         let buffer = InputBuffer::default();
         assert_eq!(buffer.inputs.len(), 0);
@@ -282,7 +282,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::indexing_slicing)]
+    #[expect(clippy::indexing_slicing, reason = "test verifies known buffer state")]
     fn test_input_buffer_push() {
         let mut buffer = InputBuffer::new(Duration::from_secs(1));
         buffer.push(GameAction::Primary, false);
@@ -294,7 +294,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::cast_lossless)]
+    #[expect(clippy::cast_lossless, reason = "loop counter fits in f64 for practical buffer testing")]
     fn test_input_buffer_max_size() {
         let mut buffer = InputBuffer::new(Duration::from_secs(100));
 
@@ -331,7 +331,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::indexing_slicing)]
+    #[expect(clippy::indexing_slicing, reason = "test verifies known buffer state")]
     fn test_input_buffer_check_sequence_match() {
         let mut buffer = InputBuffer::new(Duration::from_secs(10));
 

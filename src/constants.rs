@@ -45,7 +45,11 @@ pub mod analog_stick {
 
     /// Convert normalized value back to raw 8-bit.
     #[must_use]
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "intentional conversion to u8 range 0-255"
+    )]
     pub fn denormalize(normalized: f32) -> u8 {
         ((normalized * f32::from(CENTER)) + f32::from(CENTER)) as u8
     }
@@ -82,7 +86,11 @@ pub mod trigger {
 
     /// Convert normalized value back to raw.
     #[must_use]
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "intentional conversion to u8 range 0-255"
+    )]
     pub fn denormalize(normalized: f32) -> u8 {
         (normalized * f32::from(MAX)) as u8
     }

@@ -18,7 +18,7 @@
 //!
 //! Due to the callback-based nature of `dualsense-rs` and its requirement for
 //! `'static` closures, a full implementation requires either:
-//! - Using `lazy_static` or `once_cell` for global state
+//! - Using `std::sync::LazyLock` (stable in Rust 1.80+) for global state
 //! - Using `Box::leak` to create static references
 //!
 //! This is a reference implementation showing the intended architecture.
