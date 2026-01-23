@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn test_analog_stick_normalize_max() {
-        assert_relative_eq!(analog_stick::normalize(255), 0.9921875); // ~1.0
+        assert_relative_eq!(analog_stick::normalize(255), 0.992_187_5); // ~1.0
     }
 
     #[test]
