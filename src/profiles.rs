@@ -9,6 +9,30 @@ use std::collections::HashMap;
 use crate::actions::ActionMap;
 use crate::config::ControllerLayout;
 
+/// Controller connection type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+pub enum ConnectionType {
+    /// USB wired connection.
+    USB,
+    /// Bluetooth wireless connection.
+    Bluetooth,
+    /// Unknown connection type.
+    Unknown,
+}
+
+/// Controller-specific quirks or special handling requirements.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+pub enum ControllerQuirk {
+    /// DualShock 4 over Bluetooth uses different HID report format than USB.
+    DS4BluetoothReportDiffers,
+    /// Some 8BitDo controllers report as Xbox but need special handling.
+    EightBitDoXInputMode,
+    /// Switch Pro needs handshake over USB before data is available.
+    SwitchProUSBHandshake,
+    /// Controller requires big-endian value interpretation (e.g., PS3 SIXAXIS).
+    BigEndianValues,
+}
+
 /// Controller model/type identification.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
 pub enum ControllerModel {
@@ -18,6 +42,8 @@ pub enum ControllerModel {
     XboxOne,
     /// Xbox Series X|S controller.
     XboxSeriesXS,
+    /// `PlayStation` 3 `DualShock` 3 (SIXAXIS).
+    PS3,
     /// `PlayStation` 4 `DualShock` 4.
     PS4,
     /// `PlayStation` 5 `DualSense`.
@@ -26,10 +52,22 @@ pub enum ControllerModel {
     SwitchPro,
     /// Nintendo Switch Joy-Con (pair).
     SwitchJoyCon,
+    /// Nintendo Switch 2 Pro Controller.
+    Switch2Pro,
+    /// Nintendo Switch 2 GameCube-style controller.
+    Switch2GC,
     /// Steam Controller.
     Steam,
     /// Google Stadia Controller (Bluetooth mode).
     Stadia,
+    /// Amazon Luna Controller.
+    Luna,
+    /// 8BitDo M30 (Genesis/Mega Drive style).
+    EightBitDoM30,
+    /// 8BitDo SN30 Pro (SNES style).
+    EightBitDoSN30Pro,
+    /// HORI Fighting Commander.
+    HoriFightingCommander,
     /// Generic/unknown controller.
     Generic,
 }
@@ -39,9 +77,16 @@ impl ControllerModel {
     #[must_use]
     pub const fn default_layout(self) -> ControllerLayout {
         match self {
-            Self::Xbox360 | Self::XboxOne | Self::XboxSeriesXS => ControllerLayout::Xbox,
-            Self::PS4 | Self::PS5 => ControllerLayout::PlayStation,
-            Self::SwitchPro | Self::SwitchJoyCon => ControllerLayout::Nintendo,
+            Self::Xbox360 | Self::XboxOne | Self::XboxSeriesXS | Self::Luna => {
+                ControllerLayout::Xbox
+            }
+            Self::PS3 | Self::PS4 | Self::PS5 => ControllerLayout::PlayStation,
+            Self::SwitchPro | Self::SwitchJoyCon | Self::Switch2Pro | Self::Switch2GC => {
+                ControllerLayout::Nintendo
+            }
+            Self::EightBitDoM30 => ControllerLayout::Nintendo, // Genesis/MD layout similar to Nintendo
+            Self::EightBitDoSN30Pro => ControllerLayout::Nintendo, // SNES-style
+            Self::HoriFightingCommander => ControllerLayout::PlayStation,
             Self::Steam | Self::Stadia | Self::Generic => ControllerLayout::Xbox,
         }
     }
@@ -51,10 +96,13 @@ impl ControllerModel {
     pub const fn supports_gyro(self) -> bool {
         matches!(
             self,
-            Self::PS4
+            Self::PS3
+                | Self::PS4
                 | Self::PS5
                 | Self::SwitchPro
                 | Self::SwitchJoyCon
+                | Self::Switch2Pro
+                | Self::Switch2GC
                 | Self::Stadia
                 | Self::Steam
         )
@@ -64,6 +112,12 @@ impl ControllerModel {
     #[must_use]
     pub const fn supports_touchpad(self) -> bool {
         matches!(self, Self::PS4 | Self::PS5 | Self::Steam)
+    }
+
+    /// Check if this controller supports pressure-sensitive buttons.
+    #[must_use]
+    pub const fn supports_pressure_buttons(self) -> bool {
+        matches!(self, Self::PS3) // DualShock 3 has 12 pressure-sensitive buttons
     }
 
     /// Check if this controller supports adaptive triggers.
@@ -97,24 +151,90 @@ impl DetectedController {
     }
 
     /// Identify controller model from vendor/product IDs.
+    ///
+    /// VID/PID database compiled from:
+    /// - USB-IF Vendor ID Database
+    /// - Joypad OS controller registry
+    /// - Community controller databases
     fn identify(vendor_id: u16, product_id: u16) -> ControllerModel {
         match (vendor_id, product_id) {
-            // Microsoft Xbox controllers
+            // Microsoft Xbox controllers (VID: 0x045E)
             (0x045e, 0x028e) => ControllerModel::Xbox360,
-            (0x045e, 0x02d1) => ControllerModel::XboxOne,
-            (0x045e, 0x0b13) => ControllerModel::XboxSeriesXS,
-            // Sony PlayStation controllers
-            (0x054c, 0x05c4 | 0x09cc) => ControllerModel::PS4, // PS4 and PS4 Slim
-            (0x054c, 0x0ce6) => ControllerModel::PS5,
-            // Nintendo Switch controllers
+            (0x045e, 0x02d1 | 0x02dd | 0x02e3 | 0x02ea | 0x0b00) => ControllerModel::XboxOne,
+            (0x045e, 0x0b12 | 0x0b13) => ControllerModel::XboxSeriesXS,
+
+            // Sony PlayStation controllers (VID: 0x054C)
+            (0x054c, 0x0268) => ControllerModel::PS3, // DualShock 3 / SIXAXIS
+            (0x054c, 0x05c4) => ControllerModel::PS4, // DualShock 4 (USB)
+            (0x054c, 0x09cc) => ControllerModel::PS4, // DualShock 4 v2 (Bluetooth)
+            (0x054c, 0x0ba0) => ControllerModel::PS4, // DualShock 4 USB Wireless Adapter
+            (0x054c, 0x0ce6) => ControllerModel::PS5, // DualSense
+            (0x054c, 0x0df2) => ControllerModel::PS5, // DualSense Edge
+
+            // Nintendo Switch controllers (VID: 0x057E)
             (0x057e, 0x2009) => ControllerModel::SwitchPro,
-            (0x057e, 0x2006 | 0x2007) => ControllerModel::SwitchJoyCon,
-            // Valve Steam Controller
+            (0x057e, 0x2006) => ControllerModel::SwitchJoyCon, // Joy-Con Left
+            (0x057e, 0x2007) => ControllerModel::SwitchJoyCon, // Joy-Con Right
+            (0x057e, 0x2072) => ControllerModel::Switch2Pro,   // Switch 2 Pro Controller
+            (0x057e, 0x2073) => ControllerModel::Switch2GC,    // Switch 2 GameCube-style
+
+            // 8BitDo controllers (VID: 0x2DC8)
+            (0x2dc8, 0x5006) => ControllerModel::EightBitDoM30, // M30 (Genesis/MD style)
+            (0x2dc8, 0x6001 | 0x6101) => ControllerModel::EightBitDoSN30Pro, // SN30 Pro variants
+
+            // HORI controllers (VID: 0x0F0D)
+            (0x0f0d, 0x00c1) => ControllerModel::HoriFightingCommander,
+
+            // Valve Steam Controller (VID: 0x28DE)
             (0x28de, 0x1142) => ControllerModel::Steam,
-            // Google Stadia Controller (Bluetooth mode after shutdown)
+
+            // Google Stadia Controller (VID: 0x18D1) - Bluetooth mode only
             (0x18d1, 0x9400) => ControllerModel::Stadia,
+
+            // Amazon Luna Controller (VID: 0x0171)
+            (0x0171, 0x0419) => ControllerModel::Luna,
+
+            // Unknown/Generic
             _ => ControllerModel::Generic,
         }
+    }
+
+    /// Get the connection type hint based on product ID patterns.
+    ///
+    /// Note: This is a heuristic based on common PID patterns.
+    /// Real connection type detection requires platform-specific APIs.
+    #[must_use]
+    pub fn connection_type_hint(&self) -> ConnectionType {
+        match (self.vendor_id, self.product_id) {
+            // Sony PS4 Bluetooth PIDs
+            (0x054c, 0x09cc | 0x0ba0) => ConnectionType::Bluetooth,
+            // Most others USB by default
+            _ => ConnectionType::Unknown,
+        }
+    }
+
+    /// Get quirks for this controller.
+    #[must_use]
+    pub fn quirks(&self) -> Vec<ControllerQuirk> {
+        let mut quirks = Vec::new();
+
+        match self.model {
+            ControllerModel::PS4 if self.product_id == 0x09cc => {
+                quirks.push(ControllerQuirk::DS4BluetoothReportDiffers);
+            }
+            ControllerModel::PS3 => {
+                quirks.push(ControllerQuirk::BigEndianValues);
+            }
+            ControllerModel::SwitchPro if self.connection_type_hint() == ConnectionType::USB => {
+                quirks.push(ControllerQuirk::SwitchProUSBHandshake);
+            }
+            ControllerModel::EightBitDoM30 | ControllerModel::EightBitDoSN30Pro => {
+                quirks.push(ControllerQuirk::EightBitDoXInputMode);
+            }
+            _ => {}
+        }
+
+        quirks
     }
 }
 
@@ -536,12 +656,19 @@ mod tests {
             ControllerModel::Xbox360,
             ControllerModel::XboxOne,
             ControllerModel::XboxSeriesXS,
+            ControllerModel::PS3,
             ControllerModel::PS4,
             ControllerModel::PS5,
             ControllerModel::SwitchPro,
             ControllerModel::SwitchJoyCon,
+            ControllerModel::Switch2Pro,
+            ControllerModel::Switch2GC,
             ControllerModel::Steam,
             ControllerModel::Stadia,
+            ControllerModel::Luna,
+            ControllerModel::EightBitDoM30,
+            ControllerModel::EightBitDoSN30Pro,
+            ControllerModel::HoriFightingCommander,
             ControllerModel::Generic,
         ];
 
@@ -553,6 +680,90 @@ mod tests {
                 }
             }
         }
+    }
+
+    // ========== New Controller Detection Tests ==========
+
+    #[test]
+    fn test_detected_controller_identify_ps3() {
+        let detected = DetectedController::new(0x054c, 0x0268);
+        assert_eq!(detected.model, ControllerModel::PS3);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_switch2_pro() {
+        let detected = DetectedController::new(0x057e, 0x2072);
+        assert_eq!(detected.model, ControllerModel::Switch2Pro);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_switch2_gc() {
+        let detected = DetectedController::new(0x057e, 0x2073);
+        assert_eq!(detected.model, ControllerModel::Switch2GC);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_8bitdo_m30() {
+        let detected = DetectedController::new(0x2dc8, 0x5006);
+        assert_eq!(detected.model, ControllerModel::EightBitDoM30);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_8bitdo_sn30pro() {
+        let detected = DetectedController::new(0x2dc8, 0x6001);
+        assert_eq!(detected.model, ControllerModel::EightBitDoSN30Pro);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_hori_fighting_commander() {
+        let detected = DetectedController::new(0x0f0d, 0x00c1);
+        assert_eq!(detected.model, ControllerModel::HoriFightingCommander);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_luna() {
+        let detected = DetectedController::new(0x0171, 0x0419);
+        assert_eq!(detected.model, ControllerModel::Luna);
+    }
+
+    #[test]
+    fn test_connection_type_hint_bluetooth() {
+        let detected = DetectedController::new(0x054c, 0x09cc);
+        assert_eq!(detected.connection_type_hint(), ConnectionType::Bluetooth);
+    }
+
+    #[test]
+    fn test_connection_type_hint_unknown() {
+        let detected = DetectedController::new(0x045e, 0x028e);
+        assert_eq!(detected.connection_type_hint(), ConnectionType::Unknown);
+    }
+
+    #[test]
+    fn test_quirks_ps4_bluetooth() {
+        let detected = DetectedController::new(0x054c, 0x09cc);
+        let quirks = detected.quirks();
+        assert!(quirks.contains(&ControllerQuirk::DS4BluetoothReportDiffers));
+    }
+
+    #[test]
+    fn test_quirks_ps3() {
+        let detected = DetectedController::new(0x054c, 0x0268);
+        let quirks = detected.quirks();
+        assert!(quirks.contains(&ControllerQuirk::BigEndianValues));
+    }
+
+    #[test]
+    fn test_quirks_8bitdo() {
+        let detected = DetectedController::new(0x2dc8, 0x5006);
+        let quirks = detected.quirks();
+        assert!(quirks.contains(&ControllerQuirk::EightBitDoXInputMode));
+    }
+
+    #[test]
+    fn test_supports_pressure_buttons() {
+        assert!(ControllerModel::PS3.supports_pressure_buttons());
+        assert!(!ControllerModel::PS4.supports_pressure_buttons());
+        assert!(!ControllerModel::Xbox360.supports_pressure_buttons());
     }
 
     // ========== Additional DetectedController Tests ==========
