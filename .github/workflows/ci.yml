@@ -197,7 +197,7 @@ jobs:
       - name: Install Rust toolchain (MSRV)
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.88"
+          toolchain: "1.91"
 
       - name: Install system dependencies
         run: |
