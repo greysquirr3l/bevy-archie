@@ -18,7 +18,7 @@
 //!
 //! Due to the callback-based nature of `dualsense-rs` and its requirement for
 //! `'static` closures, a full implementation requires either:
-//! - Using `lazy_static` or `once_cell` for global state
+//! - Using `std::sync::LazyLock` for global state (Rust 1.80+)
 //! - Using `Box::leak` to create static references
 //!
 //! This is a reference implementation showing the intended architecture.
@@ -85,15 +85,14 @@ impl DualSenseBackend {
     ///
     /// # Implementation Pattern
     ///
-    /// A full implementation using `once_cell` would look like:
+    /// A full implementation using `std::sync::LazyLock` (Rust 1.80+):
     /// ```ignore
     /// use dualsense_rs::DualSense;
-    /// use once_cell::sync::Lazy;
-    /// use std::sync::{Arc, Mutex};
+    /// use std::sync::{Arc, LazyLock, Mutex};
     ///
     /// // Global state accessible from 'static callbacks
-    /// static DUALSENSE_STATE: Lazy<Arc<Mutex<DualSenseState>>> =
-    ///     Lazy::new(|| Arc::new(Mutex::new(DualSenseState::default())));
+    /// static DUALSENSE_STATE: LazyLock<Arc<Mutex<DualSenseState>>> =
+    ///     LazyLock::new(|| Arc::new(Mutex::new(DualSenseState::default())));
     ///
     /// pub fn new() -> Option<Self> {
     ///     let mut controller = DualSense::default();
@@ -127,8 +126,8 @@ impl DualSenseBackend {
     /// # Current Status
     ///
     /// This placeholder returns `None` and logs a warning. To use `DualSense`
-    /// motion controls, implement the pattern above using `once_cell` or
-    /// `lazy_static` for global state management.
+    /// motion controls, implement the pattern above using `std::sync::LazyLock`
+    /// for global state management.
     #[cfg(feature = "dualsense")]
     #[must_use]
     pub fn new() -> Option<Self> {
@@ -136,7 +135,7 @@ impl DualSenseBackend {
         // See documentation above for the implementation pattern.
         log::warn!(
             "DualSense backend requires global state for 'static callbacks. \
-             See DualSenseBackend::new() docs for implementation pattern using once_cell."
+             See DualSenseBackend::new() docs for implementation pattern using std::sync::LazyLock."
         );
         None
     }

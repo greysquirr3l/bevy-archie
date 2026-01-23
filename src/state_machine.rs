@@ -177,7 +177,7 @@ pub struct InputDrivenState<S, A> {
     /// Reference to the state machine
     _machine: std::marker::PhantomData<(S, A)>,
     /// Last processed input frame
-    #[allow(dead_code)]
+    #[expect(dead_code, reason = "stored for future frame-based input processing")]
     last_frame: u64,
 }
 

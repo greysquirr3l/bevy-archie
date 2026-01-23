@@ -53,7 +53,7 @@ pub fn normalize_coords(x: u16, y: u16, max_x: u16, max_y: u16) -> (f32, f32) {
 
 /// Convert normalized coordinates back to raw values for a specific touchpad.
 #[must_use]
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+#[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "intentional conversion to u16 touchpad coordinates")]
 pub fn denormalize_coords(x: f32, y: f32, max_x: u16, max_y: u16) -> (u16, u16) {
     ((x * f32::from(max_x)) as u16, (y * f32::from(max_y)) as u16)
 }

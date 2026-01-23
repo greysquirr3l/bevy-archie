@@ -1,8 +1,14 @@
-#![allow(clippy::float_cmp, clippy::doc_markdown)]
+#![expect(
+    clippy::float_cmp,
+    clippy::doc_markdown,
+    reason = "tests use exact float comparison with known values, doc examples don't need links"
+)]
 
 //! Integration tests for bevy_archie.
 
+use bevy::asset::AssetPlugin;
 use bevy::prelude::*;
+use bevy::state::app::StatesPlugin;
 use bevy_archie::action_modifiers::ActionModifier;
 use bevy_archie::gyro::MotionGesture;
 use bevy_archie::haptics::{RumbleController, RumbleIntensity, RumblePattern};
@@ -14,11 +20,22 @@ use bevy_archie::profiles::ControllerModel;
 use bevy_archie::touchpad::TouchpadGesture;
 use std::time::Duration;
 
+/// Creates a minimal test app with all required plugins for ControllerPlugin.
+fn create_test_app() -> App {
+    let mut app = App::new();
+    app.add_plugins((
+        MinimalPlugins,
+        bevy::input::InputPlugin,
+        AssetPlugin::default(),
+        StatesPlugin,
+    ))
+    .add_plugins(ControllerPlugin::default());
+    app
+}
+
 #[test]
 fn test_plugin_initialization() {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
-        .add_plugins(ControllerPlugin::default());
+    let mut app = create_test_app();
 
     app.update();
 
@@ -31,9 +48,7 @@ fn test_plugin_initialization() {
 
 #[test]
 fn test_action_state_updates() {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
-        .add_plugins(ControllerPlugin::default());
+    let mut app = create_test_app();
 
     app.update();
 
@@ -45,9 +60,7 @@ fn test_action_state_updates() {
 
 #[test]
 fn test_input_device_state_switch() {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
-        .add_plugins(ControllerPlugin::default());
+    let mut app = create_test_app();
 
     {
         let mut state = app.world_mut().resource_mut::<InputDeviceState>();
@@ -62,9 +75,7 @@ fn test_input_device_state_switch() {
 
 #[test]
 fn test_controller_config_modifications() {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
-        .add_plugins(ControllerPlugin::default());
+    let mut app = create_test_app();
 
     {
         let mut config = app.world_mut().resource_mut::<ControllerConfig>();
@@ -81,9 +92,7 @@ fn test_controller_config_modifications() {
 
 #[test]
 fn test_action_bindings() {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
-        .add_plugins(ControllerPlugin::default());
+    let mut app = create_test_app();
 
     {
         let mut action_map = app.world_mut().resource_mut::<ActionMap>();
@@ -101,9 +110,7 @@ fn test_action_bindings() {
 
 #[test]
 fn test_multiplayer_controller_assignment() {
-    let mut app = App::new();
-    app.add_plugins((MinimalPlugins, bevy::input::InputPlugin))
-        .add_plugins(ControllerPlugin::default());
+    let mut app = create_test_app();
 
     let gamepad = app.world_mut().spawn_empty().id();
 

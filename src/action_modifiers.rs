@@ -84,7 +84,7 @@ impl ActionModifierState {
         // Find the held action
         if let Some(idx) = self.held_actions.iter().position(|(a, _)| *a == action) {
             let (_, press_time) = self.held_actions.remove(idx);
-            #[allow(clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_possible_truncation, reason = "duration fits in f32 for practical input timing")]
             let duration = (time - press_time) as f32;
 
             // Check for tap
@@ -121,7 +121,7 @@ impl ActionModifierState {
 
     /// Check for held actions that exceeded long press duration.
     #[must_use]
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation, reason = "duration fits in f32 for practical input timing")]
     pub fn check_long_press(&mut self, time: f64) -> Vec<GameAction> {
         self.held_actions
             .iter()
@@ -153,7 +153,7 @@ pub fn detect_action_modifiers(
         if action_state.just_released(action) {
             let modifiers = modifier_state.record_release(action, current_time);
             for modifier in modifiers {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation, reason = "duration fits in f32 for practical input timing")]
                 let duration = modifier_state
                     .held_actions
                     .iter()
