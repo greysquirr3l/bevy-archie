@@ -130,6 +130,7 @@ impl DualSenseBackend {
     /// motion controls, implement the pattern above using `once_cell` or
     /// `lazy_static` for global state management.
     #[cfg(feature = "dualsense")]
+    #[must_use]
     pub fn new() -> Option<Self> {
         // Full implementation requires 'static callbacks with global state.
         // See documentation above for the implementation pattern.
@@ -142,6 +143,7 @@ impl DualSenseBackend {
 
     /// Create a backend without the dualsense feature (always returns None).
     #[cfg(not(feature = "dualsense"))]
+    #[must_use]
     pub fn new() -> Option<Self> {
         None
     }

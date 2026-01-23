@@ -8,7 +8,7 @@ use bevy::prelude::*;
 // Sourced from PS4/PS5 HID descriptors and verified against Joypad OS implementation
 // Reference: https://github.com/joypad-ai/joypad-os/blob/main/src/usb/usbd/descriptors/ps4_descriptors.h
 
-/// DualShock 4 (PS4) touchpad resolution.
+/// `DualShock` 4 (PS4) touchpad resolution.
 pub mod dualshock4_touchpad {
     /// Touchpad width in native resolution.
     pub const WIDTH: u16 = 1920;
@@ -16,7 +16,7 @@ pub mod dualshock4_touchpad {
     pub const HEIGHT: u16 = 943;
 }
 
-/// DualSense (PS5) touchpad resolution.
+/// `DualSense` (PS5) touchpad resolution.
 pub mod dualsense_touchpad {
     /// Touchpad width in native resolution (same as DS4).
     pub const WIDTH: u16 = 1920;
@@ -53,6 +53,7 @@ pub fn normalize_coords(x: u16, y: u16, max_x: u16, max_y: u16) -> (f32, f32) {
 
 /// Convert normalized coordinates back to raw values for a specific touchpad.
 #[must_use]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn denormalize_coords(x: f32, y: f32, max_x: u16, max_y: u16) -> (u16, u16) {
     ((x * f32::from(max_x)) as u16, (y * f32::from(max_y)) as u16)
 }
