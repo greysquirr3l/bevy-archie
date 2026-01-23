@@ -159,7 +159,7 @@ Add to affected source files:
 
 Create `NOTICE` at repository root:
 
-```
+```text
 Bevy Archie
 Copyright (c) 2024 [Your Name/Organization]
 

@@ -7,7 +7,7 @@ Joypad OS is a **firmware platform** for RP2040 microcontrollers that handles ha
 ## Architectural Differences
 
 | Aspect | Joypad OS | Bevy Archie |
-|--------|-----------|-------------|
+| -------- | ----------- | ------------- |
 | **Platform** | RP2040 microcontroller firmware (C) | Desktop/Mobile application library (Rust/Bevy) |
 | **Purpose** | Hardware adapter (USB→Console protocols) | Game engine input abstraction |
 | **Language** | C with TinyUSB | Rust with Bevy/gilrs |
@@ -410,7 +410,7 @@ pub fn normalize_touchpad_coords(x: u16, y: u16, controller: ControllerModel) ->
 
 ### From Joypad OS (Read for Patterns)
 
-```
+```text
 src/usb/usbh/hid/
 ├── hid_registry.c              ← Controller type enum & VID/PID database
 ├── hid_registry.h              ← CONTROLLER_* enum definitions  

@@ -78,6 +78,7 @@ impl ActiveMotionBackend {
     }
 
     /// Check if the backend is connected.
+    #[must_use]
     pub fn is_connected(&self) -> bool {
         self.backend.is_connected()
     }

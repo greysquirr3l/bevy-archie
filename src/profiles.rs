@@ -13,7 +13,7 @@ use crate::config::ControllerLayout;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
 pub enum ConnectionType {
     /// USB wired connection.
-    USB,
+    Usb,
     /// Bluetooth wireless connection.
     Bluetooth,
     /// Unknown connection type.
@@ -23,7 +23,7 @@ pub enum ConnectionType {
 /// Controller-specific quirks or special handling requirements.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
 pub enum ControllerQuirk {
-    /// DualShock 4 over Bluetooth uses different HID report format than USB.
+    /// `DualShock` 4 over Bluetooth uses different HID report format than USB.
     DS4BluetoothReportDiffers,
     /// Some 8BitDo controllers report as Xbox but need special handling.
     EightBitDoXInputMode,
@@ -204,7 +204,7 @@ impl DetectedController {
     /// Note: This is a heuristic based on common PID patterns.
     /// Real connection type detection requires platform-specific APIs.
     #[must_use]
-    pub fn connection_type_hint(&self) -> ConnectionType {
+    pub fn connection_type_hint(self) -> ConnectionType {
         match (self.vendor_id, self.product_id) {
             // Sony PS4 Bluetooth PIDs
             (0x054c, 0x09cc | 0x0ba0) => ConnectionType::Bluetooth,
@@ -215,7 +215,7 @@ impl DetectedController {
 
     /// Get quirks for this controller.
     #[must_use]
-    pub fn quirks(&self) -> Vec<ControllerQuirk> {
+    pub fn quirks(self) -> Vec<ControllerQuirk> {
         let mut quirks = Vec::new();
 
         match self.model {
@@ -225,7 +225,7 @@ impl DetectedController {
             ControllerModel::PS3 => {
                 quirks.push(ControllerQuirk::BigEndianValues);
             }
-            ControllerModel::SwitchPro if self.connection_type_hint() == ConnectionType::USB => {
+            ControllerModel::SwitchPro if self.connection_type_hint() == ConnectionType::Usb => {
                 quirks.push(ControllerQuirk::SwitchProUSBHandshake);
             }
             ControllerModel::EightBitDoM30 | ControllerModel::EightBitDoSN30Pro => {

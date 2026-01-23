@@ -13,7 +13,7 @@
 /// - **X-axis**: 0 = full left, 128 = center, 255 = full right
 /// - **Y-axis**: 0 = full up, 128 = center, 255 = full down
 ///
-/// This is the USB HID standard and matches DirectInput, GP2040-CE, and most
+/// This is the USB HID standard and matches `DirectInput`, GP2040-CE, and most
 /// controller firmware implementations.
 ///
 /// **Important**: Some game engines (including Bevy/gilrs) may invert the Y-axis
@@ -45,6 +45,7 @@ pub mod analog_stick {
 
     /// Convert normalized value back to raw 8-bit.
     #[must_use]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     pub fn denormalize(normalized: f32) -> u8 {
         ((normalized * f32::from(CENTER)) + f32::from(CENTER)) as u8
     }
@@ -81,6 +82,7 @@ pub mod trigger {
 
     /// Convert normalized value back to raw.
     #[must_use]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     pub fn denormalize(normalized: f32) -> u8 {
         (normalized * f32::from(MAX)) as u8
     }
