@@ -2,9 +2,12 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange.svg)](https://www.rust-lang.org)
-[![Bevy](https://img.shields.io/badge/bevy-0.17-purple.svg)](https://bevyengine.org)
+[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange.svg)](https://www.rust-lang.org)
+[![Bevy](https://img.shields.io/badge/bevy-0.18-purple.svg)](https://bevyengine.org)
 [![Coverage](https://img.shields.io/badge/coverage-66.56%25-yellowgreen.svg)](target/coverage/tarpaulin-report.html)
+[![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevy.org/learn/quick-start/plugin-development/#main-branch-tracking)
+[![crates.io](https://img.shields.io/crates/v/bevy_archie)](https://crates.io/crates/bevy_archie)
+[![docs.rs](https://docs.rs/bevy_archie/badge.svg)](https://docs.rs/bevy_archie)
 
 ![Archie Out of Context](docs/assets/archie_context.png)
 
@@ -28,6 +31,13 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 > **Legend**: ✅ Supported | 🔴 Hardware limitation | 🔶 Unknown (varies by device)
 >
 > **Note**: Gyroscope, touchpad, and adaptive triggers require platform-specific implementations. See [Advanced Features](#advanced-features) for details.
+
+## Version Compatibility
+
+| bevy | bevy_archie                                                              |
+|------|--------------------------------------------------------------------------|
+| 0.18 | 0.2.x (this branch)                                                      |
+| 0.17 | [0.1.x (main)](https://github.com/greysquirr3l/bevy-archie/tree/main)    |
 
 ## Features
 
@@ -681,6 +691,29 @@ cargo run --example config_persistence
 ```
 
 ## API Reference
+
+### SystemSets
+
+bevy_archie provides the following system sets for ordering your systems:
+
+```rust
+pub enum ControllerSystemSet {
+    /// Device detection runs first.
+    Detection,
+    /// Action state updates.
+    Actions,
+    /// UI updates based on input state.
+    UI,
+}
+```
+
+**Execution order**: `Detection` → `Actions` → `UI`
+
+Use these to order your systems relative to controller input processing:
+
+```rust
+app.add_systems(Update, my_input_system.after(ControllerSystemSet::Actions));
+```
 
 ### Core Types
 
