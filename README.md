@@ -20,13 +20,18 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 | Xbox 360             | 🔴        | 🔴       | 🔴                | ✅     | Xbox        |
 | Xbox One             | 🔴        | 🔴       | 🔴                | ✅     | Xbox        |
 | Xbox Series X\|S     | 🔴        | 🔴       | 🔴                | ✅     | Xbox        |
+| PlayStation 3        | ✅        | 🔴       | 🔴                | ✅     | PlayStation |
 | PlayStation 4        | ✅        | ✅       | 🔴                | ✅     | PlayStation |
 | PlayStation 5        | ✅        | ✅       | ✅                | ✅     | PlayStation |
 | Switch Pro           | ✅        | 🔴       | 🔴                | ✅     | Nintendo    |
+| Switch 2 Pro         | ✅        | 🔴       | 🔴                | ✅     | Nintendo    |
 | Switch Joy-Con       | ✅        | 🔴       | 🔴                | ✅     | Nintendo    |
 | Steam Controller     | ✅        | ✅       | 🔴                | ✅     | Xbox        |
 | Stadia               | ✅        | 🔴       | 🔴                | ✅     | Xbox        |
 | Amazon Luna          | 🔴        | 🔴       | 🔴                | ✅     | Xbox        |
+| 8BitDo M30           | 🔴        | 🔴       | 🔴                | ✅     | Sega        |
+| 8BitDo SN30 Pro      | 🔴        | 🔴       | 🔴                | ✅     | Nintendo    |
+| HORI Fighting Cmd    | 🔴        | 🔴       | 🔴                | ✅     | PlayStation |
 | Generic              | 🔶        | 🔶       | 🔴                | ✅     | Xbox        |
 
 > **Legend**: ✅ Supported | 🔴 Hardware limitation | 🔶 Unknown (varies by device)
@@ -87,11 +92,13 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 ## Supported Controllers
 
 - **Xbox** - Xbox 360, Xbox One, Xbox Series X|S controllers
-- **PlayStation** - PS3, PS4, PS5 (DualShock and DualSense)
-- **Nintendo** - Switch Pro Controller, Joy-Cons
+- **PlayStation** - PS3, PS4, PS5 (DualShock 3, DualShock 4, and DualSense)
+- **Nintendo** - Switch Pro Controller, Switch 2 Pro, Joy-Cons
 - **Steam** - Steam Controller, Steam Deck
 - **Stadia** - Google Stadia Controller (Bluetooth mode)
 - **Amazon Luna** - Amazon Luna Controller (Xbox-style layout)
+- **8BitDo** - M30 (Sega-style), SN30 Pro (Nintendo-style)
+- **HORI** - Fighting Commander, HORIPAD series
 - **Generic** - Any other standard gamepad
 
 **Note**: Stadia controllers must be switched to Bluetooth mode (a permanent one-time operation that was available until Dec 31, 2025). In Bluetooth mode, they function as standard Xbox-style gamepads.

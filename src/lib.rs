@@ -58,6 +58,7 @@
 pub mod action_modifiers;
 pub mod actions;
 pub mod config;
+pub mod constants;
 pub mod debug;
 pub mod detection;
 pub mod gyro;

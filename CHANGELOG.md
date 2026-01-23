@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2026-01-23
+
+### Added
+
+- **Enhanced Controller Database**: Expanded VID/PID detection database with 30+ controller entries
+  - PlayStation 3 DualShock 3 controllers (wired and Bluetooth)
+  - Nintendo Switch 2 Pro Controller and GameCube-style controller
+  - 8BitDo M30 and SN30 Pro controllers
+  - HORI Fighting Commander and HORIPAD series
+  - Additional Amazon Luna controller VIDs
+- **Motion Sensor Calibration**: Hardware-accurate calibration constants for motion sensors
+  - DualSense (PS5): ±2000°/s gyro, ±4g accelerometer at 16-bit resolution
+  - DualShock 4 (PS4): ±2000°/s gyro, ±4g accelerometer at 16-bit resolution
+  - DualShock 3 (PS3): ±500°/s gyro, ±2g accelerometer at 10-bit resolution
+  - Nintendo Switch: ±2000°/s gyro, ±8g accelerometer at 16-bit resolution
+- **Touchpad Resolution Constants**: Precise touchpad dimensions for coordinate normalization
+  - DualShock 4: 1920×943 pixels
+  - DualSense: 1920×1080 pixels
+  - Steam Controller/Deck: 32767×32767 (16-bit range)
+- **Hardware Constants Module** (`src/constants.rs`): Analog stick and trigger conventions
+  - Standard 8-bit conventions (0-255 range, 128 center)
+  - Normalization/denormalization helpers
+  - Configurable deadzone application
+- **Connection Type Detection**: `ConnectionType` enum and `connection_type_hint()` method
+- **Controller Quirks System**: `ControllerQuirk` enum for handling device-specific behaviors
+- **New Example**: `controller_database.rs` demonstrating enhanced detection capabilities
+- **Documentation**: Technical analysis and integration guides in `docs/`
+
 ## [0.1.4] - 2026-01-22
 
 ### Added

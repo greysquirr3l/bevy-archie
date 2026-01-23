@@ -4,6 +4,59 @@
 
 use bevy::prelude::*;
 
+// ========== Touchpad Hardware Specifications ==========
+// Sourced from PS4/PS5 HID descriptors and verified against Joypad OS implementation
+// Reference: https://github.com/joypad-ai/joypad-os/blob/main/src/usb/usbd/descriptors/ps4_descriptors.h
+
+/// DualShock 4 (PS4) touchpad resolution.
+pub mod dualshock4_touchpad {
+    /// Touchpad width in native resolution.
+    pub const WIDTH: u16 = 1920;
+    /// Touchpad height in native resolution.
+    pub const HEIGHT: u16 = 943;
+}
+
+/// DualSense (PS5) touchpad resolution.
+pub mod dualsense_touchpad {
+    /// Touchpad width in native resolution (same as DS4).
+    pub const WIDTH: u16 = 1920;
+    /// Touchpad height in native resolution (taller than DS4).
+    pub const HEIGHT: u16 = 1080;
+}
+
+/// Steam Controller touchpad resolution.
+pub mod steam_touchpad {
+    /// Steam touchpad is circular, but reported as rectangular.
+    /// Width in native resolution.
+    pub const WIDTH: u16 = 32767;
+    /// Height in native resolution.
+    pub const HEIGHT: u16 = 32767;
+}
+
+/// Normalize raw touchpad coordinates to 0.0-1.0 range.
+///
+/// # Arguments
+/// * `x` - Raw X coordinate from hardware
+/// * `y` - Raw Y coordinate from hardware  
+/// * `max_x` - Maximum X value for this touchpad
+/// * `max_y` - Maximum Y value for this touchpad
+///
+/// # Returns
+/// Normalized (x, y) coordinates in 0.0-1.0 range.
+#[must_use]
+pub fn normalize_coords(x: u16, y: u16, max_x: u16, max_y: u16) -> (f32, f32) {
+    (
+        f32::from(x) / f32::from(max_x),
+        f32::from(y) / f32::from(max_y),
+    )
+}
+
+/// Convert normalized coordinates back to raw values for a specific touchpad.
+#[must_use]
+pub fn denormalize_coords(x: f32, y: f32, max_x: u16, max_y: u16) -> (u16, u16) {
+    ((x * f32::from(max_x)) as u16, (y * f32::from(max_y)) as u16)
+}
+
 /// Touchpad finger data.
 #[derive(Debug, Clone, Copy, Default, Reflect)]
 pub struct TouchFinger {
@@ -135,6 +188,30 @@ impl TouchpadData {
         finger.x = x.clamp(0.0, 1.0);
         finger.y = y.clamp(0.0, 1.0);
         finger.active = active;
+    }
+
+    /// Set finger data from raw hardware coordinates.
+    ///
+    /// This automatically normalizes the coordinates based on the touchpad type.
+    ///
+    /// # Arguments
+    /// * `finger_index` - 0 for finger1, 1 for finger2
+    /// * `raw_x` - Raw X coordinate from hardware
+    /// * `raw_y` - Raw Y coordinate from hardware
+    /// * `max_x` - Maximum X value for this touchpad (e.g., `dualshock4_touchpad::WIDTH`)
+    /// * `max_y` - Maximum Y value for this touchpad (e.g., `dualshock4_touchpad::HEIGHT`)
+    /// * `active` - Whether the finger is touching
+    pub fn set_finger_raw(
+        &mut self,
+        finger_index: usize,
+        raw_x: u16,
+        raw_y: u16,
+        max_x: u16,
+        max_y: u16,
+        active: bool,
+    ) {
+        let (x, y) = normalize_coords(raw_x, raw_y, max_x, max_y);
+        self.set_finger(finger_index, x, y, active);
     }
 
     /// Update frame state - call this at the end of your custom system.
