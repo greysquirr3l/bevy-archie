@@ -170,58 +170,6 @@ fn setup_actions(mut action_map: ResMut<ActionMap>) {
 }
 ```
 
-## Controller Icons
-
-This library includes [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts) icon pack (CC0 licensed) in `assets/icons/mrbreakfast/`. This provides 400+ ready-to-use PNG icons for Xbox, PlayStation, Nintendo Switch, Steam Deck, keyboard, and mouse.
-
-You can also use alternative icon packs:
-
-- [Kenney Input Prompts](https://kenney.nl/assets/input-prompts)
-- Custom artwork
-
-The icon system provides platform-aware filename generation and asset loading infrastructure. Point it to your icon directory:
-
-```rust
-fn setup_icons(mut commands: Commands) {
-    commands.insert_resource(
-        ControllerIconAssets::new("assets/icons/mrbreakfast/png")  // Included icons
-    );
-}
-```
-
-Display controller-appropriate button icons in your UI:
-
-```rust
-fn spawn_button_prompt(
-    mut commands: Commands,
-    icon_assets: Res<ControllerIconAssets>,
-    input_state: Res<InputDeviceState>,
-) {
-    let icon = icon_assets.get_icon(
-        GamepadButtonType::South,
-        input_state.controller_layout,
-    );
-    
-    commands.spawn(ImageNode {
-        image: icon,
-        ..default()
-    });
-}
-```
-
-### Icon Naming Conventions
-
-The system expects icons named according to platform conventions:
-
-- **Xbox**: `xbox_a.png`, `xbox_b.png`, `xbox_lb.png`, `xbox_lt.png`
-- **PlayStation**: `ps_cross.png`, `ps_circle.png`, `ps_l1.png`, `ps_l2.png`
-- **Nintendo**: `switch_b.png`, `switch_a.png`, `switch_l.png`, `switch_zl.png`
-- **Generic**: `left_stick.png`, `right_stick.png`, `dpad.png`
-
-Icon sizes are supported via suffixes: `xbox_a_small.png` (32x32), `xbox_a.png` (48x48), `xbox_a_large.png` (64x64).
-
-If your icon pack uses different naming, create a thin wrapper or use symbolic links to match the expected names.
-
 ## Remapping
 
 Enable controller remapping in your settings menu:
@@ -952,34 +900,70 @@ The project includes comprehensive unit and integration tests covering:
 - **Icon System** (`icons`): Icon filename generation, platform-specific labels, asset loading
 - **Integration Tests**: Plugin initialization, resource management, end-to-end workflows
 
-**Coverage Goal**: 80% code coverage across all modules.
-
-### Running Coverage Analysis
-
-Install `tarpaulin` for coverage reports:
-
-```bash
-cargo install cargo-tarpaulin
-```
-
-Generate coverage report:
-
-```bash
-# HTML report in coverage/ directory
-cargo tarpaulin --out Html --output-dir coverage
-
-# Both HTML and console output
-cargo tarpaulin --out Html --out Stdout --output-dir coverage
-
-# With all features
-cargo tarpaulin --all-features --out Html --output-dir coverage
-```
+**Coverage Goal**: 80% code coverage across all modules. See [docs/TEST_COVERAGE.md](docs/TEST_COVERAGE.md) for coverage tools and analysis.
 
 ### Test Structure
 
 - `src/*/tests`: Unit tests for each module
 - `tests/integration_tests.rs`: Integration tests for full plugin functionality
 - `.cargo/config.toml`: Test configuration and aliases
+
+For detailed coverage analysis instructions, see [docs/TEST_COVERAGE.md](docs/TEST_COVERAGE.md).
+
+## Controller Icons
+
+This library's icon system is **asset-agnostic** - it provides the infrastructure for loading and displaying controller-appropriate icons, but does not bundle icon assets in the crate to keep download size minimal.
+
+### Recommended Icon Pack
+
+We recommend [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts) - a comprehensive CC0-licensed icon pack with 400+ PNG/SVG icons for Xbox, PlayStation, Nintendo Switch, Steam Deck, keyboard, and mouse.
+
+### Adding Icon Assets
+
+1. **Download the icon pack** from [itch.io](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts)
+
+2. **Extract to your project's assets folder:**
+   ```
+   your_game/
+   └── assets/
+       └── icons/
+           └── mrbreakfast/
+               ├── LICENSE
+               └── png/
+                   ├── xbox_a.png
+                   ├── ps_cross.png
+                   └── ...
+   ```
+
+3. **Configure the icon system:**
+   ```rust
+   fn setup_icons(mut commands: Commands) {
+       commands.insert_resource(
+           ControllerIconAssets::new("icons/mrbreakfast/png")
+       );
+   }
+   ```
+
+### Alternative Icon Packs
+
+You can use any icon pack that follows standard naming conventions:
+
+- [Kenney Input Prompts](https://kenney.nl/assets/input-prompts) (CC0)
+- [Xelu's Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/) (CC0)
+- Custom artwork
+
+### Icon Naming Conventions
+
+The system expects icons named according to platform conventions:
+
+- **Xbox**: `xbox_a.png`, `xbox_b.png`, `xbox_lb.png`, `xbox_lt.png`
+- **PlayStation**: `ps_cross.png`, `ps_circle.png`, `ps_l1.png`, `ps_l2.png`
+- **Nintendo**: `switch_b.png`, `switch_a.png`, `switch_l.png`, `switch_zl.png`
+- **Generic**: `left_stick.png`, `right_stick.png`, `dpad.png`
+
+Icon sizes are supported via suffixes: `xbox_a_small.png` (32x32), `xbox_a.png` (48x48), `xbox_a_large.png` (64x64).
+
+If your icon pack uses different naming, create a thin wrapper or use symbolic links.
 
 ## Credits
 
