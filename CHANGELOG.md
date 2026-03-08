@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-03-07
+
+### Changed
+
+- **MSRV Upgraded to Rust 1.94.0** (from 1.91)
+  - Leverages `LazyLock::force_mut` for safer lazy state initialization in controller detection
+  - Uses stabilized `Peekable::next_if_map` for more ergonomic input buffer peeking in state machines
+  - Stable `impl TryFrom<char> for usize` for safer key mapping conversions
+  - TOML v1.1 support enables future multiline string configurations in Cargo.toml
+  - Enhanced closure lifetime handling improves correctness for input callback internals
+  - Unicode 17.0 support provides updated character categorization for text input
+  - Stable Cargo config include key allows better organization of build-time icon configurations
+
 ## [0.1.6] - 2026-01-23
 
 ### Added
@@ -244,6 +257,9 @@ When contributing, please:
 
 ---
 
+[0.2.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.1.6..v0.2.0
+[0.1.6]: https://github.com/greysquirr3l/bevy-archie/compare/v0.1.5..v0.1.6
+[0.1.5]: https://github.com/greysquirr3l/bevy-archie/compare/v0.1.4..v0.1.5
 [0.1.4]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.4
 [0.1.3]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.3
 [0.1.2]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.2
