@@ -110,6 +110,7 @@ impl InputBuffer {
     }
 
     /// Check for a specific action in the buffer.
+    /// Uses reverse iteration to check from most recent inputs first.
     #[must_use]
     pub fn has_action(&self, action: GameAction, within: Duration) -> bool {
         let cutoff = self.current_time - within.as_secs_f64();

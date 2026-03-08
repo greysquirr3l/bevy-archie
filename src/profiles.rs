@@ -2,9 +2,14 @@
 //!
 //! This module provides controller-specific profiles that can be
 //! automatically loaded based on detected hardware.
+//!
+//! Uses `std::sync::LazyLock` (Rust 1.80+) for lazy-initialized controller
+//! model database, providing thread-safe zero-cost access to commonly-used
+//! controller feature lookups without expensive initialization overhead.
 
 use bevy::prelude::*;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use crate::actions::ActionMap;
 use crate::config::ControllerLayout;
@@ -32,6 +37,59 @@ pub enum ControllerQuirk {
     /// Controller requires big-endian value interpretation (e.g., PS3 SIXAXIS).
     BigEndianValues,
 }
+
+/// Lazy-initialized VID/PID database for controller identification.
+///
+/// Uses [`std::sync::LazyLock`] to defer expensive `HashMap` construction until
+/// the first lookup, providing thread-safe access without runtime initialization overhead.
+/// This demonstrates Rust 1.94's zero-cost lazy initialization pattern.
+static VID_PID_DATABASE: LazyLock<HashMap<(u16, u16), ControllerModel>> = LazyLock::new(|| {
+    let mut db = HashMap::new();
+
+    // Microsoft Xbox controllers (VID: 0x045E)
+    db.insert((0x045e, 0x028e), ControllerModel::Xbox360);
+    db.insert((0x045e, 0x02d1), ControllerModel::XboxOne);
+    db.insert((0x045e, 0x02dd), ControllerModel::XboxOne);
+    db.insert((0x045e, 0x02e3), ControllerModel::XboxOne);
+    db.insert((0x045e, 0x02ea), ControllerModel::XboxOne);
+    db.insert((0x045e, 0x0b00), ControllerModel::XboxOne);
+    db.insert((0x045e, 0x0b12), ControllerModel::XboxSeriesXS);
+    db.insert((0x045e, 0x0b13), ControllerModel::XboxSeriesXS);
+
+    // Sony PlayStation controllers (VID: 0x054C)
+    db.insert((0x054c, 0x0268), ControllerModel::PS3); // DualShock 3 / SIXAXIS
+    db.insert((0x054c, 0x05c4), ControllerModel::PS4); // DualShock 4 (USB)
+    db.insert((0x054c, 0x09cc), ControllerModel::PS4); // DualShock 4 v2 (Bluetooth)
+    db.insert((0x054c, 0x0ba0), ControllerModel::PS4); // DualShock 4 USB Wireless Adapter
+    db.insert((0x054c, 0x0ce6), ControllerModel::PS5); // DualSense
+    db.insert((0x054c, 0x0df2), ControllerModel::PS5); // DualSense Edge
+
+    // Nintendo Switch controllers (VID: 0x057E)
+    db.insert((0x057e, 0x2009), ControllerModel::SwitchPro);
+    db.insert((0x057e, 0x2006), ControllerModel::SwitchJoyCon); // Joy-Con Left
+    db.insert((0x057e, 0x2007), ControllerModel::SwitchJoyCon); // Joy-Con Right
+    db.insert((0x057e, 0x2072), ControllerModel::Switch2Pro); // Switch 2 Pro Controller
+    db.insert((0x057e, 0x2073), ControllerModel::Switch2GC); // Switch 2 GameCube-style
+
+    // 8BitDo controllers (VID: 0x2DC8)
+    db.insert((0x2dc8, 0x5006), ControllerModel::EightBitDoM30); // M30 (Genesis/MD style)
+    db.insert((0x2dc8, 0x6001), ControllerModel::EightBitDoSN30Pro); // SN30 Pro variants
+    db.insert((0x2dc8, 0x6101), ControllerModel::EightBitDoSN30Pro);
+
+    // HORI controllers (VID: 0x0F0D)
+    db.insert((0x0f0d, 0x00c1), ControllerModel::HoriFightingCommander);
+
+    // Valve Steam Controller (VID: 0x28DE)
+    db.insert((0x28de, 0x1142), ControllerModel::Steam);
+
+    // Google Stadia Controller (VID: 0x18D1) - Bluetooth mode only
+    db.insert((0x18d1, 0x9400), ControllerModel::Stadia);
+
+    // Amazon Luna Controller (VID: 0x0171)
+    db.insert((0x0171, 0x0419), ControllerModel::Luna);
+
+    db
+});
 
 /// Controller model/type identification.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
@@ -157,46 +215,10 @@ impl DetectedController {
     /// - Joypad OS controller registry
     /// - Community controller databases
     fn identify(vendor_id: u16, product_id: u16) -> ControllerModel {
-        match (vendor_id, product_id) {
-            // Microsoft Xbox controllers (VID: 0x045E)
-            (0x045e, 0x028e) => ControllerModel::Xbox360,
-            (0x045e, 0x02d1 | 0x02dd | 0x02e3 | 0x02ea | 0x0b00) => ControllerModel::XboxOne,
-            (0x045e, 0x0b12 | 0x0b13) => ControllerModel::XboxSeriesXS,
-
-            // Sony PlayStation controllers (VID: 0x054C)
-            (0x054c, 0x0268) => ControllerModel::PS3, // DualShock 3 / SIXAXIS
-            (0x054c, 0x05c4) => ControllerModel::PS4, // DualShock 4 (USB)
-            (0x054c, 0x09cc) => ControllerModel::PS4, // DualShock 4 v2 (Bluetooth)
-            (0x054c, 0x0ba0) => ControllerModel::PS4, // DualShock 4 USB Wireless Adapter
-            (0x054c, 0x0ce6) => ControllerModel::PS5, // DualSense
-            (0x054c, 0x0df2) => ControllerModel::PS5, // DualSense Edge
-
-            // Nintendo Switch controllers (VID: 0x057E)
-            (0x057e, 0x2009) => ControllerModel::SwitchPro,
-            (0x057e, 0x2006) => ControllerModel::SwitchJoyCon, // Joy-Con Left
-            (0x057e, 0x2007) => ControllerModel::SwitchJoyCon, // Joy-Con Right
-            (0x057e, 0x2072) => ControllerModel::Switch2Pro,   // Switch 2 Pro Controller
-            (0x057e, 0x2073) => ControllerModel::Switch2GC,    // Switch 2 GameCube-style
-
-            // 8BitDo controllers (VID: 0x2DC8)
-            (0x2dc8, 0x5006) => ControllerModel::EightBitDoM30, // M30 (Genesis/MD style)
-            (0x2dc8, 0x6001 | 0x6101) => ControllerModel::EightBitDoSN30Pro, // SN30 Pro variants
-
-            // HORI controllers (VID: 0x0F0D)
-            (0x0f0d, 0x00c1) => ControllerModel::HoriFightingCommander,
-
-            // Valve Steam Controller (VID: 0x28DE)
-            (0x28de, 0x1142) => ControllerModel::Steam,
-
-            // Google Stadia Controller (VID: 0x18D1) - Bluetooth mode only
-            (0x18d1, 0x9400) => ControllerModel::Stadia,
-
-            // Amazon Luna Controller (VID: 0x0171)
-            (0x0171, 0x0419) => ControllerModel::Luna,
-
-            // Unknown/Generic
-            _ => ControllerModel::Generic,
-        }
+        VID_PID_DATABASE
+            .get(&(vendor_id, product_id))
+            .copied()
+            .unwrap_or(ControllerModel::Generic)
     }
 
     /// Get the connection type hint based on product ID patterns.
@@ -366,10 +388,6 @@ pub fn auto_load_profiles(
     registry: Res<ProfileRegistry>,
     mut action_map: ResMut<ActionMap>,
 ) {
-    if !registry.auto_load {
-        return;
-    }
-
     for event in detected_events.read() {
         if let Some(profile) = registry.get(event.model) {
             // Apply profile settings
@@ -391,10 +409,7 @@ pub(crate) fn register_profile_types(app: &mut App) {
 
 /// Add profile systems to the app.
 pub(crate) fn add_profile_systems(app: &mut App) {
-    app.add_systems(
-        Update,
-        (detect_controller_models, auto_load_profiles).chain(),
-    );
+    app.add_systems(Update, (detect_controller_models, auto_load_profiles));
 }
 
 #[cfg(test)]
