@@ -157,7 +157,10 @@ impl ControllerLayout {
 /// Global controller configuration resource.
 #[derive(Debug, Clone, Resource, Serialize, Deserialize, Reflect)]
 #[reflect(Resource)]
-#[expect(clippy::struct_excessive_bools, reason = "configuration toggles are naturally boolean flags")]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "configuration toggles are naturally boolean flags"
+)]
 pub struct ControllerConfig {
     /// Analog stick deadzone (0.0 - 1.0).
     /// Values below this threshold are ignored.
