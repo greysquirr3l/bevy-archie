@@ -5,18 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2026-03-07
+## [0.1.8] - 2026-03-12
+
+### Added
+
+- **Clippy SARIF scanning**: Clippy results now upload to GitHub Code Scanning via SARIF format
+- **CodeQL on both branches**: Extended CodeQL analysis to scan `main` and `bevy-0.17`
+
+### Removed
+
+- **`sync-branches` workflow**: No longer needed after branch restructure — `main` (Bevy 0.18) and `bevy-0.17` are independent codebases
+
+## [0.1.7] - 2026-03-12
 
 ### Changed
 
+- **Branch restructure**: `main` now targets Bevy 0.18; Bevy 0.17 support continues on this [`bevy-0.17`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17) branch
 - **MSRV Upgraded to Rust 1.94.0** (from 1.91)
-  - Leverages `LazyLock::force_mut` for safer lazy state initialization in controller detection
-  - Uses stabilized `Peekable::next_if_map` for more ergonomic input buffer peeking in state machines
-  - Stable `impl TryFrom<char> for usize` for safer key mapping conversions
-  - TOML v1.1 support enables future multiline string configurations in Cargo.toml
-  - Enhanced closure lifetime handling improves correctness for input callback internals
-  - Unicode 17.0 support provides updated character categorization for text input
-  - Stable Cargo config include key allows better organization of build-time icon configurations
+
+### Fixed
+
+- Fixed CI MSRV toolchain to 1.94 to match `rust-version` in Cargo.toml
+- Applied `rustfmt` formatting for `#[expect]` attributes
+- Updated README to reflect branch restructure and version compatibility table
 
 ## [0.1.6] - 2026-01-23
 
@@ -257,7 +268,8 @@ When contributing, please:
 
 ---
 
-[0.2.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.1.6..v0.2.0
+[0.1.8]: https://github.com/greysquirr3l/bevy-archie/compare/v0.1.7..v0.1.8
+[0.1.7]: https://github.com/greysquirr3l/bevy-archie/compare/v0.1.6..v0.1.7
 [0.1.6]: https://github.com/greysquirr3l/bevy-archie/compare/v0.1.5..v0.1.6
 [0.1.5]: https://github.com/greysquirr3l/bevy-archie/compare/v0.1.4..v0.1.5
 [0.1.4]: https://github.com/greysquirr3l/bevy-archie/releases/tag/v0.1.4
