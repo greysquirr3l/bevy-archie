@@ -11,6 +11,8 @@
 
 ![Archie Out of Context](docs/assets/archie_context.png)
 
+> **Note:** This branch (`bevy-0.17`) targets **Bevy 0.17**. For Bevy 0.18 support, see [`main`](https://github.com/greysquirr3l/bevy-archie).
+
 A comprehensive game controller support module for the Bevy engine, inspired by the RenPy Controller GUI project.
 
 ## Controller Support Matrix
@@ -40,10 +42,10 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 
 ## Version Compatibility
 
-| bevy | bevy_archie                                                                        |
-|------|------------------------------------------------------------------------------------|
-| 0.18 | [`bevy-0.18` branch](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.18)   |
-| 0.17 | 0.1.x (main)                                                                       |
+| bevy | bevy_archie                                                                       |
+|------|-----------------------------------------------------------------------------------|
+| 0.18 | [0.2.x (`main`)](https://github.com/greysquirr3l/bevy-archie)                     |
+| 0.17 | 0.1.x (this branch)                                                               |
 
 ## Features
 
