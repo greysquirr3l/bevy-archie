@@ -96,6 +96,9 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v6
 
@@ -134,6 +137,22 @@ jobs:
 
       - name: Run clippy on examples
         run: cargo clippy --examples --features motion-backends -- -D warnings
+
+      - name: Install clippy-sarif and sarif-fmt
+        run: cargo install clippy-sarif sarif-fmt
+
+      - name: Run clippy (SARIF)
+        run: |
+          cargo clippy --all-features --message-format=json 2>&1 |
+            clippy-sarif | tee clippy-results.sarif | sarif-fmt
+        continue-on-error: true
+
+      - name: Upload Clippy SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: clippy-results.sarif
+          category: clippy
+          wait-for-processing: true
 
   fmt:
     name: Format
