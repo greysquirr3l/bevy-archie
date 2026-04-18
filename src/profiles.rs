@@ -656,12 +656,19 @@ mod tests {
             ControllerModel::Xbox360,
             ControllerModel::XboxOne,
             ControllerModel::XboxSeriesXS,
+            ControllerModel::PS3,
             ControllerModel::PS4,
             ControllerModel::PS5,
             ControllerModel::SwitchPro,
             ControllerModel::SwitchJoyCon,
+            ControllerModel::Switch2Pro,
+            ControllerModel::Switch2GC,
             ControllerModel::Steam,
             ControllerModel::Stadia,
+            ControllerModel::Luna,
+            ControllerModel::EightBitDoM30,
+            ControllerModel::EightBitDoSN30Pro,
+            ControllerModel::HoriFightingCommander,
             ControllerModel::Generic,
         ];
 
@@ -673,6 +680,90 @@ mod tests {
                 }
             }
         }
+    }
+
+    // ========== New Controller Detection Tests ==========
+
+    #[test]
+    fn test_detected_controller_identify_ps3() {
+        let detected = DetectedController::new(0x054c, 0x0268);
+        assert_eq!(detected.model, ControllerModel::PS3);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_switch2_pro() {
+        let detected = DetectedController::new(0x057e, 0x2072);
+        assert_eq!(detected.model, ControllerModel::Switch2Pro);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_switch2_gc() {
+        let detected = DetectedController::new(0x057e, 0x2073);
+        assert_eq!(detected.model, ControllerModel::Switch2GC);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_8bitdo_m30() {
+        let detected = DetectedController::new(0x2dc8, 0x5006);
+        assert_eq!(detected.model, ControllerModel::EightBitDoM30);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_8bitdo_sn30pro() {
+        let detected = DetectedController::new(0x2dc8, 0x6001);
+        assert_eq!(detected.model, ControllerModel::EightBitDoSN30Pro);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_hori_fighting_commander() {
+        let detected = DetectedController::new(0x0f0d, 0x00c1);
+        assert_eq!(detected.model, ControllerModel::HoriFightingCommander);
+    }
+
+    #[test]
+    fn test_detected_controller_identify_luna() {
+        let detected = DetectedController::new(0x0171, 0x0419);
+        assert_eq!(detected.model, ControllerModel::Luna);
+    }
+
+    #[test]
+    fn test_connection_type_hint_bluetooth() {
+        let detected = DetectedController::new(0x054c, 0x09cc);
+        assert_eq!(detected.connection_type_hint(), ConnectionType::Bluetooth);
+    }
+
+    #[test]
+    fn test_connection_type_hint_unknown() {
+        let detected = DetectedController::new(0x045e, 0x028e);
+        assert_eq!(detected.connection_type_hint(), ConnectionType::Unknown);
+    }
+
+    #[test]
+    fn test_quirks_ps4_bluetooth() {
+        let detected = DetectedController::new(0x054c, 0x09cc);
+        let quirks = detected.quirks();
+        assert!(quirks.contains(&ControllerQuirk::DS4BluetoothReportDiffers));
+    }
+
+    #[test]
+    fn test_quirks_ps3() {
+        let detected = DetectedController::new(0x054c, 0x0268);
+        let quirks = detected.quirks();
+        assert!(quirks.contains(&ControllerQuirk::BigEndianValues));
+    }
+
+    #[test]
+    fn test_quirks_8bitdo() {
+        let detected = DetectedController::new(0x2dc8, 0x5006);
+        let quirks = detected.quirks();
+        assert!(quirks.contains(&ControllerQuirk::EightBitDoXInputMode));
+    }
+
+    #[test]
+    fn test_supports_pressure_buttons() {
+        assert!(ControllerModel::PS3.supports_pressure_buttons());
+        assert!(!ControllerModel::PS4.supports_pressure_buttons());
+        assert!(!ControllerModel::Xbox360.supports_pressure_buttons());
     }
 
     // ========== Additional DetectedController Tests ==========
