@@ -2,13 +2,15 @@
 
 bevy\_archie follows [Semantic Versioning](https://semver.org/) and maintains compatibility branches for different Bevy versions.
 
+Default release target: Bevy 0.18.x on `main`.
+
 ## Branch Strategy
 
 | Branch | Bevy Version | Status | Crate Version |
 | --- | --- | --- | --- |
-| `main` | 0.17.x | Active Development | 0.1.x |
+| `main` | 0.18.x | Active Development | 0.2.x |
 | `bevy-0.17` | 0.17.x | Maintenance (patches only) | 0.1.x |
-| `bevy-0.18` | 0.18.x | Migration in Progress | 0.2.x |
+| `bevy-0.18` | 0.18.x | Historical migration branch | 0.2.x |
 
 ### Branch Lifecycle
 
@@ -21,8 +23,8 @@ bevy\_archie follows [Semantic Versioning](https://semver.org/) and maintains co
 
 | bevy\_archie | Bevy | Rust | Notes |
 | --- | --- | --- | --- |
-| 0.1.x | 0.17.x | 1.85+ | Current stable |
-| 0.2.x | 0.18.x | 1.85+ | In development |
+| 0.2.x | 0.18.x | 1.85+ | Current stable |
+| 0.1.x | 0.17.x | 1.85+ | Maintenance only |
 
 ## Upgrade Path
 
@@ -40,7 +42,7 @@ Key changes in 0.2.x:
 
 Dependabot is configured to:
 
-- **Allow** patch updates for Bevy (0.17.1 → 0.17.2)
+- **Allow** patch updates for Bevy (0.18.1 → 0.18.2)
 - **Ignore** minor/major Bevy updates (requires manual migration)
 - **Auto-merge** patch updates for non-Bevy dependencies
 
@@ -79,13 +81,13 @@ The release workflow automatically:
 Users can select their Bevy version in `Cargo.toml`:
 
 ```toml
-# For Bevy 0.17
-[dependencies]
-bevy_archie = "0.1"
-
-# For Bevy 0.18 (when available)
+# Default release target (Bevy 0.18)
 [dependencies]
 bevy_archie = "0.2"
+
+# Legacy support branch (Bevy 0.17)
+[dependencies]
+bevy_archie = "0.1"
 ```
 
 ## Contributing
@@ -93,6 +95,6 @@ bevy_archie = "0.2"
 When contributing, target the appropriate branch:
 
 - Bug fixes for current stable → `main`
-- Bug fixes for older Bevy → `bevy-X.Y` branch
+- Bug fixes for Bevy 0.17 → `bevy-0.17`
 - New features → `main` (will be forward-ported)
 - Bevy migration work → `bevy-X.Y` branch

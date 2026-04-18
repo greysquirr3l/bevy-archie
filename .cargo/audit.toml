@@ -1,0 +1,8 @@
+[advisories]
+ignore = [
+    # paste crate is unmaintained but comes from Bevy's wgpu dependency
+    # No security vulnerability, just maintenance status
+    "RUSTSEC-2024-0436",
+]
+# Allow unmaintained warnings but show them
+informational_warnings = ["unmaintained"]

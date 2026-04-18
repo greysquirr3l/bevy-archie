@@ -9,12 +9,16 @@ Cargo.lock
 
 # Bevy hot-reload
 .cargo/
+!.cargo/
+!.cargo/config.toml
+!.cargo/audit.toml
 .rustc_info.json
 *.profraw
 
-# Serena
+# Serena & Coraline
 .serena/
 .mcp.json
+.coraline/
 
 # macOS
 .DS_Store

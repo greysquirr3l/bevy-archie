@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Rust](https://img.shields.io/badge/rust-1.92%2B-orange.svg)](https://www.rust-lang.org)
-[![Bevy](https://img.shields.io/badge/bevy-0.17-purple.svg)](https://bevyengine.org)
+[![Bevy](https://img.shields.io/badge/bevy-0.18-purple.svg)](https://bevyengine.org)
 [![Coverage](https://img.shields.io/badge/coverage-66.56%25-yellowgreen.svg)](target/coverage/tarpaulin-report.html)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevy.org/learn/quick-start/plugin-development/#main-branch-tracking)
 [![crates.io](https://img.shields.io/crates/v/bevy_archie)](https://crates.io/crates/bevy_archie)
@@ -40,10 +40,12 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 
 ## Version Compatibility
 
+Default release target: Bevy 0.18.x on main.
+
 | bevy | bevy_archie                                                                        |
 |------|------------------------------------------------------------------------------------|
-| 0.18 | [`bevy-0.18` branch](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.18)   |
-| 0.17 | 0.1.x (main)                                                                       |
+| 0.18 | 0.2.x (main)                                                                       |
+| 0.17 | [`bevy-0.17` branch](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17)   |
 
 ## Features
 
