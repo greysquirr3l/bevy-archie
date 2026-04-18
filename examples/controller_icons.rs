@@ -126,7 +126,6 @@ fn spawn_button_prompt(parent: &mut ChildSpawnerCommands, icon: ButtonIcon, labe
                     height: Val::Px(64.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
-                    border_radius: BorderRadius::all(Val::Px(8.0)),
                     ..default()
                 },
                 background: BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
