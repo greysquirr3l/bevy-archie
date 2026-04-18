@@ -260,6 +260,20 @@ pub struct ControllerIconAssets {
     icons: std::collections::HashMap<(ButtonIcon, ControllerLayout, IconSize), Handle<Image>>,
 }
 
+fn build_asset_path(base_path: &str, filename: &str) -> String {
+    let normalized_base = base_path.replace('\\', "/");
+    let trimmed_base = normalized_base.trim_end_matches('/');
+
+    let normalized_filename = filename.replace('\\', "/");
+    let trimmed_filename = normalized_filename.trim_start_matches('/');
+
+    if trimmed_base.is_empty() {
+        trimmed_filename.to_string()
+    } else {
+        format!("{trimmed_base}/{trimmed_filename}")
+    }
+}
+
 impl ControllerIconAssets {
     /// Create a new icon assets resource with a base path.
     #[must_use]
@@ -285,7 +299,7 @@ impl ControllerIconAssets {
             return handle.clone();
         }
 
-        let path = format!("{}/{}", self.base_path, icon.filename(layout, size));
+        let path = build_asset_path(&self.base_path, &icon.filename(layout, size));
         let handle = asset_server.load(&path);
         self.icons.insert(key, handle.clone());
         handle
@@ -668,5 +682,39 @@ mod tests {
     fn test_controller_icon_assets_with_custom_path() {
         let assets = ControllerIconAssets::new("custom/path/icons");
         assert_eq!(assets.base_path, "custom/path/icons");
+    }
+
+    #[test]
+    fn test_build_asset_path_normalizes_windows_separators() {
+        // Windows paths with backslashes should be normalized to forward slashes
+        assert_eq!(
+            build_asset_path("assets\\icons", "xbox_a.png"),
+            "assets/icons/xbox_a.png"
+        );
+        assert_eq!(
+            build_asset_path("assets\\icons\\", "xbox_a.png"),
+            "assets/icons/xbox_a.png"
+        );
+        assert_eq!(
+            build_asset_path("assets/icons", "xbox_a.png"),
+            "assets/icons/xbox_a.png"
+        );
+    }
+
+    #[test]
+    fn test_build_asset_path_trims_extra_separators() {
+        // Extra separators should be trimmed
+        assert_eq!(
+            build_asset_path("assets/icons/", "/xbox_a.png"),
+            "assets/icons/xbox_a.png"
+        );
+        assert_eq!(
+            build_asset_path("", "xbox_a.png"),
+            "xbox_a.png"
+        );
+        assert_eq!(
+            build_asset_path("assets/icons", "xbox_a.png"),
+            "assets/icons/xbox_a.png"
+        );
     }
 }
