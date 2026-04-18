@@ -160,9 +160,8 @@ impl MotionBackend for DualSenseBackend {
             accel_z: s.accel_z,
         })
     }
-
     fn is_connected(&self) -> bool {
-        self.state.lock().map(|s| s.connected).unwrap_or(false)
+        self.state.lock().is_ok_and(|s| s.connected)
     }
 
     fn name(&self) -> &'static str {
