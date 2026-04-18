@@ -32,6 +32,7 @@ Bug fixes and minor improvements for the current stable version.
 6. Push: `git push origin main --tags`
 
 The release workflow will automatically:
+
 - Publish to crates.io
 - Create a GitHub release with changelog notes
 
@@ -93,6 +94,7 @@ The release workflow requires:
 
 The release workflow validates that `Cargo.toml` version matches the tag.
 If you see this error, ensure:
+
 ```bash
 # Tag version (without 'v' prefix)
 git describe --tags  # e.g., v0.1.3 → version should be 0.1.3
@@ -111,6 +113,7 @@ grep '^version' Cargo.toml
 
 The workflow extracts notes from `CHANGELOG.md` matching the version.
 Ensure your changelog follows the format:
+
 ```markdown
 ## [0.1.3] - 2026-01-16
 
