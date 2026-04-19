@@ -708,10 +708,7 @@ mod tests {
             build_asset_path("assets/icons/", "/xbox_a.png"),
             "assets/icons/xbox_a.png"
         );
-        assert_eq!(
-            build_asset_path("", "xbox_a.png"),
-            "xbox_a.png"
-        );
+        assert_eq!(build_asset_path("", "xbox_a.png"), "xbox_a.png");
         assert_eq!(
             build_asset_path("assets/icons", "xbox_a.png"),
             "assets/icons/xbox_a.png"
