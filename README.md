@@ -2,8 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange.svg)](https://www.rust-lang.org)
-[![Bevy](https://img.shields.io/badge/bevy-0.17-purple.svg)](https://bevyengine.org)
+[![Rust](https://img.shields.io/badge/rust-1.93%2B-orange.svg)](https://www.rust-lang.org)
+[![Bevy](https://img.shields.io/badge/bevy-0.18-purple.svg)](https://bevyengine.org)
 [![Coverage](https://img.shields.io/badge/coverage-66.56%25-yellowgreen.svg)](target/coverage/tarpaulin-report.html)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevy.org/learn/quick-start/plugin-development/#main-branch-tracking)
 [![crates.io](https://img.shields.io/crates/v/bevy_archie)](https://crates.io/crates/bevy_archie)
@@ -11,7 +11,7 @@
 
 ![Archie Out of Context](docs/assets/archie_context.png)
 
-> **Note:** This branch (`bevy-0.17`) targets **Bevy 0.17**. For Bevy 0.18 support, see [`main`](https://github.com/greysquirr3l/bevy-archie).
+> **Note:** This branch (`main`) targets **Bevy 0.18**. Bevy 0.17 support is deprecated in 30 days (target date: **2026-05-18**). If you still need Bevy 0.17 during the maintenance window, use [`bevy-0.17`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17).
 
 A comprehensive game controller support module for the Bevy engine, inspired by the RenPy Controller GUI project.
 
@@ -38,14 +38,16 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 
 > **Legend**: ✅ Supported | 🔴 Hardware limitation | 🔶 Unknown (varies by device)
 >
-> **Note**: Gyroscope, touchpad, and adaptive triggers require platform-specific implementations. See [Advanced Features](#advanced-features) for details.
+> **Note**: Gyroscope, touchpad, and adaptive triggers require platform-specific implementations. See [Advanced Features Guide](docs/ADVANCED_FEATURES.md) for details.
 
 ## Version Compatibility
 
 | bevy | bevy_archie                                                                       |
 |------|-----------------------------------------------------------------------------------|
-| 0.18 | [0.2.x (`main`)](https://github.com/greysquirr3l/bevy-archie)                     |
-| 0.17 | 0.1.x (this branch)                                                               |
+| 0.18 | 0.2.x (`main`)                                                                    |
+| 0.17 | [0.1.x (`bevy-0.17`)](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17) |
+
+> Bevy 0.17 support is deprecated and scheduled for end of support on **2026-05-18**.
 
 ## Features
 
@@ -131,6 +133,15 @@ bevy_archie = { path = "path/to/bevy-archie" }
 bevy_archie = { path = "path/to/bevy-archie", features = ["full"] }
 ```
 
+### Library Size
+
+| Configuration    | Pre-link (.rlib) | Final Binary Impact |
+| ---------------- | ---------------- | ------------------- |
+| Default features | ~8.7 MB          | ~200-400 KB         |
+| All features     | ~9.7 MB          | ~300-500 KB         |
+
+The `.rlib` size includes Rust metadata and monomorphization templates. After LTO and dead code elimination, bevy_archie adds roughly **0.5-1%** overhead on top of a typical Bevy application (~50-80 MB).
+
 ## Quick Start
 
 ```rust
@@ -186,6 +197,57 @@ fn setup_actions(mut action_map: ResMut<ActionMap>) {
     action_map.bind_key(GameAction::Cancel, KeyCode::Escape);
 }
 ```
+
+## Controller Icons
+
+**Note**: bevy-archie is asset-agnostic. You must provide your own icon assets or use a compatible icon pack like:
+
+- [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts) (400+ icons, Xbox/PS/Switch/Steam Deck)
+- [Kenney Input Prompts](https://kenney.nl/assets/input-prompts)
+- Custom artwork
+
+The icon system provides platform-aware filename generation and asset loading infrastructure. Point it to your icon directory:
+
+```rust
+fn setup_icons(mut commands: Commands) {
+    commands.insert_resource(
+        ControllerIconAssets::new("assets/icons")  // Your icon directory
+    );
+}
+```
+
+Display controller-appropriate button icons in your UI:
+
+```rust
+fn spawn_button_prompt(
+    mut commands: Commands,
+    icon_assets: Res<ControllerIconAssets>,
+    input_state: Res<InputDeviceState>,
+) {
+    let icon = icon_assets.get_icon(
+        GamepadButtonType::South,
+        input_state.controller_layout,
+    );
+    
+    commands.spawn(ImageNode {
+        image: icon,
+        ..default()
+    });
+}
+```
+
+### Icon Naming Conventions
+
+The system expects icons named according to platform conventions:
+
+- **Xbox**: `xbox_a.png`, `xbox_b.png`, `xbox_lb.png`, `xbox_lt.png`
+- **PlayStation**: `ps_cross.png`, `ps_circle.png`, `ps_l1.png`, `ps_l2.png`
+- **Nintendo**: `switch_b.png`, `switch_a.png`, `switch_l.png`, `switch_zl.png`
+- **Generic**: `left_stick.png`, `right_stick.png`, `dpad.png`
+
+Icon sizes are supported via suffixes: `xbox_a_small.png` (32x32), `xbox_a.png` (48x48), `xbox_a_large.png` (64x64).
+
+If your icon pack uses different naming, create a thin wrapper or use symbolic links to match the expected names.
 
 ## Remapping
 
@@ -323,917 +385,34 @@ cargo run --example ps5_dualsense_motion --features motion-backends
 - **Nintendo**: Joy-Con, Pro Controller, GameCube
 - **Steam**: Steam Controller, Steam Deck
 - **Stadia**: Google Stadia Controller (Bluetooth mode)
+- **Amazon Luna**: Amazon Luna Controller (Xbox-style layout)
 - **Generic**: Fallback for unrecognized controllers
 
-## Advanced Features
-
-### Haptic Feedback
-
-Add rumble and vibration to your game:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn trigger_rumble(
-    mut rumble_events: MessageWriter<RumbleRequest>,
-    gamepads: Query<Entity, With<Gamepad>>,
-) {
-    for gamepad in gamepads.iter() {
-        // Simple rumble
-        rumble_events.write(RumbleRequest::new(
-            gamepad,
-            0.8,  // Intensity (0.0-1.0)
-            Duration::from_millis(500),
-        ));
-        
-        // Pattern-based rumble
-        rumble_events.write(RumbleRequest::with_pattern(
-            gamepad,
-            RumblePattern::Explosion,  // Strong fade effect
-            0.9,
-            Duration::from_secs(1),
-        ));
-    }
-}
-
-// Available patterns:
-// - Constant: Steady vibration
-// - Pulse: Rhythmic pulsing
-// - Explosion: Strong start with fade
-// - DamageTap: Quick impact feel
-// - HeavyImpact: Longer impact
-// - Engine: Motor-like hum
-// - Heartbeat: Pulse pattern
-```
-
-### Input Buffering & Combos
-
-Detect input sequences for fighting game mechanics:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn setup_combos(mut registry: ResMut<ComboRegistry>) {
-    // Define a combo sequence
-    registry.register(
-        Combo::new("hadouken", vec![
-            GameAction::Down,
-            GameAction::Right,
-            GameAction::Primary,
-        ])
-        .with_window(Duration::from_millis(500))
-    );
-}
-
-fn handle_combos(
-    mut combo_events: MessageReader<ComboDetected>,
-) {
-    for event in combo_events.read() {
-        println!("Combo detected: {}", event.combo);
-        // Trigger special move
-    }
-}
-```
-
-### Multiplayer Controller Management
-
-Assign controllers to players:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn setup_players(mut commands: Commands) {
-    // Spawn player entities
-    commands.spawn(Player::new(0)); // Player 1
-    commands.spawn(Player::new(1)); // Player 2
-}
-
-fn manual_assignment(
-    mut assign_events: MessageWriter<AssignControllerRequest>,
-    gamepads: Query<Entity, With<Gamepad>>,
-) {
-    // Manually assign a controller to a player
-    if let Some(gamepad) = gamepads.iter().next() {
-        assign_events.write(AssignControllerRequest {
-            gamepad,
-            player: PlayerId::new(0),
-        });
-    }
-}
-
-fn check_ownership(
-    ownership: Res<ControllerOwnership>,
-    input: Res<ActionState>,
-) {
-    // Check which player owns a gamepad
-    if let Some(player_id) = ownership.get_owner(gamepad_entity) {
-        println!("Controller owned by player {}", player_id.id());
-    }
-    
-    // Get gamepad for a specific player
-    if let Some(gamepad) = ownership.get_gamepad(PlayerId::new(0)) {
-        // Read input for player 1's controller
-    }
-}
-```
-
-### Action Modifiers
-
-Detect advanced input patterns:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn handle_modifiers(
-    mut modifier_events: MessageReader<ModifiedActionEvent>,
-) {
-    for event in modifier_events.read() {
-        match event.modifier {
-            ActionModifier::Tap => {
-                println!("Quick tap on {:?}", event.action);
-            }
-            ActionModifier::Hold => {
-                println!("Held for {} seconds", event.duration);
-            }
-            ActionModifier::DoubleTap => {
-                println!("Double-tapped!");
-            }
-            ActionModifier::LongPress => {
-                println!("Long press detected");
-            }
-            ActionModifier::Released => {
-                println!("Button released");
-            }
-        }
-    }
-}
-
-// Configure modifier timings
-fn configure_modifiers(mut state: ResMut<ActionModifierState>) {
-    state.config.hold_duration = 0.2;        // 200ms for hold
-    state.config.long_press_duration = 0.8;  // 800ms for long press
-    state.config.double_tap_window = 0.3;    // 300ms between taps
-}
-```
-
-### PlayStation Touchpad
-
-Handle touchpad input on DualShock 4 and DualSense:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn handle_touchpad(
-    mut gesture_events: MessageReader<TouchpadGestureEvent>,
-    touchpad_query: Query<&TouchpadData>,
-) {
-    // Handle gestures
-    for event in gesture_events.read() {
-        match event.gesture {
-            TouchpadGesture::Tap => println!("Tapped at {:?}", event.position),
-            TouchpadGesture::TwoFingerTap => println!("Two-finger tap"),
-            TouchpadGesture::SwipeLeft => println!("Swiped left"),
-            TouchpadGesture::SwipeRight => println!("Swiped right"),
-            TouchpadGesture::SwipeUp => println!("Swiped up"),
-            TouchpadGesture::SwipeDown => println!("Swiped down"),
-            TouchpadGesture::PinchIn => println!("Pinch in (zoom out)"),
-            TouchpadGesture::PinchOut => println!("Pinch out (zoom in)"),
-        }
-    }
-    
-    // Direct touchpad access
-    for touchpad in touchpad_query.iter() {
-        let finger1_pos = touchpad.finger1.position();
-        let finger1_delta = touchpad.finger1_delta();
-        
-        if touchpad.button_pressed {
-            println!("Touchpad button pressed");
-        }
-        
-        println!("Active fingers: {}", touchpad.active_fingers());
-    }
-}
-```
-
-### Controller Profiles
-
-Automatically detect controller models and load profiles:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn setup_profiles(mut registry: ResMut<ProfileRegistry>) {
-    // Register a custom profile for PS5 controllers
-    let ps5_profile = ControllerProfile::new("PS5 Default", ControllerModel::PS5)
-        .with_action_map(my_custom_action_map())
-        .with_layout(ControllerLayout::PlayStation);
-    
-    registry.register(ps5_profile);
-    registry.auto_load = true;  // Auto-apply profiles when controllers connect
-}
-
-fn handle_detection(
-    mut detected_events: MessageReader<ControllerDetected>,
-    detected_query: Query<&DetectedController>,
-) {
-    for event in detected_events.read() {
-        println!("Detected: {:?}", event.model);
-        
-        // Check controller capabilities
-        if event.model.supports_gyro() {
-            println!("Controller has gyroscope support");
-        }
-        if event.model.supports_touchpad() {
-            println!("Controller has touchpad");
-        }
-        if event.model.supports_adaptive_triggers() {
-            println!("Controller has adaptive triggers (PS5)");
-        }
-    }
-}
-```
-
-### Motion Controls (Gyroscope)
-
-Access gyroscope and accelerometer data:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn handle_motion(
-    mut gesture_events: MessageReader<MotionGestureDetected>,
-    gyro_query: Query<&GyroData>,
-    accel_query: Query<&AccelData>,
-) {
-    // Handle detected gestures
-    for event in gesture_events.read() {
-        match event.gesture {
-            MotionGesture::Flick => println!("Quick rotation detected"),
-            MotionGesture::Shake => println!("Controller shaken"),
-            MotionGesture::Tilt => println!("Controller tilted"),
-            MotionGesture::Roll => println!("Controller rolled"),
-        }
-    }
-    
-    // Direct gyro access
-    for gyro in gyro_query.iter() {
-        if gyro.valid {
-            let rotation_speed = gyro.magnitude();
-            println!("Rotation: pitch={}, yaw={}, roll={}", 
-                gyro.pitch, gyro.yaw, gyro.roll);
-        }
-    }
-    
-    // Direct accelerometer access
-    for accel in accel_query.iter() {
-        if accel.valid {
-            if accel.is_shaking(3.0) {  // Threshold in m/s²
-                println!("Shake detected!");
-            }
-        }
-    }
-}
-
-// Configure motion controls
-fn configure_motion(mut config: ResMut<MotionConfig>) {
-    config.gyro_sensitivity = 1.5;
-    config.gyro_deadzone = 0.01;
-    config.enabled = true;
-}
-```
-
-### Debug Tools
-
-Visualize and record input for testing:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn toggle_debug(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    mut debug_events: MessageWriter<ToggleInputDebug>,
-) {
-    if keyboard.just_pressed(KeyCode::F12) {
-        debug_events.write(ToggleInputDebug { enable: true });
-    }
-}
-
-fn configure_debugger(mut debugger: ResMut<InputDebugger>) {
-    debugger.show_history = true;   // Show input history
-    debugger.show_sticks = true;    // Show analog stick positions
-    debugger.show_buttons = true;   // Show button states
-    debugger.show_gyro = true;      // Show gyro data
-    debugger.history_size = 50;     // Keep last 50 inputs
-}
-
-fn start_recording(
-    mut record_events: MessageWriter<RecordingCommand>,
-) {
-    record_events.write(RecordingCommand { start: true });
-}
-
-fn playback_recording(
-    recorder: Res<InputRecorder>,
-    mut playback_events: MessageWriter<PlaybackCommand>,
-) {
-    if !recorder.recording {
-        playback_events.write(PlaybackCommand {
-            inputs: recorder.recorded.clone(),
-        });
-    }
-}
-```
-
-### Virtual Input Composites
-
-Combine multiple buttons into unified axes:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn setup_virtual_inputs(mut commands: Commands) {
-    // Combine W/S keys into a vertical axis (-1.0 to 1.0)
-    let vertical = VirtualAxis::new(KeyCode::KeyW, KeyCode::KeyS);
-    
-    // Combine WASD into a 2D movement vector
-    let movement = VirtualDPad::new(
-        KeyCode::KeyW,  // up
-        KeyCode::KeyS,  // down
-        KeyCode::KeyA,  // left
-        KeyCode::KeyD,  // right
-    );
-    
-    // Combine multiple buttons with OR logic
-    let any_jump = VirtualButton::any(vec![
-        KeyCode::Space,
-        KeyCode::KeyW,
-    ]);
-}
-```
-
-### Button Chords
-
-Detect simultaneous button presses:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn setup_chords(mut chord_registry: ResMut<ChordRegistry>) {
-    // Register Ctrl+S chord for saving
-    let save_chord = ButtonChord::from_buttons([KeyCode::ControlLeft, KeyCode::KeyS]);
-    chord_registry.register("save", save_chord);
-    
-    // Register gamepad chord (LB + RB for special move)
-    let special_chord = ButtonChord::from_buttons([
-        GamepadButton::LeftTrigger,
-        GamepadButton::RightTrigger,
-    ]);
-    chord_registry.register("special_move", special_chord)
-        .with_clash_strategy(ClashStrategy::PrioritizeLongest);
-}
-
-fn handle_chords(mut chord_events: MessageReader<ChordTriggered>) {
-    for event in chord_events.read() {
-        match event.chord_name.as_str() {
-            "save" => println!("Save triggered!"),
-            "special_move" => println!("Special move!"),
-            _ => {}
-        }
-    }
-}
-```
-
-### Conditional Bindings
-
-Make actions context-aware:
-
-```rust
-use bevy_archie::prelude::*;
-
-#[derive(States, Default, Clone, Eq, PartialEq, Debug, Hash)]
-enum GameState {
-    #[default]
-    Menu,
-    Playing,
-    Paused,
-}
-
-fn setup_conditional_bindings(mut bindings: ResMut<ConditionalBindings>) {
-    // "Confirm" only works in menus
-    bindings.add(
-        GameAction::Confirm,
-        KeyCode::Enter,
-        InputCondition::in_state(GameState::Menu),
-    );
-    
-    // "Attack" only works while playing
-    bindings.add(
-        GameAction::Primary,
-        KeyCode::Space,
-        InputCondition::in_state(GameState::Playing),
-    );
-    
-    // Chain conditions: works in Playing OR Paused
-    bindings.add(
-        GameAction::Pause,
-        KeyCode::Escape,
-        InputCondition::in_state(GameState::Playing)
-            .or(InputCondition::in_state(GameState::Paused)),
-    );
-}
-```
-
-### Input State Machine
-
-Define states driven by input:
-
-```rust
-use bevy_archie::prelude::*;
-
-fn setup_state_machine(mut commands: Commands) {
-    let state_machine = StateMachineBuilder::new()
-        .add_state("idle")
-        .add_state("walking")
-        .add_state("running")
-        .add_state("jumping")
-        .initial_state("idle")
-        // Transitions based on actions
-        .add_transition("idle", "walking", GameAction::Up)
-        .add_transition("idle", "walking", GameAction::Down)
-        .add_transition("walking", "running", GameAction::Primary) // Sprint
-        .add_transition("idle", "jumping", GameAction::Confirm)    // Jump
-        .add_transition("walking", "jumping", GameAction::Confirm)
-        // Return to idle when no input
-        .add_transition("walking", "idle", GameAction::Released)
-        .build();
-    
-    commands.insert_resource(state_machine);
-}
-
-fn handle_state_changes(mut state_events: MessageReader<StateMachineTransition>) {
-    for event in state_events.read() {
-        println!("State changed: {} -> {}", event.from_state, event.to_state);
-    }
-}
-```
-
-### Input Mocking for Tests
-
-Test input-dependent systems:
-
-```rust
-use bevy_archie::prelude::*;
-use bevy_archie::testing::*;
-
-#[test]
-fn test_jump_mechanic() {
-    let mut app = App::new();
-    app.add_plugins(MinimalPlugins)
-       .add_plugins(MockInputPlugin);  // Use mock input instead of real
-    
-    // Simulate pressing jump
-    let mock = MockInput::new()
-        .press(GameAction::Confirm)
-        .with_duration(Duration::from_millis(100));
-    
-    app.world.insert_resource(mock);
-    app.update();
-    
-    // Assert jump was triggered
-    let actions = app.world.resource::<ActionState>();
-    assert!(actions.just_pressed(GameAction::Confirm));
-}
-
-// Script a sequence of inputs
-fn test_combo_detection() {
-    let sequence = MockInputSequence::new()
-        .then_press(GameAction::Down, Duration::from_millis(50))
-        .then_press(GameAction::Right, Duration::from_millis(50))
-        .then_press(GameAction::Primary, Duration::from_millis(50));
-    
-    // Inject and verify combo detection
-}
-```
-
-### Touch Joystick (Mobile)
-
-Add virtual joysticks for touch screens:
-
-```rust
-use bevy_archie::prelude::*;
-use bevy_archie::touch_joystick::*;
-
-fn setup_touch_controls(mut commands: Commands) {
-    // Left stick for movement (fixed position)
-    commands.spawn(TouchJoystick {
-        position: Vec2::new(150.0, 150.0),
-        radius: 100.0,
-        dead_zone: 0.15,
-        mode: JoystickMode::Fixed,
-        output_action: Some(GameAction::Up), // Maps to movement
-    });
-    
-    // Right stick for camera (floating - appears where you touch)
-    commands.spawn(TouchJoystick {
-        position: Vec2::ZERO,
-        radius: 80.0,
-        dead_zone: 0.1,
-        mode: JoystickMode::Floating,
-        output_action: Some(GameAction::LookUp),
-    });
-}
-
-fn read_joystick(joysticks: Query<&TouchJoystick>) {
-    for joystick in joysticks.iter() {
-        let direction = joystick.direction(); // Vec2 from -1 to 1
-        let magnitude = joystick.magnitude(); // 0.0 to 1.0
-    }
-}
-```
-
-### Network Input Sync
-
-Synchronize input state across network:
-
-```rust
-use bevy_archie::prelude::*;
-use bevy_archie::networking::*;
-
-fn send_input_to_server(
-    action_state: Res<ActionState>,
-    mut diff_buffer: ResMut<ActionDiffBuffer>,
-    mut network: ResMut<NetworkClient>,
-) {
-    // Generate diff from last sent state
-    if let Some(diff) = diff_buffer.generate_diff(&action_state) {
-        // Serialize and send
-        let bytes = diff.serialize().expect("serialization failed");
-        network.send_reliable(bytes);
-        
-        // Store for potential rollback
-        diff_buffer.push(diff);
-    }
-}
-
-fn receive_input_from_client(
-    mut network_events: MessageReader<NetworkPacket>,
-    mut remote_actions: ResMut<RemoteActionStates>,
-) {
-    for packet in network_events.read() {
-        let diff = ActionDiff::deserialize(&packet.data)
-            .expect("deserialization failed");
-        remote_actions.apply_diff(packet.player_id, diff);
-    }
-}
-```
-
-## Examples
-
-Run the examples to see features in action:
-
-```bash
-# Basic input handling
-cargo run --example basic_input
-
-# Controller icon display
-cargo run --example controller_icons
-
-# Button remapping UI
-cargo run --example remapping
-
-# Virtual cursor
-cargo run --example virtual_cursor
-
-# Config persistence
-cargo run --example config_persistence
-```
-
-## API Reference
-
-### SystemSets
-
-bevy_archie provides the following system sets for ordering your systems:
-
-```rust
-pub enum ControllerSystemSet {
-    /// Device detection runs first.
-    Detection,
-    /// Action state updates.
-    Actions,
-    /// UI updates based on input state.
-    UI,
-}
-```
-
-**Execution order**: `Detection` → `Actions` → `UI`
-
-Use these to order your systems relative to controller input processing:
-
-```rust
-app.add_systems(Update, my_input_system.after(ControllerSystemSet::Actions));
-```
-
-### Core Types
-
-#### `InputDeviceState`
-
-Tracks the currently active input device.
-
-```rust
-pub struct InputDeviceState {
-    pub active_device: InputDevice,
-    pub last_gamepad: Option<Entity>,
-    // ...
-}
-
-// Methods
-fn using_gamepad(&self) -> bool;
-fn using_keyboard(&self) -> bool;
-fn using_mouse(&self) -> bool;
-fn active_gamepad(&self) -> Option<Entity>;
-```
-
-#### `ActionState`
-
-Query the state of game actions.
-
-```rust
-pub struct ActionState {
-    // ...
-}
-
-// Methods
-fn pressed(&self, action: GameAction) -> bool;
-fn just_pressed(&self, action: GameAction) -> bool;
-fn just_released(&self, action: GameAction) -> bool;
-fn value(&self, action: GameAction) -> f32;  // 0.0-1.0 for analog
-```
-
-#### `ActionMap`
-
-Map actions to input sources.
-
-```rust
-pub struct ActionMap {
-    // ...
-}
-
-// Methods
-fn bind_gamepad(&mut self, action: GameAction, button: GamepadButton);
-fn bind_axis(&mut self, action: GameAction, axis: GamepadAxis, direction: AxisDirection, threshold: f32);
-fn bind_key(&mut self, action: GameAction, key: KeyCode);
-fn bind_mouse(&mut self, action: GameAction, button: MouseButton);
-fn clear_bindings(&mut self, action: GameAction);
-fn primary_gamepad_button(&self, action: GameAction) -> Option<GamepadButton>;
-```
-
-#### `GameAction`
-
-Predefined actions that can be customized.
-
-```rust
-pub enum GameAction {
-    // Navigation
-    Confirm, Cancel, Pause, Select,
-    
-    // Movement
-    Up, Down, Left, Right,
-    
-    // Camera
-    LookUp, LookDown, LookLeft, LookRight,
-    
-    // Actions
-    Primary, Secondary,
-    LeftShoulder, RightShoulder,
-    LeftTrigger, RightTrigger,
-    
-    // UI
-    PageLeft, PageRight,
-    
-    // Custom slots
-    Custom1, Custom2, Custom3, Custom4,
-}
-
-// Methods
-fn all() -> &'static [GameAction];
-fn display_name(&self) -> &'static str;
-fn is_remappable(&self) -> bool;
-fn is_required(&self) -> bool;
-```
-
-### Configuration
-
-#### `ControllerConfig`
-
-Main configuration resource.
-
-```rust
-pub struct ControllerConfig {
-    pub deadzone: f32,
-    pub left_stick_sensitivity: f32,
-    pub right_stick_sensitivity: f32,
-    pub invert_left_x: bool,
-    pub invert_left_y: bool,
-    pub invert_right_x: bool,
-    pub invert_right_y: bool,
-    pub auto_detect_layout: bool,
-    pub force_layout: Option<ControllerLayout>,
-}
-
-// Methods (for persistence)
-fn save_default(&self) -> std::io::Result<()>;
-fn save_to_file(&self, path: impl AsRef<Path>) -> std::io::Result<()>;
-fn load_or_default() -> std::io::Result<Self>;
-fn load_from_file(path: impl AsRef<Path>) -> std::io::Result<Self>;
-```
-
-### Events (now Messages in Bevy 0.17)
-
-All events are now `Message` types. Use `MessageReader` and `MessageWriter`:
-
-- `InputDeviceChanged` - Input device switched
-- `GamepadConnected` / `GamepadDisconnected` - Controller connection
-- `VirtualCursorClick` - Virtual cursor clicked
-- `RumbleRequest` - Request haptic feedback
-- `ComboDetected` - Input combo detected
-- `ModifiedActionEvent` - Action modifier detected
-- `TouchpadGestureEvent` - Touchpad gesture
-- `MotionGestureDetected` - Motion gesture
-- `ControllerAssigned` / `ControllerUnassigned` - Player assignment
-- `ControllerDetected` - Controller model detected
-- `StartRemapEvent` / `RemapEvent` - Remapping events
-- `ToggleInputDebug` / `RecordingCommand` / `PlaybackCommand` - Debug commands
-
-## Platform Support
-
-### Haptic Feedback
-
-Fully implemented using Bevy's native `GamepadRumbleRequest`. Works out of the box on all platforms that support rumble through `gilrs`.
-
-### Motion Controls
-
-**What's implemented:** Complete gesture detection (shake, tilt, flick, roll), data structures (`GyroData`, `AccelData`), and event system.
-
-**What's needed:** Hardware drivers to read sensor data from controllers. See the [Hardware Integration Guide](docs/HARDWARE_INTEGRATION_GUIDE.md) for detailed instructions.
-
-**Quick example** (see [ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs) for full code):
-
-```rust
-fn inject_gyro_data(mut gamepads: Query<&mut GyroData>) {
-    // Use hidapi, SDL2, or platform-specific drivers
-    let (pitch, yaw, roll) = read_controller_sensors();
-    for mut gyro in &mut gamepads {
-        gyro.set_raw(pitch, yaw, roll);
-    }
-}
-```
-
-### Touchpad
-
-**What's implemented:** Complete gesture detection (swipe, pinch, tap, multi-touch), data structures (`TouchpadData`), and event system.
-
-**What's needed:** Hardware drivers to read touchpad data from controllers. See the [Hardware Integration Guide](docs/HARDWARE_INTEGRATION_GUIDE.md) for detailed instructions.
-
-**Quick example** (see [ps5_dualsense_motion.rs](examples/ps5_dualsense_motion.rs) for full code):
-
-```rust
-fn inject_touchpad_data(mut gamepads: Query<&mut TouchpadData>) {
-    // Use hidapi, SDL2, or platform-specific drivers
-    let (x, y, pressed) = read_touchpad();
-    for mut touchpad in &mut gamepads {
-        touchpad.set_finger(0, x, y, pressed);
-        touchpad.update_frame();
-    }
-}
-```
-
-**Hardware integration resources:**
-
-- 📘 [Hardware Integration Guide](docs/HARDWARE_INTEGRATION_GUIDE.md) - Complete guide with controller-specific details
-- 🎮 [PS5 DualSense Example](examples/ps5_dualsense_motion.rs) - Both gyro and touchpad
-- 🎮 [Switch Pro Example](examples/switch_pro_gyro.rs) - Gyro via SDL2
-- 🎮 [Steam Deck Example](examples/steam_touchpad.rs) - Touchpad via Steam Input API
-
-## Migration from Bevy 0.16
-
-Bevy 0.17 introduced a major change: **Events are now Messages**.
-
-### Key Changes
-
-```rust
-// Bevy 0.16
-app.add_event::<MyEvent>();
-fn system(mut events: EventWriter<MyEvent>) { }
-fn reader(mut events: EventReader<MyEvent>) { }
-
-// Bevy 0.17
-app.add_message::<MyEvent>();
-fn system(mut events: MessageWriter<MyEvent>) { }
-fn reader(mut events: MessageReader<MyEvent>) { }
-```
-
-All events in bevy_archie have been migrated to Messages.
+## Documentation Map
+
+For a faster overview, this README stays focused on setup and common workflows.
+Deep dives are split into dedicated docs:
+
+- [Advanced Features Guide](docs/ADVANCED_FEATURES.md)
+- [API Reference Guide](docs/API_REFERENCE.md)
+- [Hardware Integration Guide](docs/HARDWARE_INTEGRATION_GUIDE.md)
+- [Test Coverage Guide](docs/TEST_COVERAGE.md)
 
 ## Testing
 
-### Running Tests
+Quick commands:
 
 ```bash
-# Run all unit tests
 cargo test --lib
-
-# Run all tests including integration tests
 cargo test
-
-# Run specific test module
-cargo test --lib config::tests
-
-# Run with all features enabled
 cargo test --all-features
 ```
 
-### Test Coverage
-
-The project includes comprehensive unit and integration tests covering:
-
-- **Core Modules** (`actions`, `config`, `detection`): Input device detection, action mapping, configuration management
-- **Icon System** (`icons`): Icon filename generation, platform-specific labels, asset loading
-- **Integration Tests**: Plugin initialization, resource management, end-to-end workflows
-
-**Coverage Goal**: 80% code coverage across all modules. See [docs/TEST_COVERAGE.md](docs/TEST_COVERAGE.md) for coverage tools and analysis.
-
-### Test Structure
-
-- `src/*/tests`: Unit tests for each module
-- `tests/integration_tests.rs`: Integration tests for full plugin functionality
-- `.cargo/config.toml`: Test configuration and aliases
-
-For detailed coverage analysis instructions, see [docs/TEST_COVERAGE.md](docs/TEST_COVERAGE.md).
-
-## Controller Icons
-
-This library's icon system is **asset-agnostic** - it provides the infrastructure for loading and displaying controller-appropriate icons, but does not bundle icon assets in the crate to keep download size minimal.
-
-### Recommended Icon Pack
-
-We recommend [Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts) - a comprehensive CC0-licensed icon pack with 400+ PNG/SVG icons for Xbox, PlayStation, Nintendo Switch, Steam Deck, keyboard, and mouse.
-
-### Adding Icon Assets
-
-1. **Download the icon pack** from [itch.io](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts)
-
-2. **Extract to your project's assets folder:**
-
-   ```text
-   your_game/
-   └── assets/
-       └── icons/
-           └── mrbreakfast/
-               ├── LICENSE
-               └── png/
-                   ├── xbox_a.png
-                   ├── ps_cross.png
-                   └── ...
-   ```
-
-3. **Configure the icon system:**
-
-   ```rust
-   fn setup_icons(mut commands: Commands) {
-       commands.insert_resource(
-           ControllerIconAssets::new("icons/mrbreakfast/png")
-       );
-   }
-   ```
-
-### Alternative Icon Packs
-
-You can use any icon pack that follows standard naming conventions:
-
-- [Kenney Input Prompts](https://kenney.nl/assets/input-prompts) (CC0)
-- [Xelu's Controllers & Keyboard Prompts](https://thoseawesomeguys.com/prompts/) (CC0)
-- Custom artwork
-
-### Icon Naming Conventions
-
-The system expects icons named according to platform conventions:
-
-- **Xbox**: `xbox_a.png`, `xbox_b.png`, `xbox_lb.png`, `xbox_lt.png`
-- **PlayStation**: `ps_cross.png`, `ps_circle.png`, `ps_l1.png`, `ps_l2.png`
-- **Nintendo**: `switch_b.png`, `switch_a.png`, `switch_l.png`, `switch_zl.png`
-- **Generic**: `left_stick.png`, `right_stick.png`, `dpad.png`
-
-Icon sizes are supported via suffixes: `xbox_a_small.png` (32x32), `xbox_a.png` (48x48), `xbox_a_large.png` (64x64).
-
-If your icon pack uses different naming, create a thin wrapper or use symbolic links.
+For detailed coverage setup and reports, see [Test Coverage Guide](docs/TEST_COVERAGE.md).
 
 ## Credits
 
 Inspired by the [RenPy Controller GUI](https://feniksdev.com) by Feniks.
-
-### Included Assets
-
-- **[Mr. Breakfast's Free Prompts](https://mrbreakfastsdelight.itch.io/mr-breakfasts-free-prompts)** - Controller and keyboard input prompt icons by [Mr. Breakfast](https://github.com/mr-breakfast/mrbreakfasts_free_prompts). Over 400 PNG/SVG icons supporting Xbox, PlayStation, Nintendo Switch, Steam Deck, keyboard, and mouse. Licensed under [CC0 1.0 Universal](assets/icons/mrbreakfast/LICENSE) (Public Domain).
 
 ## License
 
