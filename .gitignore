@@ -85,3 +85,5 @@ docs/
 !docs/HARDWARE_INTEGRATION_GUIDE.md
 !docs/TEST_COVERAGE.md
 !docs/assets/
+
+.coraline/
