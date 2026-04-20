@@ -82,8 +82,11 @@ temp/
 
 # Development Documents
 docs/
+!docs/
 !docs/HARDWARE_INTEGRATION_GUIDE.md
 !docs/TEST_COVERAGE.md
+!docs/ADVANCED_FEATURES.md
+!docs/API_REFERENCE.md
 !docs/assets/
 
 .coraline/
