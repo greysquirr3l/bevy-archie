@@ -89,3 +89,7 @@ docs/
 
 .coraline/
 *.rs.bak*
+docs/dev/rust-catchup-1.78-1.93.md
+docs/dev/rust-catchup-1.78-1.95.0.md
+.gitignore
+docs/dev/rust-counterintuitive-patterns.md
