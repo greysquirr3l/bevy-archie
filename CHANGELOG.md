@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-04-20
+
+### Changed
+
+- **Rust toolchain**: Switch to `stable` channel (from pinned `1.95.0`) for local dev and CI
+- **CI toolchain alignment**: Ensure `rustfmt` and `clippy` components install on the active toolchain
+
+### Removed
+
+- Stray backup file (`src/motion/dualsense.rs.bak2`) excluded from crate distribution
+
+## [0.1.9] - 2026-04-03
+
+### Fixed
+
+- **Windows asset paths**: Normalize backslash separators in controller icon paths on Windows
+- **DualSense clippy**: Fix `map_unwrap_or` lint in DualSense motion state check
+
 ## [0.1.8] - 2026-03-12
 
 ### Added
