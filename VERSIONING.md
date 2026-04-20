@@ -6,9 +6,17 @@ bevy\_archie follows [Semantic Versioning](https://semver.org/) and maintains co
 
 | Branch | Bevy Version | Status | Crate Version |
 | --- | --- | --- | --- |
-| `main` | 0.17.x | Active Development | 0.1.x |
-| `bevy-0.17` | 0.17.x | Maintenance (patches only) | 0.1.x |
-| `bevy-0.18` | 0.18.x | Migration in Progress | 0.2.x |
+| `main` | 0.18.x | Active Development | 0.2.x |
+| `bevy-0.18` | 0.18.x | Maintenance mirror | 0.2.x |
+| `bevy-0.17` | 0.17.x | Deprecated in 30 days (maintenance only) | 0.1.x |
+
+## Deprecation Notice
+
+Bevy 0.17 support (crate `0.1.x`, branch `bevy-0.17`) is scheduled for deprecation in 30 days.
+
+- Deprecation date: 2026-05-18
+- During this window, only critical fixes should target `bevy-0.17`
+- New development should target Bevy 0.18 (`main`, crate `0.2.x`)
 
 ### Branch Lifecycle
 
@@ -21,8 +29,8 @@ bevy\_archie follows [Semantic Versioning](https://semver.org/) and maintains co
 
 | bevy\_archie | Bevy | Rust | Notes |
 | --- | --- | --- | --- |
-| 0.1.x | 0.17.x | 1.85+ | Current stable |
-| 0.2.x | 0.18.x | 1.85+ | In development |
+| 0.2.x | 0.18.x | 1.95+ | Current stable |
+| 0.1.x | 0.17.x | 1.95+ | Deprecated in 30 days |
 
 ## Upgrade Path
 
@@ -33,8 +41,8 @@ See [Migration Guide](docs/dev/BEVY_0.17_TO_0.18_MIGRATION.md) for detailed inst
 Key changes in 0.2.x:
 
 - Updated to Bevy 0.18 APIs
-- Breaking changes in input handling (TBD)
-- New features (TBD)
+- Active feature development and fixes
+- 0.17 support moving to end-of-support after deprecation window
 
 ## Dependency Management
 
@@ -92,7 +100,6 @@ bevy_archie = "0.2"
 
 When contributing, target the appropriate branch:
 
-- Bug fixes for current stable → `main`
-- Bug fixes for older Bevy → `bevy-X.Y` branch
-- New features → `main` (will be forward-ported)
-- Bevy migration work → `bevy-X.Y` branch
+- New features and standard fixes → `main`
+- Bevy 0.18 maintenance-only patches → `bevy-0.18`
+- Bevy 0.17 critical fixes only (until deprecation date) → `bevy-0.17`
