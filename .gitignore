@@ -87,3 +87,4 @@ docs/
 !docs/assets/
 
 .coraline/
+*.rs.bak*
