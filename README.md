@@ -11,7 +11,7 @@
 
 ![Archie Out of Context](docs/assets/archie_context.png)
 
-> **Note:** This branch (`main`) targets **Bevy 0.18**. Bevy 0.17 support is deprecated in 30 days (target date: **2026-05-18**). If you still need Bevy 0.17 during the maintenance window, use [`bevy-0.17`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17).
+> **Branch policy:** `main` tracks **Bevy 0.18.x**. The only support branch is [`bevy-0.17`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17) for **Bevy 0.17.x**, and it is scheduled for retirement on **2026-05-18** (less than 30 days from 2026-04-26).
 
 A comprehensive game controller support module for the Bevy engine, inspired by the RenPy Controller GUI project.
 
@@ -47,7 +47,7 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 | 0.18 | 0.2.x (`main`)                                                                    |
 | 0.17 | [0.1.x (`bevy-0.17`)](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17) |
 
-> Bevy 0.17 support is deprecated and scheduled for end of support on **2026-05-18**.
+> `main` is Bevy 0.18.x. The only other supported line is Bevy 0.17.x on `bevy-0.17`, retiring on **2026-05-18**.
 
 ## Features
 

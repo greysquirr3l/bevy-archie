@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Branch policy clarified**: `main` is explicitly documented as the Bevy 0.18.x line, with `bevy-0.17` as the only remaining support branch scheduled for retirement on 2026-05-18.
+- **CI scope reduced**: `.github/workflows/ci.yml` now runs for `main` and `bevy-0.17` only.
+- **Branch workflow docs aligned**: Updated branch strategy, backport notes, MSRV notes, and release command examples in `docs/dev/BRANCH_WORKFLOW.md`.
+- **README policy update**: Updated support messaging and version compatibility notes to match the two-branch model.
+
+### Removed
+
+- **`ci-migration.yml` workflow**: Removed the separate `bevy-0.18` transitional CI workflow.
+
 ## [0.2.4] - 2026-04-20
 
 ### Fixed

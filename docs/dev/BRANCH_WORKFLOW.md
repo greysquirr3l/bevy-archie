@@ -4,22 +4,23 @@
 
 ## Branch Strategy
 
+Branch policy (effective 2026-04-26): `main` is Bevy 0.18.x. The only other branch line is `bevy-0.17` for Bevy 0.17.x, and that branch is scheduled for retirement on 2026-05-18 (less than 30 days).
+
 | Branch | Purpose | Bevy Version | Status |
 | -------- | --------- | -------------- | -------- |
-| `main` | Latest stable release | 0.17.x | Active |
-| `bevy-0.17` | Maintenance for Bevy 0.17 | 0.17.x | Active |
-| `bevy-0.18` | Migration to Bevy 0.18 | 0.18.x | Development |
+| `main` | Latest stable release | 0.18.x | Active |
+| `bevy-0.17` | Final maintenance for Bevy 0.17 | 0.17.x | Retirement scheduled for 2026-05-18 |
 
-## Automatic Branch Sync
+## Backport Strategy
 
-The `sync-branches.yml` workflow automatically cherry-picks commits from `main` to `bevy-0.17`.
+There is no automatic `sync-branches.yml` workflow in this repository. Backports from `main` to `bevy-0.17` are manual cherry-picks when needed.
 
 ### How It Works
 
 1. Push a commit to `main`
-2. Workflow triggers automatically
-3. Commit is cherry-picked to `bevy-0.17`
-4. If conflicts occur, an issue is created
+2. Decide whether the change should also ship on `bevy-0.17`
+3. Cherry-pick the commit onto `bevy-0.17`
+4. Resolve conflicts locally if they occur
 
 ### Skipping Sync
 
@@ -29,13 +30,7 @@ Add `[skip-sync]` to your commit message to prevent auto-sync:
 git commit -m "feat: main-only feature [skip-sync]"
 ```
 
-### Manual Sync (Workflow Dispatch)
-
-Go to Actions → "Sync Branches" → Run workflow:
-
-- **source_branch**: Branch to cherry-pick from (default: main)
-- **target_branch**: Branch to cherry-pick to (default: bevy-0.17)
-- **commit_sha**: Specific commit (leave empty for latest)
+`[skip-sync]` is a human reminder only. It documents that a change is intentionally `main`-only; no workflow consumes it.
 
 ## Manual Cherry-Pick Process
 
@@ -72,7 +67,6 @@ git checkout main
 | `codeql.yml` | Push/PR, weekly schedule | Security analysis |
 | `release.yml` | Tag v*.*.* | Publish to crates.io |
 | `dependabot-auto-merge.yml` | Dependabot PRs | Auto-merge patch updates |
-| `sync-branches.yml` | Push to main | Sync commits to bevy-0.17 |
 
 ## Branch Protection
 
@@ -95,9 +89,8 @@ Both `main` and `bevy-0.17` have OSSF branch protection:
 
 | Branch | MSRV | Notes |
 | -------- | ------ | ------- |
-| main | 1.88 | Matches Bevy 0.17.3 |
-| bevy-0.17 | 1.88 | Matches Bevy 0.17.3 |
-| bevy-0.18 | 1.89 | Required for Bevy 0.18 |
+| main | 1.94 | Matches `rust-version` in `Cargo.toml` on `main` |
+| bevy-0.17 | Branch-specific | Check that branch's `Cargo.toml` |
 
 ## Bevy Migration Process
 
@@ -109,15 +102,15 @@ When migrating to a new Bevy version:
 4. Fix breaking changes (see `docs/dev/BEVY_0.17_TO_0.18_MIGRATION.md`)
 5. Run full test suite
 6. Update `CHANGELOG.md`
-7. When stable, merge to `main`
+7. Keep `main` as the Bevy 0.18.x line and retire obsolete support branches on schedule
 
 ## Publishing to crates.io
 
 ```bash
 # Ensure CARGO_REGISTRY_TOKEN is set in GitHub secrets
 # Tag the release
-git tag v0.1.4
-git push origin v0.1.4
+git tag vX.Y.Z
+git push origin vX.Y.Z
 
 # release.yml workflow will automatically publish
 ```
