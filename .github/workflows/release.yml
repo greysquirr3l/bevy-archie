@@ -13,13 +13,17 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # workflow_dispatch receives a `tag` input but `github.ref` still points at
+  # the branch you dispatched from, so synthesize refs/tags/<tag> for that path.
+  # For tag pushes `github.ref` is already refs/tags/<tag>.
+  RELEASE_REF: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', github.event.inputs.tag) || github.ref }}
 
 # Default-deny: each job opts in to the minimum permissions it needs.
 permissions: {}
 
 # Don't run two releases for the same tag in parallel.
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ env.RELEASE_REF }}
   cancel-in-progress: false
 
 jobs:
@@ -32,7 +36,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           # Fetch the tag's commit, not just the default branch
-          ref: ${{ github.ref }}
+          ref: ${{ env.RELEASE_REF }}
           persist-credentials: false
 
       - name: Install Rust toolchain
@@ -66,7 +70,7 @@ jobs:
       - name: Verify version matches tag
         run: |
           CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
-          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          TAG_VERSION="${RELEASE_REF#refs/tags/v}"
           if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
             echo "Version mismatch: Cargo.toml has $CARGO_VERSION, tag is $TAG_VERSION"
             exit 1
@@ -87,12 +91,12 @@ jobs:
           # crates.io index can cause "already exists" between pre-checks and
           # the actual upload. Treat that single error as a success.
           if cargo publish 2>&1 | tee "$log"; then
-            echo "bevy_archie@${GITHUB_REF#refs/tags/v} published successfully"
+            echo "bevy_archie@${RELEASE_REF#refs/tags/v} published successfully"
             exit 0
           fi
 
           if grep -qE "already exists on crates.io" "$log"; then
-            echo "bevy_archie@${GITHUB_REF#refs/tags/v} already published (treating as success)"
+            echo "bevy_archie@${RELEASE_REF#refs/tags/v} already published (treating as success)"
             exit 0
           fi
 
@@ -109,13 +113,13 @@ jobs:
       - uses: actions/checkout@v7
         with:
           # Fetch the tag's commit for correct CHANGELOG extraction
-          ref: ${{ github.ref }}
+          ref: ${{ env.RELEASE_REF }}
           persist-credentials: false
 
       - name: Extract changelog for this version
         id: changelog
         run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
+          VERSION="${RELEASE_REF#refs/tags/v}"
           # Extract section for this version from CHANGELOG.md
           NOTES=$(awk "/^## \[?$VERSION\]?/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md)
           echo "notes<<EOF" >> $GITHUB_OUTPUT
@@ -127,6 +131,6 @@ jobs:
         with:
           body: ${{ steps.changelog.outputs.notes }}
           draft: false
-          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+          prerelease: ${{ contains(env.RELEASE_REF, '-alpha') || contains(env.RELEASE_REF, '-beta') || contains(env.RELEASE_REF, '-rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

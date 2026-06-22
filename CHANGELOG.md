@@ -13,10 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Bumped `bevy` dependency (library and dev) from `0.18` to `0.19` in `Cargo.toml`.
   - Bumped `rust-version` from `1.94` to `1.96` to match the Bevy 0.19 line and align with the stable Rust toolchain.
   - Updated all example `TextFont { font_size: N.N, .. }` literals to the new `FontSize::Px(N.N)` enum form introduced by the Bevy text Parley migration. The `font` field now flows through `FontSource` and existing `..default()` usage continues to work via `From<Handle<Font>>`.
-- **Branch policy clarified**: `main` is now the Bevy 0.19.x line; `bevy-0.18` is the maintenance branch (Bevy 0.18.x); `bevy-0.17` remains published but is deprecated.
-- **CI scope reduced**: `.github/workflows/ci.yml` now runs for `main`, `bevy-0.19`, `bevy-0.18`, and `bevy-0.17`.
-- **Branch workflow docs aligned**: Updated branch strategy, backport notes (now covering both `bevy-0.18` and `bevy-0.17`), MSRV notes, and release command examples in `docs/dev/BRANCH_WORKFLOW.md`.
-- **README policy update**: Updated support messaging and version compatibility notes to reflect the three-branch model (`main` / `bevy-0.18` / `bevy-0.17`).
+- **Branch policy clarified**: `main` is now the Bevy 0.19.x line; `bevy-0.18` is the maintenance branch (Bevy 0.18.x). The `bevy-0.17` branch has been retired (final 0.1.x releases remain on crates.io).
+- **CI scope reduced**: `.github/workflows/ci.yml` now runs for `main`, `bevy-0.19`, and `bevy-0.18`.
+- **Branch workflow docs aligned**: Updated branch strategy, backport notes (covering `bevy-0.18`), MSRV notes, and release command examples in `docs/dev/BRANCH_WORKFLOW.md`.
+- **README policy update**: Updated support messaging and version compatibility notes to reflect the two-branch model (`main` / `bevy-0.18`).
 
 ### Removed
 

@@ -22,7 +22,7 @@ jobs:
       # an attacker who controls a previous run. Since we already gate on
       # head_branch == 'main', main's HEAD is the same merge commit and the
       # tag/commit we operate on.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -43,7 +43,13 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         id: version
         run: |
-          VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "bevy_archie") | .version')
+          # Parse version directly from Cargo.toml to avoid requiring a full
+          # Rust toolchain install for this single metadata call.
+          VERSION=$(awk -F'"' '/^version[[:space:]]*=/ {print $2; exit}' Cargo.toml)
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not parse version from Cargo.toml"
+            exit 1
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 

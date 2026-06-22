@@ -8,11 +8,10 @@ bevy\_archie follows [Semantic Versioning](https://semver.org/) and maintains co
 | --- | --- | --- | --- |
 | `main` | 0.19.x | Active Development | 0.3.x |
 | `bevy-0.18` | 0.18.x | Maintenance mirror | 0.2.x |
-| `bevy-0.17` | 0.17.x | Deprecated | 0.1.x |
 
 ## Deprecation Notice
 
-Bevy 0.17 support (crate `0.1.x`, branch `bevy-0.17`) is deprecated.
+Bevy 0.17 support (crate `0.1.x`) is end-of-life. The `bevy-0.17` branch has been retired; the final 0.1.x releases remain on [crates.io](https://crates.io/crates/bevy_archie/versions) for existing consumers.
 
 - New development should target Bevy 0.19 (`main`, crate `0.3.x`)
 - Bevy 0.18 maintenance-only patches target `bevy-0.18` (crate `0.2.x`)
@@ -30,7 +29,6 @@ Bevy 0.17 support (crate `0.1.x`, branch `bevy-0.17`) is deprecated.
 | --- | --- | --- | --- |
 | 0.3.x | 0.19.x | 1.96+ | Current stable |
 | 0.2.x | 0.18.x | 1.95+ | Maintenance |
-| 0.1.x | 0.17.x | 1.95+ | Deprecated |
 
 ## Upgrade Path
 
@@ -109,4 +107,3 @@ When contributing, target the appropriate branch:
 
 - New features and standard fixes → `main`
 - Bevy 0.18 maintenance-only patches → `bevy-0.18`
-- Bevy 0.17 critical fixes only (deprecated) → `bevy-0.17`

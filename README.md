@@ -11,7 +11,7 @@
 
 ![Archie Out of Context](docs/assets/archie_context.png)
 
-> **Branch policy:** `main` tracks **Bevy 0.19.x**. The maintenance branch is [`bevy-0.18`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.18) for **Bevy 0.18.x**. The [`bevy-0.17`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17) branch remains published for **Bevy 0.17.x** consumers but is deprecated.
+> **Branch policy:** `main` tracks **Bevy 0.19.x**. The maintenance branch is [`bevy-0.18`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.18) for **Bevy 0.18.x**. Bevy 0.17 support is no longer maintained; the final 0.1.x release remains on [crates.io](https://crates.io/crates/bevy_archie/0.1.4) for existing consumers.
 
 A comprehensive game controller support module for the Bevy engine, inspired by the RenPy Controller GUI project.
 
@@ -46,9 +46,9 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 |------|-----------------------------------------------------------------------------------|
 | 0.19 | 0.3.x (`main`)                                                                    |
 | 0.18 | [0.2.x (`bevy-0.18`)](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.18) |
-| 0.17 | [0.1.x (`bevy-0.17`)](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17) |
+| 0.17 | 0.1.x (final, on [crates.io](https://crates.io/crates/bevy_archie/versions))      |
 
-> `main` is Bevy 0.19.x.
+> `main` is Bevy 0.19.x. Bevy 0.17 is no longer maintained; the `bevy-0.17` branch has been retired.
 
 ## Features
 

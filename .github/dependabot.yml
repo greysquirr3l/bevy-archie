@@ -4,7 +4,6 @@
 # Branch Strategy:
 # - main: Latest stable Bevy line (currently 0.19)
 # - bevy-0.18: Maintenance branch for Bevy 0.18.x
-# - bevy-0.17: Deprecated maintenance branch for Bevy 0.17.x
 
 version: 2
 updates:
@@ -47,34 +46,6 @@ updates:
           - "patch"
         exclude-patterns:
           - "bevy*"
-
-  # Dependabot for bevy-0.17 maintenance branch
-  - package-ecosystem: "cargo"
-    directory: "/"
-    target-branch: "bevy-0.17"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "America/New_York"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "deps(cargo)"
-    labels:
-      - "dependencies"
-      - "rust"
-      - "bevy-0.17"
-    ignore:
-      - dependency-name: "bevy"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-      - dependency-name: "bevy-*"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
-    groups:
-      all-patches:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

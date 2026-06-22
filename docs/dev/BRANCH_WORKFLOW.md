@@ -4,23 +4,22 @@
 
 ## Branch Strategy
 
-Branch policy (effective 2026-06-22): `main` is Bevy 0.19.x. Maintenance branches are `bevy-0.18` (Bevy 0.18.x) and `bevy-0.17` (Bevy 0.17.x, deprecated).
+Branch policy (effective 2026-06-22): `main` is Bevy 0.19.x. The maintenance branch is `bevy-0.18` (Bevy 0.18.x). Bevy 0.17 support is end-of-life and the `bevy-0.17` branch has been retired; final 0.1.x releases remain on crates.io.
 
 | Branch | Purpose | Bevy Version | Status |
 | -------- | --------- | -------------- | -------- |
 | `main` | Latest stable release | 0.19.x | Active |
 | `bevy-0.18` | Maintenance for Bevy 0.18 | 0.18.x | Maintenance |
-| `bevy-0.17` | Final maintenance for Bevy 0.17 | 0.17.x | Deprecated |
 
 ## Backport Strategy
 
-There is no automatic `sync-branches.yml` workflow in this repository. Backports from `main` to `bevy-0.18` and `bevy-0.17` are manual cherry-picks when needed.
+There is no automatic `sync-branches.yml` workflow in this repository. Backports from `main` to `bevy-0.18` are manual cherry-picks when needed.
 
 ### How It Works
 
 1. Push a commit to `main`
-2. Decide whether the change should also ship on `bevy-0.18` or `bevy-0.17`
-3. Cherry-pick the commit onto the target maintenance branch(es)
+2. Decide whether the change should also ship on `bevy-0.18`
+3. Cherry-pick the commit onto `bevy-0.18`
 4. Resolve conflicts locally if they occur
 
 ### Skipping Sync
@@ -42,7 +41,7 @@ If you need to manually sync (e.g., conflict resolution):
 git push origin main
 
 # Switch to target branch
-git checkout bevy-0.18   # or bevy-0.17
+git checkout bevy-0.18
 
 # Cherry-pick the commit
 git cherry-pick <commit-sha>
@@ -53,7 +52,7 @@ git cherry-pick <commit-sha>
 # 3. git cherry-pick --continue
 
 # Push
-git push origin bevy-0.18   # or bevy-0.17
+git push origin bevy-0.18
 
 # Return to main
 git checkout main
@@ -63,7 +62,7 @@ git checkout main
 
 | Workflow | Trigger | Purpose |
 | ---------- | --------- | --------- |
-| `ci.yml` | Push/PR to main, bevy-0.18, bevy-0.17 | Check, Test, Clippy, Format, Docs, MSRV |
+| `ci.yml` | Push/PR to main, bevy-0.18 | Check, Test, Clippy, Format, Docs, MSRV |
 | `security.yml` | Push/PR, weekly schedule | cargo-audit, cargo-deny |
 | `codeql.yml` | Push/PR, weekly schedule | Security analysis |
 | `release.yml` | Tag v*.*.* | Publish to crates.io |
@@ -71,7 +70,7 @@ git checkout main
 
 ## Branch Protection
 
-`main`, `bevy-0.18`, and `bevy-0.17` have OSSF branch protection:
+`main` and `bevy-0.18` have OSSF branch protection:
 
 - **Required status checks:** Check, Test, Clippy, Format
 - **Strict status checks:** Branch must be up-to-date
@@ -84,7 +83,7 @@ git checkout main
 - **Cargo updates:** Weekly on Monday 9 AM ET
 - **GitHub Actions updates:** Weekly on Monday 9 AM ET
 - **Bevy updates:** Ignored (manual migration required)
-- **Target branches:** main, bevy-0.18, bevy-0.17
+- **Target branches:** main, bevy-0.18
 
 ## MSRV (Minimum Supported Rust Version)
 
@@ -92,7 +91,6 @@ git checkout main
 | -------- | ------ | ------- |
 | main | 1.96 | Matches `rust-version` in `Cargo.toml` on `main` |
 | bevy-0.18 | Branch-specific | Check that branch's `Cargo.toml` |
-| bevy-0.17 | Branch-specific | Check that branch's `Cargo.toml` |
 
 ## Bevy Migration Process
 
