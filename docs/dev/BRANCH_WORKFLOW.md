@@ -19,8 +19,8 @@ There is no automatic `sync-branches.yml` workflow in this repository. Backports
 ### How It Works
 
 1. Push a commit to `main`
-2. Decide whether the change should also ship on `bevy-0.17`
-3. Cherry-pick the commit onto `bevy-0.17`
+2. Decide whether the change should also ship on `bevy-0.18` or `bevy-0.17`
+3. Cherry-pick the commit onto the target maintenance branch(es)
 4. Resolve conflicts locally if they occur
 
 ### Skipping Sync
@@ -42,7 +42,7 @@ If you need to manually sync (e.g., conflict resolution):
 git push origin main
 
 # Switch to target branch
-git checkout bevy-0.17
+git checkout bevy-0.18   # or bevy-0.17
 
 # Cherry-pick the commit
 git cherry-pick <commit-sha>
@@ -53,7 +53,7 @@ git cherry-pick <commit-sha>
 # 3. git cherry-pick --continue
 
 # Push
-git push origin bevy-0.17
+git push origin bevy-0.18   # or bevy-0.17
 
 # Return to main
 git checkout main
@@ -90,7 +90,7 @@ git checkout main
 
 | Branch | MSRV | Notes |
 | -------- | ------ | ------- |
-| main | 1.94 | Matches `rust-version` in `Cargo.toml` on `main` |
+| main | 1.96 | Matches `rust-version` in `Cargo.toml` on `main` |
 | bevy-0.18 | Branch-specific | Check that branch's `Cargo.toml` |
 | bevy-0.17 | Branch-specific | Check that branch's `Cargo.toml` |
 
