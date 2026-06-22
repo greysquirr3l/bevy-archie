@@ -29,7 +29,7 @@ fn setup(mut commands: Commands) {
             "Controller Detection Database Example\n\nConnect a controller to see its details...",
         ),
         TextFont {
-            font_size: 24.0,
+            font_size: FontSize::Px(24.0),
             ..default()
         },
         TextColor(Color::WHITE),

@@ -2,9 +2,9 @@ name: Security Audit
 
 on:
   push:
-    branches: [main, bevy-0.17]
+    branches: [main, bevy-0.18, bevy-0.17] 
   pull_request:
-    branches: [main, bevy-0.17]
+    branches: [main, bevy-0.18, bevy-0.17] 
   schedule:
     # Run weekly on Monday at 9 AM UTC
     - cron: "0 9 * * 1"

@@ -43,7 +43,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Controller Remapping"),
                 TextFont {
-                    font_size: 32.0,
+                    font_size: FontSize::Px(32.0),
                     ..default()
                 },
                 TextColor(Color::WHITE),
@@ -53,7 +53,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Click an action to remap it, then press a button on your controller"),
                 TextFont {
-                    font_size: 18.0,
+                    font_size: FontSize::Px(18.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.6, 0.6, 0.6)),
@@ -91,7 +91,7 @@ fn setup(mut commands: Commands) {
                     btn.spawn((
                         Text::new("Reset to Defaults"),
                         TextFont {
-                            font_size: 16.0,
+                            font_size: FontSize::Px(16.0),
                             ..default()
                         },
                         TextColor(Color::WHITE),
@@ -113,7 +113,7 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
             row.spawn((
                 Text::new(action.display_name()),
                 TextFont {
-                    font_size: 20.0,
+                    font_size: FontSize::Px(20.0),
                     ..default()
                 },
                 TextColor(Color::WHITE),
@@ -127,7 +127,7 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
             row.spawn((
                 Text::new("[A]"),
                 TextFont {
-                    font_size: 18.0,
+                    font_size: FontSize::Px(18.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.7, 0.7, 0.7)),
@@ -153,10 +153,10 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
             .with_children(|btn: &mut ChildSpawnerCommands| {
                 btn.spawn((
                     Text::new("Remap"),
-                    TextFont {
-                        font_size: 14.0,
-                        ..default()
-                    },
+                        TextFont {
+                            font_size: FontSize::Px(14.0),
+                            ..default()
+                        },
                     TextColor(Color::WHITE),
                 ));
             });

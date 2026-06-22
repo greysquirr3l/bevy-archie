@@ -51,7 +51,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Controller Icon Demo"),
                 TextFont {
-                    font_size: 32.0,
+                    font_size: FontSize::Px(32.0),
                     ..default()
                 },
                 TextColor(Color::WHITE),
@@ -61,7 +61,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Layout: Xbox"),
                 TextFont {
-                    font_size: 24.0,
+                    font_size: FontSize::Px(24.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.7, 0.7, 0.7)),
@@ -102,7 +102,7 @@ fn setup(mut commands: Commands) {
                     "Press 1-4 to change layout:\n1=Xbox, 2=PlayStation, 3=Nintendo, 4=Generic",
                 ),
                 TextFont {
-                    font_size: 18.0,
+                    font_size: FontSize::Px(18.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.5, 0.5, 0.5)),
@@ -137,7 +137,7 @@ fn spawn_button_prompt(parent: &mut ChildSpawnerCommands, icon: ButtonIcon, labe
                 button.spawn((
                     Text::new(icon.label(ControllerLayout::Xbox)),
                     TextFont {
-                        font_size: 20.0,
+                        font_size: FontSize::Px(20.0),
                         ..default()
                     },
                     TextColor(Color::WHITE),
@@ -148,7 +148,7 @@ fn spawn_button_prompt(parent: &mut ChildSpawnerCommands, icon: ButtonIcon, labe
             col.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.8, 0.8, 0.8)),

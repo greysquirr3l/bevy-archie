@@ -46,7 +46,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Bevy Archie - Controller Support Demo"),
                 TextFont {
-                    font_size: 32.0,
+                    font_size: FontSize::Px(32.0),
                     ..default()
                 },
                 TextColor(Color::WHITE),
@@ -56,7 +56,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Input Device: Mouse"),
                 TextFont {
-                    font_size: 24.0,
+                    font_size: FontSize::Px(24.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.7, 0.7, 0.7)),
@@ -67,7 +67,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Actions: None"),
                 TextFont {
-                    font_size: 20.0,
+                    font_size: FontSize::Px(20.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.5, 0.8, 0.5)),
@@ -83,7 +83,7 @@ fn setup(mut commands: Commands) {
                      - Press buttons to see action states",
                 ),
                 TextFont {
-                    font_size: 18.0,
+                    font_size: FontSize::Px(18.0),
                     ..default()
                 },
                 TextColor(Color::srgb(0.6, 0.6, 0.6)),

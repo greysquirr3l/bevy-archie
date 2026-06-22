@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Bevy 0.18 → 0.19 upgrade**: Migrated to Bevy 0.19 across the library, examples, and tests.
+  - Bumped `bevy` dependency (library and dev) from `0.18` to `0.19` in `Cargo.toml`.
+  - Updated all example `TextFont { font_size: N.N, .. }` literals to the new `FontSize::Px(N.N)` enum form introduced by the Bevy text Parley migration. The `font` field now flows through `FontSource` and existing `..default()` usage continues to work via `From<Handle<Font>>`.
 - **Branch policy clarified**: `main` is explicitly documented as the Bevy 0.18.x line, with `bevy-0.17` as the only remaining support branch scheduled for retirement on 2026-05-18.
 - **CI scope reduced**: `.github/workflows/ci.yml` now runs for `main` and `bevy-0.17` only.
 - **Branch workflow docs aligned**: Updated branch strategy, backport notes, MSRV notes, and release command examples in `docs/dev/BRANCH_WORKFLOW.md`.

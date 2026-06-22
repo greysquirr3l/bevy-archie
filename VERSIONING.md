@@ -6,17 +6,16 @@ bevy\_archie follows [Semantic Versioning](https://semver.org/) and maintains co
 
 | Branch | Bevy Version | Status | Crate Version |
 | --- | --- | --- | --- |
-| `main` | 0.18.x | Active Development | 0.2.x |
+| `main` | 0.19.x | Active Development | 0.3.x |
 | `bevy-0.18` | 0.18.x | Maintenance mirror | 0.2.x |
-| `bevy-0.17` | 0.17.x | Deprecated in 30 days (maintenance only) | 0.1.x |
+| `bevy-0.17` | 0.17.x | Deprecated | 0.1.x |
 
 ## Deprecation Notice
 
-Bevy 0.17 support (crate `0.1.x`, branch `bevy-0.17`) is scheduled for deprecation in 30 days.
+Bevy 0.17 support (crate `0.1.x`, branch `bevy-0.17`) is deprecated.
 
-- Deprecation date: 2026-05-18
-- During this window, only critical fixes should target `bevy-0.17`
-- New development should target Bevy 0.18 (`main`, crate `0.2.x`)
+- New development should target Bevy 0.19 (`main`, crate `0.3.x`)
+- Bevy 0.18 maintenance-only patches target `bevy-0.18` (crate `0.2.x`)
 
 ### Branch Lifecycle
 
@@ -29,10 +28,18 @@ Bevy 0.17 support (crate `0.1.x`, branch `bevy-0.17`) is scheduled for deprecati
 
 | bevy\_archie | Bevy | Rust | Notes |
 | --- | --- | --- | --- |
-| 0.2.x | 0.18.x | 1.95+ | Current stable |
-| 0.1.x | 0.17.x | 1.95+ | Deprecated in 30 days |
+| 0.3.x | 0.19.x | 1.96+ | Current stable |
+| 0.2.x | 0.18.x | 1.95+ | Maintenance |
+| 0.1.x | 0.17.x | 1.95+ | Deprecated |
 
 ## Upgrade Path
+
+### From bevy\_archie 0.2.x (Bevy 0.18) to 0.3.x (Bevy 0.19)
+
+Key changes in 0.3.x:
+
+- Updated to Bevy 0.19 APIs (resources-as-components, Parley text, BSN scenes)
+- See the upstream [Bevy 0.18 → 0.19 migration guide](https://bevy.org/learn/migration-guides/0-18-to-0-19/) for details
 
 ### From bevy\_archie 0.1.x (Bevy 0.17) to 0.2.x (Bevy 0.18)
 
@@ -87,11 +94,11 @@ The release workflow automatically:
 Users can select their Bevy version in `Cargo.toml`:
 
 ```toml
-# For Bevy 0.17
+# For Bevy 0.19
 [dependencies]
-bevy_archie = "0.1"
+bevy_archie = "0.3"
 
-# For Bevy 0.18 (when available)
+# For Bevy 0.18
 [dependencies]
 bevy_archie = "0.2"
 ```
@@ -102,4 +109,4 @@ When contributing, target the appropriate branch:
 
 - New features and standard fixes → `main`
 - Bevy 0.18 maintenance-only patches → `bevy-0.18`
-- Bevy 0.17 critical fixes only (until deprecation date) → `bevy-0.17`
+- Bevy 0.17 critical fixes only (deprecated) → `bevy-0.17`
