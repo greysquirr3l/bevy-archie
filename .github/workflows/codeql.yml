@@ -2,12 +2,29 @@ name: CodeQL
 
 on:
   push:
-    branches: [main, bevy-0.18, bevy-0.17] 
+    branches: [main, bevy-0.19, bevy-0.18, bevy-0.17]
+    paths:
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - ".github/workflows/codeql.yml"
   pull_request:
-    branches: [main, bevy-0.18, bevy-0.17] 
+    paths:
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - ".github/workflows/codeql.yml"
   schedule:
     # Run weekly on Sunday at midnight UTC
     - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+# Default-deny: the analysis job needs security-events: write to upload SARIF.
+permissions: {}
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze:

@@ -1,0 +1,99 @@
+name: Auto-tag on version bump
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+# Default-deny: tag job expands to contents:write and actions:write.
+permissions: {}
+
+jobs:
+  tag:
+    name: Push version tag if missing
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      # Check out main rather than the workflow_run head_sha: a workflow_run
+      # event is triggered by another workflow and its head_sha can be set by
+      # an attacker who controls a previous run. Since we already gate on
+      # head_branch == 'main', main's HEAD is the same merge commit and the
+      # tag/commit we operate on.
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Gate on version-bump commit
+        id: gate
+        run: |
+          msg="$(git log -1 --pretty=%s)"
+          if [[ "$msg" == chore:*bump\ version* ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Head commit message does not match 'chore: bump version ...' pattern"
+          fi
+
+      - name: Extract version from Cargo.toml
+        if: steps.gate.outputs.run == 'true'
+        id: version
+        run: |
+          VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "bevy_archie") | .version')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag already exists
+        if: steps.gate.outputs.run == 'true'
+        id: check
+        run: |
+          if git ls-remote --tags origin "refs/tags/v${{ steps.version.outputs.version }}" | grep -q .; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push tag
+        if: steps.gate.outputs.run == 'true' && steps.check.outputs.exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "${{ steps.version.outputs.tag }}"
+          if git push origin "${{ steps.version.outputs.tag }}"; then
+            echo "Pushed ${{ steps.version.outputs.tag }}"
+            exit 0
+          fi
+
+          # If a manual push raced us, treat that as success.
+          if git ls-remote --tags origin "refs/tags/${{ steps.version.outputs.tag }}" | grep -q .; then
+            echo "Tag ${{ steps.version.outputs.tag }} was created concurrently; continuing"
+            exit 0
+          fi
+          echo "Failed to push tag ${{ steps.version.outputs.tag }}"
+          exit 1
+
+      - name: Trigger release workflow
+        if: steps.gate.outputs.run == 'true' && steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run release.yml \
+            --ref "${{ steps.version.outputs.tag }}" \
+            -f tag="${{ steps.version.outputs.tag }}"
+
+      - name: Tag already exists
+        if: steps.gate.outputs.run == 'true' && steps.check.outputs.exists == 'true'
+        run: |
+          echo "Tag ${{ steps.version.outputs.version }} already exists, skipping"
+
+      - name: Not a version-bump commit
+        if: steps.gate.outputs.run != 'true'
+        run: |
+          echo "Skipping auto-tag: head commit is not a version-bump commit"

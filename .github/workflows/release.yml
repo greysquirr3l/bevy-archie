@@ -4,19 +4,36 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.3.0)"
+        required: true
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
+
+# Default-deny: each job opts in to the minimum permissions it needs.
+permissions: {}
+
+# Don't run two releases for the same tag in parallel.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   publish:
     name: Publish to crates.io
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
           # Fetch the tag's commit, not just the default branch
           ref: ${{ github.ref }}
+          persist-credentials: false
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -59,9 +76,28 @@ jobs:
         run: cargo publish --dry-run
 
       - name: Publish to crates.io
-        run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          set -o pipefail
+          log=$(mktemp)
+          trap 'rm -f "$log"' EXIT
+
+          # Race-tolerant publish: a parallel/concurrent publish or a stale
+          # crates.io index can cause "already exists" between pre-checks and
+          # the actual upload. Treat that single error as a success.
+          if cargo publish 2>&1 | tee "$log"; then
+            echo "bevy_archie@${GITHUB_REF#refs/tags/v} published successfully"
+            exit 0
+          fi
+
+          if grep -qE "already exists on crates.io" "$log"; then
+            echo "bevy_archie@${GITHUB_REF#refs/tags/v} already published (treating as success)"
+            exit 0
+          fi
+
+          echo "::error::cargo publish failed"
+          exit 1
 
   github-release:
     name: Create GitHub Release
@@ -74,6 +110,7 @@ jobs:
         with:
           # Fetch the tag's commit for correct CHANGELOG extraction
           ref: ${{ github.ref }}
+          persist-credentials: false
 
       - name: Extract changelog for this version
         id: changelog
