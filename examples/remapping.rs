@@ -163,11 +163,11 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
             .with_children(|btn: &mut ChildSpawnerCommands| {
                 btn.spawn((
                     Text::new("Remap"),
-                        TextFont {
-                            font: FontSource::SansSerif,
-                            font_size: FontSize::Px(14.0),
-                            ..default()
-                        },
+                    TextFont {
+                        font: FontSource::SansSerif,
+                        font_size: FontSize::Px(14.0),
+                        ..default()
+                    },
                     TextColor(Color::WHITE),
                 ));
             });
