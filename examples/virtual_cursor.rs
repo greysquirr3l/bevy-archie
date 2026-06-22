@@ -93,6 +93,7 @@ fn setup(
             ..default()
         },
         TextFont {
+            font: FontSource::SansSerif,
             font_size: FontSize::Px(20.0),
             ..default()
         },

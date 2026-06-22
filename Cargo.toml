@@ -38,6 +38,8 @@ bevy = { version = "0.19", default-features = false, features = [
     "bevy_text",
     "bevy_sprite",
     "bevy_state",
+    "bevy_scene",
+    "bevy_settings",
 ] }
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }

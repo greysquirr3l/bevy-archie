@@ -10,6 +10,7 @@
 //! - X-axis inversion options
 
 use bevy::prelude::*;
+use bevy::text::LetterSpacing;
 use bevy_archie::prelude::*;
 
 fn main() {
@@ -75,10 +76,12 @@ fn setup(mut commands: Commands) {
             ..default()
         },
         TextFont {
+            font: FontSource::SansSerif,
             font_size: FontSize::Px(18.0),
             ..default()
         },
         TextColor(Color::WHITE),
+        LetterSpacing::Px(0.5),
     ));
 }
 

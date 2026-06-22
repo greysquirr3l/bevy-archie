@@ -1,6 +1,7 @@
 //! Controller icons example showing how to display button prompts.
 
 use bevy::prelude::*;
+use bevy::text::LetterSpacing;
 use bevy_archie::icons::ButtonIcon;
 use bevy_archie::prelude::*;
 
@@ -51,16 +52,20 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Controller Icon Demo"),
                 TextFont {
+                    font: FontSource::SansSerif,
                     font_size: FontSize::Px(32.0),
+                    weight: FontWeight::BOLD,
                     ..default()
                 },
                 TextColor(Color::WHITE),
+                LetterSpacing::Px(1.0),
             ));
 
             // Layout indicator
             parent.spawn((
                 Text::new("Layout: Xbox"),
                 TextFont {
+                    font: FontSource::SansSerif,
                     font_size: FontSize::Px(24.0),
                     ..default()
                 },
@@ -102,6 +107,7 @@ fn setup(mut commands: Commands) {
                     "Press 1-4 to change layout:\n1=Xbox, 2=PlayStation, 3=Nintendo, 4=Generic",
                 ),
                 TextFont {
+                    font: FontSource::SansSerif,
                     font_size: FontSize::Px(18.0),
                     ..default()
                 },
@@ -137,7 +143,9 @@ fn spawn_button_prompt(parent: &mut ChildSpawnerCommands, icon: ButtonIcon, labe
                 button.spawn((
                     Text::new(icon.label(ControllerLayout::Xbox)),
                     TextFont {
+                        font: FontSource::Monospace,
                         font_size: FontSize::Px(20.0),
+                        weight: FontWeight::BOLD,
                         ..default()
                     },
                     TextColor(Color::WHITE),
@@ -148,6 +156,7 @@ fn spawn_button_prompt(parent: &mut ChildSpawnerCommands, icon: ButtonIcon, labe
             col.spawn((
                 Text::new(label),
                 TextFont {
+                    font: FontSource::SansSerif,
                     font_size: FontSize::Px(16.0),
                     ..default()
                 },

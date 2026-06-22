@@ -3,6 +3,7 @@
 //! Controller remapping example.
 
 use bevy::prelude::*;
+use bevy::text::LetterSpacing;
 use bevy_archie::prelude::*;
 
 fn main() {
@@ -43,16 +44,20 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Controller Remapping"),
                 TextFont {
+                    font: FontSource::SansSerif,
                     font_size: FontSize::Px(32.0),
+                    weight: FontWeight::BOLD,
                     ..default()
                 },
                 TextColor(Color::WHITE),
+                LetterSpacing::Px(1.0),
             ));
 
             // Status text
             parent.spawn((
                 Text::new("Click an action to remap it, then press a button on your controller"),
                 TextFont {
+                    font: FontSource::SansSerif,
                     font_size: FontSize::Px(18.0),
                     ..default()
                 },
@@ -91,7 +96,9 @@ fn setup(mut commands: Commands) {
                     btn.spawn((
                         Text::new("Reset to Defaults"),
                         TextFont {
+                            font: FontSource::SansSerif,
                             font_size: FontSize::Px(16.0),
+                            weight: FontWeight::BOLD,
                             ..default()
                         },
                         TextColor(Color::WHITE),
@@ -113,7 +120,9 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
             row.spawn((
                 Text::new(action.display_name()),
                 TextFont {
+                    font: FontSource::SansSerif,
                     font_size: FontSize::Px(20.0),
+                    weight: FontWeight::SEMIBOLD,
                     ..default()
                 },
                 TextColor(Color::WHITE),
@@ -127,6 +136,7 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
             row.spawn((
                 Text::new("[A]"),
                 TextFont {
+                    font: FontSource::Monospace,
                     font_size: FontSize::Px(18.0),
                     ..default()
                 },
@@ -154,6 +164,7 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
                 btn.spawn((
                     Text::new("Remap"),
                         TextFont {
+                            font: FontSource::SansSerif,
                             font_size: FontSize::Px(14.0),
                             ..default()
                         },
