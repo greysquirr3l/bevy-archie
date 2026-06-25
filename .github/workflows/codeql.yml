@@ -16,53 +16,50 @@ on:
       - "**/Cargo.lock"
       - ".github/workflows/codeql.yml"
   schedule:
-    # Run weekly on Sunday at midnight UTC
-    - cron: "0 0 * * 0"
+    # Tuesday 06:30 UTC — after Monday Dependabot runs, before weekly traffic peak.
+    - cron: "30 6 * * 2"
   workflow_dispatch:
 
-# Default-deny: the analysis job needs security-events: write to upload SARIF.
-permissions: {}
+# Top-level permissions default to read-all. The analyze job overrides with
+# security-events: write to upload SARIF results to the Security tab.
+permissions: read-all
 
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
-      actions: read
-      contents: read
       security-events: write
+      contents: read
+      actions: read
 
     strategy:
       fail-fast: false
       matrix:
         language: ["rust"]
+        # build-mode: none lets CodeQL compile Rust itself during analysis;
+        # no manual toolchain install or system dependency setup is needed.
+        build-mode: [none]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           languages: ${{ matrix.language }}
-          queries: security-and-quality
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libudev-dev libasound2-dev
-
-      - name: Build for CodeQL
-        run: cargo build --all-features
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-extended,security-and-quality
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
         with:
           category: "/language:${{ matrix.language }}"

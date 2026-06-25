@@ -1,0 +1,35 @@
+name: gitleaks
+
+# Scans every push and pull request for committed secrets. Runs across all
+# branches because a secret leaked to any branch — even a throwaway one —
+# is still a secret.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions: read-all
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Scan for secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # fetch-depth: 0 lets gitleaks scan the entire history, not just
+          # the most recent commit.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@f65dee2ef48e96e7a5a2b775b131c3d81b2e73ea # v2.0.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

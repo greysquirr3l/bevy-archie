@@ -23,24 +23,84 @@ permissions: {}
 
 # Don't run two releases for the same tag in parallel.
 concurrency:
-  group: release-${{ env.RELEASE_REF }}
+  group: release-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
   cancel-in-progress: false
 
 jobs:
+  verify-ci:
+    name: Verify CI is green
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Resolve tagged commit SHA
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ env.RELEASE_REF }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Wait for CI workflow result on tagged commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          sha="$(git rev-parse HEAD)"
+          repo="${GITHUB_REPOSITORY}"
+          api="https://api.github.com/repos/${repo}/actions/runs?head_sha=${sha}&event=push&per_page=50"
+
+          echo "Checking CI status for ${repo}@${sha}"
+
+          for attempt in {1..30}; do
+            json=$(curl -fsSL \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "${api}")
+
+            ci_status=$(echo "${json}" | jq -r '.workflow_runs[] | select(.name == "CI") | .status' | head -n1)
+            ci_conclusion=$(echo "${json}" | jq -r '.workflow_runs[] | select(.name == "CI") | .conclusion' | head -n1)
+
+            if [[ -z "${ci_status}" ]]; then
+              echo "Attempt ${attempt}/30: CI workflow run not found yet; waiting..."
+              sleep 20
+              continue
+            fi
+
+            if [[ "${ci_status}" != "completed" ]]; then
+              echo "Attempt ${attempt}/30: CI is ${ci_status}; waiting..."
+              sleep 20
+              continue
+            fi
+
+            if [[ "${ci_conclusion}" == "success" ]]; then
+              echo "CI completed successfully for ${sha}"
+              exit 0
+            fi
+
+            echo "CI did not pass for ${sha}: conclusion=${ci_conclusion}"
+            exit 1
+          done
+
+          echo "Timed out waiting for CI completion on ${sha}"
+          exit 1
+
   publish:
     name: Publish to crates.io
+    needs: verify-ci
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Fetch the tag's commit, not just the default branch
           ref: ${{ env.RELEASE_REF }}
           persist-credentials: false
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
 
       - name: Install system dependencies
         run: |
@@ -57,7 +117,7 @@ jobs:
             libxinerama-dev
 
       - name: Cache cargo registry
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             ~/.cargo/registry
@@ -110,7 +170,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Fetch the tag's commit for correct CHANGELOG extraction
           ref: ${{ env.RELEASE_REF }}
@@ -127,7 +187,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           body: ${{ steps.changelog.outputs.notes }}
           draft: false
