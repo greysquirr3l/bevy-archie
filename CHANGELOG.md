@@ -7,20 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-25
+
 ### Changed
 
-- **Bevy 0.18 → 0.19 upgrade**: Migrated to Bevy 0.19 across the library, examples, and tests.
-  - Bumped `bevy` dependency (library and dev) from `0.18` to `0.19` in `Cargo.toml`.
-  - Bumped `rust-version` from `1.94` to `1.96` to match the Bevy 0.19 line and align with the stable Rust toolchain.
-  - Updated all example `TextFont { font_size: N.N, .. }` literals to the new `FontSize::Px(N.N)` enum form introduced by the Bevy text Parley migration. The `font` field now flows through `FontSource` and existing `..default()` usage continues to work via `From<Handle<Font>>`.
-- **Branch policy clarified**: `main` is now the Bevy 0.19.x line; `bevy-0.18` is the maintenance branch (Bevy 0.18.x). The `bevy-0.17` branch has been retired (final 0.1.x releases remain on crates.io).
-- **CI scope reduced**: `.github/workflows/ci.yml` now runs for `main`, `bevy-0.19`, and `bevy-0.18`.
-- **Branch workflow docs aligned**: Updated branch strategy, backport notes (covering `bevy-0.18`), MSRV notes, and release command examples in `docs/dev/BRANCH_WORKFLOW.md`.
-- **README policy update**: Updated support messaging and version compatibility notes to reflect the two-branch model (`main` / `bevy-0.18`).
+- **Bevy 0.19**: Upgrade `bevy` dependency 0.18 → 0.19 with all required API updates; `TextFont { font_size: N }` literals updated to the new `FontSize::Px(N)` form
+- **`dirs` 6.0**: Bump `dirs` 5.0 → 6.0
+- **Example typography**: Replace default font handle with semantic `FontSource` variants (`SansSerif`, `Monospace`, `BOLD`/`SEMIBOLD` weights) and `LetterSpacing::Px` on titles
+- **MSRV**: Raised to Rust 1.96 to match Bevy 0.19 requirements
+- **Branch policy**: `main` now tracks Bevy 0.19.x; `bevy-0.18` is the maintenance branch; `bevy-0.17` retired
 
-### Removed
+### CI
 
-- **`ci-migration.yml` workflow**: Removed the separate `bevy-0.18` transitional CI workflow.
+- Pin all GitHub Actions to immutable commit SHAs (supply-chain hardening)
+- Add `gitleaks` secret-scanning workflow (all branches, full history)
+- Add OSSF Scorecard supply-chain scoring workflow
+- Add `verify-ci` gate to `release.yml` — polls CI status before publishing
+- Overhaul `codeql.yml`: `build-mode: none`, `security-extended` queries, `timeout-minutes: 30`
+- Add cargo cache to cross-platform CI job
+- Simplify `dependabot-auto-merge.yml` with `concurrency` group and `permissions: read-all`
 
 ## [0.2.4] - 2026-04-20
 
