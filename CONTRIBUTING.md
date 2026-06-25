@@ -22,7 +22,7 @@ Thank you for your interest in contributing to bevy-archie! This document provid
 
 ### Prerequisites
 
-- Rust 1.85 or later (see `rust-version` in Cargo.toml)
+- Rust 1.96 or later (see `rust-version` in Cargo.toml)
 - System dependencies for Bevy:
   - **Linux**: `libudev-dev libasound2-dev`
   - **macOS**: No additional dependencies

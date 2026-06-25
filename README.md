@@ -2,8 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Rust](https://img.shields.io/badge/rust-1.93%2B-orange.svg)](https://www.rust-lang.org)
-[![Bevy](https://img.shields.io/badge/bevy-0.18-purple.svg)](https://bevyengine.org)
+[![Rust](https://img.shields.io/badge/rust-1.96%2B-orange.svg)](https://www.rust-lang.org)
+[![Bevy](https://img.shields.io/badge/bevy-0.19-purple.svg)](https://bevyengine.org)
 [![Coverage](https://img.shields.io/badge/coverage-66.56%25-yellowgreen.svg)](target/coverage/tarpaulin-report.html)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevy.org/learn/quick-start/plugin-development/#main-branch-tracking)
 [![crates.io](https://img.shields.io/crates/v/bevy_archie)](https://crates.io/crates/bevy_archie)
@@ -11,7 +11,7 @@
 
 ![Archie Out of Context](docs/assets/archie_context.png)
 
-> **Branch policy:** `main` tracks **Bevy 0.18.x**. The only support branch is [`bevy-0.17`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17) for **Bevy 0.17.x**, and it is scheduled for retirement on **2026-05-18** (less than 30 days from 2026-04-26).
+> **Branch policy:** `main` tracks **Bevy 0.19.x**. The maintenance branch is [`bevy-0.18`](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.18) for **Bevy 0.18.x**. Bevy 0.17 support is no longer maintained; the final 0.1.x release remains on [crates.io](https://crates.io/crates/bevy_archie/0.1.4) for existing consumers.
 
 A comprehensive game controller support module for the Bevy engine, inspired by the RenPy Controller GUI project.
 
@@ -44,10 +44,11 @@ A comprehensive game controller support module for the Bevy engine, inspired by 
 
 | bevy | bevy_archie                                                                       |
 |------|-----------------------------------------------------------------------------------|
-| 0.18 | 0.2.x (`main`)                                                                    |
-| 0.17 | [0.1.x (`bevy-0.17`)](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.17) |
+| 0.19 | 0.3.x (`main`)                                                                    |
+| 0.18 | [0.2.x (`bevy-0.18`)](https://github.com/greysquirr3l/bevy-archie/tree/bevy-0.18) |
+| 0.17 | 0.1.x (final, on [crates.io](https://crates.io/crates/bevy_archie/versions))      |
 
-> `main` is Bevy 0.18.x. The only other supported line is Bevy 0.17.x on `bevy-0.17`, retiring on **2026-05-18**.
+> `main` is Bevy 0.19.x. Bevy 0.17 is no longer maintained; the `bevy-0.17` branch has been retired.
 
 ## Features
 

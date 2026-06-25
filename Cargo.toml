@@ -1,8 +1,8 @@
 [package]
 name = "bevy_archie"
-version = "0.2.4"
+version = "0.3.0"
 edition = "2024"
-rust-version = "1.94"
+rust-version = "1.96"
 description = "A comprehensive game controller support module for Bevy"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/greysquirr3l/bevy-archie"
@@ -29,7 +29,7 @@ dualsense = ["motion-backends", "dep:dualsense-rs"]
 full = ["icons", "virtual_keyboard", "remapping"]
 
 [dependencies]
-bevy = { version = "0.18", default-features = false, features = [
+bevy = { version = "0.19", default-features = false, features = [
     "std",
     "bevy_gilrs",
     "bevy_render",
@@ -38,11 +38,13 @@ bevy = { version = "0.18", default-features = false, features = [
     "bevy_text",
     "bevy_sprite",
     "bevy_state",
+    "bevy_scene",
+    "bevy_settings",
 ] }
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-dirs = "5.0"
+dirs = "6.0"
 # Optional: DualSense controller support via HID
 dualsense-rs = { version = "0.6", optional = true }
 
@@ -53,7 +55,7 @@ dualsense-rs = { version = "0.6", optional = true }
 # steamworks = "0.11"  # For steam_touchpad (requires Steam client)
 
 [dev-dependencies]
-bevy = { version = "0.18", default-features = true }
+bevy = { version = "0.19", default-features = true }
 approx = "0.5"  # For floating point comparisons in tests
 
 [[example]]
