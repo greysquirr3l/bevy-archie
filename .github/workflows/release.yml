@@ -30,15 +30,24 @@ jobs:
   verify-ci:
     name: Verify CI is green
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     steps:
+      - name: Resolve tagged commit SHA
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ env.RELEASE_REF }}
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Wait for CI workflow result on tagged commit
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
-          sha="${RELEASE_SHA}"
+          sha="$(git rev-parse HEAD)"
           repo="${GITHUB_REPOSITORY}"
           api="https://api.github.com/repos/${repo}/actions/runs?head_sha=${sha}&event=push&per_page=50"
 
