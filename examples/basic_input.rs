@@ -44,57 +44,53 @@ fn setup(mut commands: Commands) {
         ))
         .with_children(|parent| {
             // Title
-            parent.spawn((
-                Text::new("Bevy Archie - Controller Support Demo"),
+            parent.commands().spawn_scene(bevy::scene::bsn! {
+                Text("Bevy Archie - Controller Support Demo")
                 TextFont {
                     font: FontSource::SansSerif,
                     font_size: FontSize::Px(32.0),
                     weight: FontWeight::BOLD,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                LetterSpacing::Px(1.0),
-            ));
+                }
+                TextColor(Color::WHITE)
+                LetterSpacing::Px(1.0)
+            });
 
             // Input state display
-            parent.spawn((
-                Text::new("Input Device: Mouse"),
+            parent.commands().spawn_scene(bevy::scene::bsn! {
+                Text("Input Device: Mouse")
                 TextFont {
                     font: FontSource::SansSerif,
                     font_size: FontSize::Px(24.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                InputStateText,
-            ));
+                }
+                TextColor(Color::srgb(0.7, 0.7, 0.7))
+                InputStateText
+            });
 
             // Actions display
-            parent.spawn((
-                Text::new("Actions: None"),
+            parent.commands().spawn_scene(bevy::scene::bsn! {
+                Text("Actions: None")
                 TextFont {
                     font: FontSource::SansSerif,
                     font_size: FontSize::Px(20.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.5, 0.8, 0.5)),
-                ActionText,
-            ));
+                }
+                TextColor(Color::srgb(0.5, 0.8, 0.5))
+                ActionText
+            });
 
             // Instructions
-            parent.spawn((
-                Text::new(
+            parent.commands().spawn_scene(bevy::scene::bsn! {
+                Text(
                     "Instructions:\n\
                      - Use keyboard, mouse, or gamepad\n\
                      - The active input device will be detected automatically\n\
                      - Press buttons to see action states",
-                ),
+                )
                 TextFont {
                     font: FontSource::SansSerif,
                     font_size: FontSize::Px(18.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.6, 0.6, 0.6)),
-            ));
+                }
+                TextColor(Color::srgb(0.6, 0.6, 0.6))
+            });
         });
 }
 
