@@ -6,11 +6,11 @@
 
 Branch policy (effective 2026-09-21): `main` remains Bevy 0.19.x while the 0.20 migration lands on `bevy-0.20`. The maintenance branch is `bevy-0.18` (Bevy 0.18.x). Once the migration stabilises, `main` advances to 0.20.x and a `bevy-0.19` maintenance branch is cut. Bevy 0.17 support is end-of-life and the `bevy-0.17` branch has been retired; final 0.1.x releases remain on crates.io.
 
-| Branch | Purpose | Bevy Version | Status |
-| -------- | --------- | -------------- | -------- |
-| `bevy-0.20` | Bevy 0.20 migration (active) | 0.20.x-dev | In progress |
-| `main` | Latest stable release | 0.19.x | Active |
-| `bevy-0.18` | Maintenance for Bevy 0.18 | 0.18.x | Maintenance |
+| Branch      | Purpose                      | Bevy Version | Status      |
+| ----------- | ---------------------------- | ------------ | ----------- |
+| `bevy-0.20` | Bevy 0.20 migration (active) | 0.20.x-dev   | In progress |
+| `main`      | Latest stable release        | 0.19.x       | Active      |
+| `bevy-0.18` | Maintenance for Bevy 0.18    | 0.18.x       | Maintenance |
 
 ## Backport Strategy
 
@@ -61,13 +61,13 @@ git checkout main
 
 ## CI/CD Workflows
 
-| Workflow | Trigger | Purpose |
-| ---------- | --------- | --------- |
-| `ci.yml` | Push/PR to main, bevy-0.18 | Check, Test, Clippy, Format, Docs, MSRV |
-| `security.yml` | Push/PR, weekly schedule | cargo-audit, cargo-deny |
-| `codeql.yml` | Push/PR, weekly schedule | Security analysis |
-| `release.yml` | Tag v*.*.* | Publish to crates.io |
-| `dependabot-auto-merge.yml` | Dependabot PRs | Auto-merge patch updates |
+| Workflow                    | Trigger                    | Purpose                                 |
+| --------------------------- | -------------------------- | --------------------------------------- |
+| `ci.yml`                    | Push/PR to main, bevy-0.18 | Check, Test, Clippy, Format, Docs, MSRV |
+| `security.yml`              | Push/PR, weekly schedule   | cargo-audit, cargo-deny                 |
+| `codeql.yml`                | Push/PR, weekly schedule   | Security analysis                       |
+| `release.yml`               | Tag v*.*.\*                | Publish to crates.io                    |
+| `dependabot-auto-merge.yml` | Dependabot PRs             | Auto-merge patch updates                |
 
 ## Branch Protection
 
@@ -88,10 +88,10 @@ git checkout main
 
 ## MSRV (Minimum Supported Rust Version)
 
-| Branch | MSRV | Notes |
-| -------- | ------ | ------- |
-| main | 1.96 | Matches `rust-version` in `Cargo.toml` on `main` |
-| bevy-0.18 | Branch-specific | Check that branch's `Cargo.toml` |
+| Branch    | MSRV            | Notes                                            |
+| --------- | --------------- | ------------------------------------------------ |
+| main      | 1.96            | Matches `rust-version` in `Cargo.toml` on `main` |
+| bevy-0.18 | Branch-specific | Check that branch's `Cargo.toml`                 |
 
 ## Bevy Migration Process
 

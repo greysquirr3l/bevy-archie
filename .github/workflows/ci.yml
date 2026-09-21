@@ -99,7 +99,7 @@ jobs:
 
       - name: Run tests (all features)
         run: cargo test --all-features
-        continue-on-error: true  # virtual_keyboard test has known issue
+        continue-on-error: true # virtual_keyboard test has known issue
 
   clippy:
     name: Clippy
