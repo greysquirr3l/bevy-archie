@@ -4,10 +4,11 @@
 
 ## Branch Strategy
 
-Branch policy (effective 2026-06-22): `main` is Bevy 0.19.x. The maintenance branch is `bevy-0.18` (Bevy 0.18.x). Bevy 0.17 support is end-of-life and the `bevy-0.17` branch has been retired; final 0.1.x releases remain on crates.io.
+Branch policy (effective 2026-09-21): `main` remains Bevy 0.19.x while the 0.20 migration lands on `bevy-0.20`. The maintenance branch is `bevy-0.18` (Bevy 0.18.x). Once the migration stabilises, `main` advances to 0.20.x and a `bevy-0.19` maintenance branch is cut. Bevy 0.17 support is end-of-life and the `bevy-0.17` branch has been retired; final 0.1.x releases remain on crates.io.
 
 | Branch | Purpose | Bevy Version | Status |
 | -------- | --------- | -------------- | -------- |
+| `bevy-0.20` | Bevy 0.20 migration (active) | 0.20.x-dev | In progress |
 | `main` | Latest stable release | 0.19.x | Active |
 | `bevy-0.18` | Maintenance for Bevy 0.18 | 0.18.x | Maintenance |
 
