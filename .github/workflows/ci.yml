@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, bevy-0.19, bevy-0.18]
+    branches: [main, bevy-0.20, bevy-0.19, bevy-0.18]
   pull_request:
-    branches: [main, bevy-0.19, bevy-0.18]
+    branches: [main, bevy-0.20, bevy-0.19, bevy-0.18]
 
 env:
   CARGO_TERM_COLOR: always
@@ -99,7 +99,7 @@ jobs:
 
       - name: Run tests (all features)
         run: cargo test --all-features
-        continue-on-error: true  # virtual_keyboard test has known issue
+        continue-on-error: true # virtual_keyboard test has known issue
 
   clippy:
     name: Clippy
