@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-21
+
+### Changed
+
+- **Bevy 0.20**: Upgrade `bevy` dependency 0.19 → `0.20.0-rc.1`. The library API is unchanged — only examples were updated for Bevy 0.20's new APIs. Bevy 0.20.0 final is not yet on crates.io; the `bevy-0.20` branch tracks the RC line and will be rebased to `"0.20"` once 0.20.0 lands
+- **Example typography**: `FontSource::SansSerif` / `FontSource::Monospace` enum variants are gone in Bevy 0.20 — examples now use the `FontSource::sans_serif()` / `FontSource::monospace()` constructors (system-discoverable, no fonts vendored)
+- **Example UI**: `remapping.rs` migrated from the deprecated `Button` + `Interaction` query pattern to `bevy::ui_widgets::Button` + a per-entity `On<Activate>` observer
+- **Incidental lint fix**: `examples/steam_touchpad.rs` — two `(x + 1.0) * 0.5` patterns replaced with `f32::midpoint(x, 1.0)` for the Rust 1.98 `clippy::manual_midpoint` lint
+- **MSRV**: No change (Bevy 0.20 still requires Rust 1.96)
+- **Branch policy**: `bevy-0.20` is the active Bevy 0.20 migration line; `main` remains on Bevy 0.19.x until the migration stabilises, at which point `main` advances to 0.20 and `bevy-0.19` is cut as the maintenance branch
+
 ## [0.3.0] - 2026-06-25
 
 ### Changed
@@ -237,7 +248,7 @@ See `docs/dev/BEVY_0.17_TO_0.18_MIGRATION.md` for detailed migration instruction
 
 - Dependency check configuration with `deny.toml` for CI
 - Security audit configuration with `.cargo/audit.toml`
-- License allowlist including MIT, Apache-2.0, BSD-*, ISC, Zlib, MIT-0, CC0-1.0, Unicode-3.0, MPL-2.0
+- License allowlist including MIT, Apache-2.0, BSD-\*, ISC, Zlib, MIT-0, CC0-1.0, Unicode-3.0, MPL-2.0
 - Advisory ignore for RUSTSEC-2024-0436 (unmaintained paste crate from Bevy dependencies)
 
 ## [0.1.1] - 2026-01-15

@@ -129,8 +129,8 @@ fn inject_steam_touchpad_data(
             .as_secs_f32();
 
         // Simulate a circular motion
-        let x = ((time * 0.5).cos() + 1.0) * 0.5;
-        let y = ((time * 0.5).sin() + 1.0) * 0.5;
+        let x = f32::midpoint((time * 0.5).cos(), 1.0);
+        let y = f32::midpoint((time * 0.5).sin(), 1.0);
         touchpad.set_finger(0, x, y, true);
         touchpad.update_frame();
     }
@@ -274,8 +274,8 @@ fn parse_steam_controller_hid(report: &[u8]) -> Option<(f32, f32, bool)> {
         let y_raw = i16::from_le_bytes([report[22], report[23]]);
 
         // Normalize to 0.0-1.0
-        let x = ((x_raw as f32 / 32768.0) + 1.0) * 0.5;
-        let y = ((y_raw as f32 / 32768.0) + 1.0) * 0.5;
+        let x = f32::midpoint(x_raw as f32 / 32768.0, 1.0);
+        let y = f32::midpoint(y_raw as f32 / 32768.0, 1.0);
 
         Some((x, y, true))
     } else {
