@@ -4,23 +4,26 @@
 
 ## Branch Strategy
 
-Branch policy (effective 2026-09-21): `main` remains Bevy 0.19.x while the 0.20 migration lands on `bevy-0.20`. The maintenance branch is `bevy-0.18` (Bevy 0.18.x). Once the migration stabilises, `main` advances to 0.20.x and a `bevy-0.19` maintenance branch is cut. Bevy 0.17 support is end-of-life and the `bevy-0.17` branch has been retired; final 0.1.x releases remain on crates.io.
+Branch policy (effective 2026-09-21): `main` remains Bevy 0.19.x while the 0.20 migration lands on `bevy-0.20`. The maintenance branches are `bevy-0.19` (Bevy 0.19.x, cut from `main` at v0.3.0 on 2026-09-21) and `bevy-0.18` (Bevy 0.18.x). Once the 0.20 migration stabilises, `main` advances to 0.20.x. Bevy 0.17 support is end-of-life and the `bevy-0.17` branch has been retired; final 0.1.x releases remain on crates.io.
 
 | Branch      | Purpose                      | Bevy Version | Status      |
 | ----------- | ---------------------------- | ------------ | ----------- |
 | `bevy-0.20` | Bevy 0.20 migration (active) | 0.20.x-dev   | In progress |
 | `main`      | Latest stable release        | 0.19.x       | Active      |
+| `bevy-0.19` | Maintenance for Bevy 0.19    | 0.19.x       | Maintenance |
 | `bevy-0.18` | Maintenance for Bevy 0.18    | 0.18.x       | Maintenance |
+
+> The pre-cut state of `bevy-0.19` (at `7f4ee28`, before the 2026-09-21 cut from `main`) is preserved as the tag `pre-cut/bevy-0.19-2026-09-21` so the granular CI hardening history is recoverable. The same CI hardening changes also live on `main` under the squash PR #44 (`b25486f`).
 
 ## Backport Strategy
 
-There is no automatic `sync-branches.yml` workflow in this repository. Backports from `main` to `bevy-0.18` are manual cherry-picks when needed.
+There is no automatic `sync-branches.yml` workflow in this repository. Backports from `main` to `bevy-0.19` and `bevy-0.18` are manual cherry-picks when needed.
 
 ### How It Works
 
 1. Push a commit to `main`
-2. Decide whether the change should also ship on `bevy-0.18`
-3. Cherry-pick the commit onto `bevy-0.18`
+2. Decide whether the change should also ship on `bevy-0.19` and/or `bevy-0.18`
+3. Cherry-pick the commit onto each target branch
 4. Resolve conflicts locally if they occur
 
 ### Skipping Sync
@@ -42,7 +45,7 @@ If you need to manually sync (e.g., conflict resolution):
 git push origin main
 
 # Switch to target branch
-git checkout bevy-0.18
+git checkout bevy-0.19
 
 # Cherry-pick the commit
 git cherry-pick <commit-sha>
@@ -53,7 +56,7 @@ git cherry-pick <commit-sha>
 # 3. git cherry-pick --continue
 
 # Push
-git push origin bevy-0.18
+git push origin bevy-0.19
 
 # Return to main
 git checkout main
