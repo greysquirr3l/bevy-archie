@@ -44,7 +44,21 @@ jobs:
         run: cargo install cargo-audit --locked
 
       - name: Run security audit
-        run: cargo audit --ignore RUSTSEC-2024-0436
+        # Keep this list in sync with the [advisories] ignore list in deny.toml.
+        #
+        # RUSTSEC-2024-0436 (unmaintained `paste`) was previously ignored here and
+        # has been removed — `paste` no longer appears in Cargo.lock on Bevy 0.20,
+        # and a stale entry makes cargo-audit error.
+        #
+        # RUSTSEC-2026-0344 (ruzstd decompression bomb) and RUSTSEC-2026-0192
+        # (ttf-parser unmaintained) cannot be resolved from this repo: both are
+        # transitive dependencies of Bevy pinned below the fix. See the
+        # [advisories] section of deny.toml for the full dependency chains and
+        # the condition that clears each one.
+        run: >-
+          cargo audit
+          --ignore RUSTSEC-2026-0344
+          --ignore RUSTSEC-2026-0192
 
   deny:
     name: Cargo Deny
