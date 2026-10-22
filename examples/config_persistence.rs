@@ -76,7 +76,7 @@ fn setup(mut commands: Commands) {
             ..default()
         },
         TextFont {
-            font: FontSource::SansSerif,
+            font: FontSource::sans_serif(),
             font_size: FontSize::Px(18.0),
             ..default()
         },
