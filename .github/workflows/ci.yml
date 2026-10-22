@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, bevy-0.19, bevy-0.18]
+    branches: [main, bevy-0.20, bevy-0.19, bevy-0.18]
   pull_request:
-    branches: [main, bevy-0.19, bevy-0.18]
+    branches: [main, bevy-0.20, bevy-0.19, bevy-0.18]
 
 env:
   CARGO_TERM_COLOR: always
@@ -99,7 +99,7 @@ jobs:
 
       - name: Run tests (all features)
         run: cargo test --all-features
-        continue-on-error: true  # virtual_keyboard test has known issue
+        continue-on-error: true # virtual_keyboard test has known issue
 
   clippy:
     name: Clippy
@@ -230,7 +230,7 @@ jobs:
       - name: Install Rust toolchain (MSRV)
         uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
-          toolchain: "1.96.0"
+          toolchain: "1.97.1"
 
       - name: Install system dependencies
         run: |

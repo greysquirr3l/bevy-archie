@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 use bevy::text::LetterSpacing;
+use bevy::ui_widgets::{Activate, Button};
 use bevy_archie::prelude::*;
 
 fn main() {
@@ -44,7 +45,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Controller Remapping"),
                 TextFont {
-                    font: FontSource::SansSerif,
+                    font: FontSource::sans_serif(),
                     font_size: FontSize::Px(32.0),
                     weight: FontWeight::BOLD,
                     ..default()
@@ -57,7 +58,7 @@ fn setup(mut commands: Commands) {
             parent.spawn((
                 Text::new("Click an action to remap it, then press a button on your controller"),
                 TextFont {
-                    font: FontSource::SansSerif,
+                    font: FontSource::sans_serif(),
                     font_size: FontSize::Px(18.0),
                     ..default()
                 },
@@ -96,7 +97,7 @@ fn setup(mut commands: Commands) {
                     btn.spawn((
                         Text::new("Reset to Defaults"),
                         TextFont {
-                            font: FontSource::SansSerif,
+                            font: FontSource::sans_serif(),
                             font_size: FontSize::Px(16.0),
                             weight: FontWeight::BOLD,
                             ..default()
@@ -120,7 +121,7 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
             row.spawn((
                 Text::new(action.display_name()),
                 TextFont {
-                    font: FontSource::SansSerif,
+                    font: FontSource::sans_serif(),
                     font_size: FontSize::Px(20.0),
                     weight: FontWeight::SEMIBOLD,
                     ..default()
@@ -136,7 +137,7 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
             row.spawn((
                 Text::new("[A]"),
                 TextFont {
-                    font: FontSource::Monospace,
+                    font: FontSource::monospace(),
                     font_size: FontSize::Px(18.0),
                     ..default()
                 },
@@ -160,11 +161,20 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
                 Button,
                 RemapActionButton(action),
             ))
+            .observe(
+                |trigger: On<Activate>,
+                 actions: Query<&RemapActionButton>,
+                 mut events: MessageWriter<StartRemapEvent>| {
+                    if let Ok(action) = actions.get(trigger.entity) {
+                        events.write(StartRemapEvent::new(action.0));
+                    }
+                },
+            )
             .with_children(|btn: &mut ChildSpawnerCommands| {
                 btn.spawn((
                     Text::new("Remap"),
                     TextFont {
-                        font: FontSource::SansSerif,
+                        font: FontSource::sans_serif(),
                         font_size: FontSize::Px(14.0),
                         ..default()
                     },
@@ -175,19 +185,10 @@ fn spawn_remap_row(parent: &mut ChildSpawnerCommands, action: GameAction) {
 }
 
 fn handle_remap_ui(
-    mut remap_events: MessageWriter<StartRemapEvent>,
     action_map: Res<ActionMap>,
     config: Res<ControllerConfig>,
-    interaction_query: Query<(&Interaction, &RemapActionButton), Changed<Interaction>>,
     mut binding_query: Query<(&mut Text, &CurrentBindingText)>,
 ) {
-    // Handle remap button clicks
-    for (interaction, remap_button) in interaction_query.iter() {
-        if *interaction == Interaction::Pressed {
-            remap_events.write(StartRemapEvent::new(remap_button.0));
-        }
-    }
-
     // Update current binding displays
     let layout = config.layout();
     for (mut text, binding_text) in &mut binding_query {
