@@ -2,12 +2,41 @@
 # https://embarkstudios.github.io/cargo-deny/
 
 [advisories]
+# Advisories we cannot resolve from this repo because the vulnerable crate is a
+# transitive dependency of Bevy with a version constraint Bevy has not yet
+# relaxed. These are deliberately NOT vendored or [patch]-ed:
+#
+#   * [patch.crates-io] does not propagate to crates.io consumers, so vendoring
+#     would only silence our own CI while leaving downstream users on the
+#     vulnerable version — a false sense of security.
+#   * Where an upstream fix exists, we prefer to pick it up when Bevy bumps its
+#     constraint rather than maintain a backport that conflicts later.
+#
+# Re-check these on every Bevy minor update: `cargo update` then `cargo deny
+# check advisories`. Remove each entry once its crate leaves the tree.
 ignore = [
-    # paste crate is unmaintained but comes from Bevy's wgpu dependency
-    # No security vulnerability, just maintenance status
-    # Tracking: https://github.com/bevyengine/bevy/issues/XXXXX
-    "RUSTSEC-2024-0436",
+    # RUSTSEC-2026-0344 — ruzstd decompression bomb (OOM on crafted .zst).
+    # Fixed upstream in ruzstd 0.9.1 (2026-10-11), but bevy_image 0.20.0
+    # requires `ruzstd ^0.8.0`, so 0.9.1 is semver-incompatible and
+    # `cargo update --precise` cannot select it.
+    #   bevy_image 0.20.0 → ruzstd 0.8.3
+    # Clears when Bevy bumps bevy_image's ruzstd constraint.
+    # Impact here is low: bevy_archie consumers supply their own image assets
+    # rather than decoding untrusted .zst uploads.
+    "RUSTSEC-2026-0344",
+
+    # RUSTSEC-2026-0192 — ttf-parser is unmaintained (author declared the crate
+    # done). This is a maintenance-status advisory, not a vulnerability: there
+    # is no fixed version to upgrade to (0.25.1 is latest).
+    #   sctk-adwaita 0.10.1 → ab_glyph 0.2.32 → ttf-parser 0.25.1
+    # Linux-only, font-rasterisation path via winit.
+    # Clears when sctk-adwortha/ab_glyph migrate off ttf-parser.
+    "RUSTSEC-2026-0192",
 ]
+
+# NOTE: RUSTSEC-2024-0436 (unmaintained `paste`) was previously ignored here and
+# has been removed — `paste` no longer appears in Cargo.lock on Bevy 0.20. It
+# arrived via Bevy's wgpu dependency; the dependency is gone upstream.
 
 [licenses]
 # Allow common permissive licenses
