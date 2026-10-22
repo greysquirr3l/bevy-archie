@@ -7,16 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.0] - 2026-09-21
+## [0.4.0] - 2026-10-22
 
 ### Changed
 
-- **Bevy 0.20**: Upgrade `bevy` dependency 0.19 → `0.20.0-rc.1`. The library API is unchanged — only examples were updated for Bevy 0.20's new APIs. Bevy 0.20.0 final is not yet on crates.io; the `bevy-0.20` branch tracks the RC line and will be rebased to `"0.20"` once 0.20.0 lands
+- **Bevy 0.20**: Upgrade `bevy` dependency 0.19 → `0.20` (stable, `0.20.0`, released 2026-10-08). The library API is unchanged — only examples were updated for Bevy 0.20's new APIs
+- **MSRV**: Raised to Rust 1.97.1 from 1.96, to match Bevy 0.20.0 final (the `0.20.0-rc.1` pre-release still allowed 1.96). The MSRV CI job pin moves with it
 - **Example typography**: `FontSource::SansSerif` / `FontSource::Monospace` enum variants are gone in Bevy 0.20 — examples now use the `FontSource::sans_serif()` / `FontSource::monospace()` constructors (system-discoverable, no fonts vendored)
 - **Example UI**: `remapping.rs` migrated from the deprecated `Button` + `Interaction` query pattern to `bevy::ui_widgets::Button` + a per-entity `On<Activate>` observer
 - **Incidental lint fix**: `examples/steam_touchpad.rs` — two `(x + 1.0) * 0.5` patterns replaced with `f32::midpoint(x, 1.0)` for the Rust 1.98 `clippy::manual_midpoint` lint
-- **MSRV**: No change (Bevy 0.20 still requires Rust 1.96)
-- **Branch policy**: `bevy-0.20` is the active Bevy 0.20 migration line; `main` remains on Bevy 0.19.x until the migration stabilises, at which point `main` advances to 0.20 and `bevy-0.19` is cut as the maintenance branch
+
+### Fixed
+
+- **`cargo deny` CI**: `cargo deny check --config deny.toml <check>` passed `--config` as a
+  subcommand argument, which cargo-deny rejects (`unexpected argument '--config' found`) — the
+  `Cargo Deny` job had been failing on every push. `deny.toml` is auto-discovered from the
+  project root, so the flag was redundant; the invocations are now `cargo deny check <check>`
+
+### Branching
+
+- `bevy-0.20` is the active Bevy 0.20 line; `bevy-0.19` (Bevy 0.19.x maintenance, cut from
+  `main` at v0.3.0) and `bevy-0.18` (Bevy 0.18.x maintenance) are the maintenance branches
 
 ## [0.3.0] - 2026-06-25
 
