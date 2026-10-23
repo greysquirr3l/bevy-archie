@@ -674,7 +674,7 @@ mod tests {
         for &icon in &all_icons {
             let filename = icon.filename(ControllerLayout::Xbox, IconSize::Medium);
             assert!(filename.ends_with(".png"));
-            assert!(!filename.is_empty());
+            assert_ne!(filename, "");
         }
     }
 

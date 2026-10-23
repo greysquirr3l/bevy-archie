@@ -341,7 +341,7 @@ mod tests {
         assert_eq!(state.active_device, InputDevice::Mouse);
         assert_eq!(state.previous_device, InputDevice::Mouse);
         assert!(!state.device_changed);
-        assert!(state.connected_gamepads.is_empty());
+        assert_eq!(state.connected_gamepads.len(), 0);
         assert!(state.primary_gamepad.is_none());
         assert!(state.auto_switch);
     }
