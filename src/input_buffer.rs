@@ -252,10 +252,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[expect(
-        clippy::float_cmp,
-        reason = "exact float comparison is intentional in tests with known values"
-    )]
     fn test_buffered_input_creation() {
         let input = BufferedInput {
             action: GameAction::Primary,
@@ -268,10 +264,6 @@ mod tests {
     }
 
     #[test]
-    #[expect(
-        clippy::float_cmp,
-        reason = "exact float comparison is intentional in tests with known values"
-    )]
     fn test_input_buffer_new() {
         let buffer = InputBuffer::new(Duration::from_millis(500));
         assert_eq!(buffer.window, Duration::from_millis(500));
@@ -280,10 +272,6 @@ mod tests {
     }
 
     #[test]
-    #[expect(
-        clippy::float_cmp,
-        reason = "exact float comparison is intentional in tests with known values"
-    )]
     fn test_input_buffer_default() {
         let buffer = InputBuffer::default();
         assert_eq!(buffer.inputs.len(), 0);
