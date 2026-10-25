@@ -1,8 +1,4 @@
 #![expect(
-    clippy::float_cmp,
-    reason = "exact float comparison is intentional in tests with known values"
-)]
-#![expect(
     clippy::doc_markdown,
     reason = "test documentation doesn't need strict markdown linting"
 )]

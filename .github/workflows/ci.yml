@@ -141,7 +141,11 @@ jobs:
             ${{ runner.os }}-cargo-clippy-
 
       - name: Run clippy
-        run: cargo clippy --all-features -- -D warnings
+        # --all-targets is required: without it clippy only checks the lib and
+        # silently skips #[cfg(test)] modules, the tests/ integration crate, and
+        # benches. Lints there (e.g. unfulfilled_lint_expectations on a stale
+        # #[expect]) pass CI and then surface in the editor.
+        run: cargo clippy --all-features --all-targets -- -D warnings
 
       - name: Run clippy on examples
         run: cargo clippy --examples --features motion-backends -- -D warnings
@@ -151,7 +155,7 @@ jobs:
 
       - name: Run clippy (SARIF)
         run: |
-          cargo clippy --all-features --message-format=json 2>&1 |
+          cargo clippy --all-features --all-targets --message-format=json 2>&1 |
             clippy-sarif | tee clippy-results.sarif | sarif-fmt
         continue-on-error: true
 
