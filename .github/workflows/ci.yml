@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main, bevy-0.20, bevy-0.19, bevy-0.18]
+    # release/* must be included: release.yml's verify-ci job waits for a CI
+    # workflow result on the tagged commit, so a release branch without CI
+    # would hang the release.
+    branches: [main, bevy-0.20, bevy-0.19, bevy-0.18, "release/*"]
   pull_request:
-    branches: [main, bevy-0.20, bevy-0.19, bevy-0.18]
+    branches: [main, bevy-0.20, bevy-0.19, bevy-0.18, "release/*"]
 
 env:
   CARGO_TERM_COLOR: always

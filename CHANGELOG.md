@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.0] - 2026-10-22
+## [0.4.0] - 2026-10-25
 
 ### Changed
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MSRV**: Raised to Rust 1.97.1 from 1.96, to match Bevy 0.20.0 final (the `0.20.0-rc.1` pre-release still allowed 1.96). The MSRV CI job pin moves with it
 - **Example typography**: `FontSource::SansSerif` / `FontSource::Monospace` enum variants are gone in Bevy 0.20 — examples now use the `FontSource::sans_serif()` / `FontSource::monospace()` constructors (system-discoverable, no fonts vendored)
 - **Example UI**: `remapping.rs` migrated from the deprecated `Button` + `Interaction` query pattern to `bevy::ui_widgets::Button` + a per-entity `On<Activate>` observer
-- **Incidental lint fix**: `examples/steam_touchpad.rs` — two `(x + 1.0) * 0.5` patterns replaced with `f32::midpoint(x, 1.0)` for the Rust 1.98 `clippy::manual_midpoint` lint
+- **Incidental lint fix**: `examples/steam_touchpad.rs` — four `(x + 1.0) * 0.5` patterns replaced with `f32::midpoint(x, 1.0)` for the Rust 1.98 `clippy::manual_midpoint` lint. `f32::midpoint` is also the form that cannot overflow
 
 ### Fixed
 
@@ -23,11 +23,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   subcommand argument, which cargo-deny rejects (`unexpected argument '--config' found`) — the
   `Cargo Deny` job had been failing on every push. `deny.toml` is auto-discovered from the
   project root, so the flag was redundant; the invocations are now `cargo deny check <check>`
+- **`cargo audit` CI**: the `Security Audit` job keeps its own `--ignore` list in
+  `security.yml` rather than reading `deny.toml`, and had drifted — it still ignored
+  `RUSTSEC-2024-0436` (`paste`, no longer in the dependency tree) and lacked the two
+  advisories that do apply. Both tools now ignore the same two advisories, which are
+  documented in `deny.toml` with the dependency chain that causes them and the condition
+  that clears each one
+- **CI clippy coverage**: the clippy step ran without `--all-targets`, so it checked only the
+  library and silently skipped every `#[cfg(test)]` module and the `tests/` integration crate.
+  Lints there — including stale `#[expect(clippy::float_cmp)]` attributes that no longer match
+  anything — passed CI and then surfaced in the editor. Both the gating clippy step and the
+  SARIF step now pass `--all-targets`
 
 ### Branching
 
-- `bevy-0.20` is the active Bevy 0.20 line; `bevy-0.19` (Bevy 0.19.x maintenance, cut from
-  `main` at v0.3.0) and `bevy-0.18` (Bevy 0.18.x maintenance) are the maintenance branches
+- `main` is now the Bevy 0.20.x line (the migration landed via PR #51). `bevy-0.19` (Bevy
+  0.19.x maintenance, cut from `main` at v0.3.0) and `bevy-0.18` (Bevy 0.18.x maintenance) are
+  the maintenance branches. `bevy-0.20` remains as a merged, historical branch
+- A `release/<version>` branch is used to stage each release: release-prep commits land
+  there, and the branch is squash-merged into `main` with a `chore: bump version to <version>`
+  subject, which is what the auto-tag workflow gates on
 
 ## [0.3.0] - 2026-06-25
 
@@ -357,14 +372,23 @@ When contributing, please:
 
 ## Release Process
 
-1. Update version in `Cargo.toml`
-2. Move `[Unreleased]` changes to new version section
-3. Update version comparison links
-4. Create git tag
-5. Publish to crates.io (when ready)
+1. Create a `release/<version>` branch from `main`
+2. Update version in `Cargo.toml`
+3. Move `[Unreleased]` changes to new version section
+4. Update version comparison links
+5. Squash-merge the release branch into `main` with the subject
+   `chore: bump version to <version>` — the auto-tag workflow gates on `main`'s HEAD
+   subject, so a plain merge commit will not trigger the tag
+6. The auto-tag workflow pushes `v<version>`, and the Release workflow publishes to
+   crates.io and creates the GitHub Release
+7. Publish to crates.io (when ready)
 
 ---
 
+[0.4.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.3.0..v0.4.0
+[0.3.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.4..v0.3.0
+[0.2.4]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.3..v0.2.4
+[0.2.3]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.2..v0.2.3
 [0.2.2]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.1..v0.2.2
 [0.2.1]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.0..v0.2.1
 [0.2.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.0-beta.4..v0.2.0

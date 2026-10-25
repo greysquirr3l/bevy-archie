@@ -6,13 +6,37 @@
 
 Branch policy (effective 2026-10-22): `main` is Bevy **0.20.x** — the migration has landed and `bevy-0.20` was merged into `main` via PR #51. The maintenance branches are `bevy-0.19` (Bevy 0.19.x, cut from `main` at v0.3.0 on 2026-09-21) and `bevy-0.18` (Bevy 0.18.x). Bevy 0.17 support is end-of-life and the `bevy-0.17` branch has been retired; final 0.1.x releases remain on crates.io.
 
-| Branch      | Purpose                   | Bevy Version | Status      |
-| ----------- | ------------------------- | ------------ | ----------- |
-| `main`      | Latest stable release     | 0.20.x       | Active      |
-| `bevy-0.19` | Maintenance for Bevy 0.19 | 0.19.x       | Maintenance |
-| `bevy-0.18` | Maintenance for Bevy 0.18 | 0.18.x       | Maintenance |
+| Branch      | Purpose                                   | Bevy Version   | Status      |
+| ----------- | ----------------------------------------- | -------------- | ----------- |
+| `main`      | Latest stable release                     | 0.20.x         | Active      |
+| `bevy-0.19` | Maintenance for Bevy 0.19                 | 0.19.x         | Maintenance |
+| `bevy-0.18` | Maintenance for Bevy 0.18                 | 0.18.x         | Maintenance |
+| `release/*` | Release staging for a bevy_archie version | same as `main` | Transient   |
 
 `bevy-0.20` remains as a merged, historical branch — it is no longer a migration target and will not receive further commits.
+
+### Release branches
+
+`release/<version>` is a **staging** branch, distinct from the `bevy-*` **maintenance** branches:
+
+- `release/0.4` holds the release-prep commits for bevy_archie 0.4.x. It is cut from `main` and deleted once the release ships.
+- `bevy-0.19` / `bevy-0.18` are long-lived lines that receive backports _after_ a release ships, because those releases track an older Bevy.
+
+Two constraints make the release branch work, both easy to get wrong:
+
+1. **`ci.yml` must trigger on `release/*`.** `release.yml`'s `verify-ci` job waits for a CI workflow result on the tagged commit. A release branch without CI would hang the release indefinitely.
+2. **The release branch must be squash-merged into `main`** with the subject `chore: bump version to <version>`. The `auto-tag.yml` workflow gates on `main`'s HEAD subject matching `chore:*bump version*` — a plain merge commit ("Merge pull request #N …") does not match, so the tag would never be pushed.
+
+### Release flow
+
+1. Cut `release/<version>` from `main`
+2. Land the release-prep commits: version in `Cargo.toml`, `[Unreleased]` moved into the new version section, version comparison links updated
+3. Squash-merge into `main` with the subject `chore: bump version to <version>`
+4. `auto-tag.yml` pushes `v<version>` once CI is green
+5. `release.yml` verifies CI on the tagged commit, publishes to crates.io, and creates the GitHub Release using the matching CHANGELOG section
+6. Delete the release branch
+
+Steps 4–6 publish to crates.io. That is irreversible — verify the CHANGELOG section and `Cargo.toml` version before merging.
 
 > The pre-cut state of `bevy-0.19` (at `7f4ee28`, before the 2026-09-21 cut from `main`) is preserved as the tag `pre-cut/bevy-0.19-2026-09-21` so the granular CI hardening history is recoverable. The same CI hardening changes also live on `main` under the squash PR #44 (`b25486f`).
 
@@ -65,13 +89,14 @@ git checkout main
 
 ## CI/CD Workflows
 
-| Workflow                    | Trigger                               | Purpose                                 |
-| --------------------------- | ------------------------------------- | --------------------------------------- |
-| `ci.yml`                    | Push/PR to main, bevy-0.19, bevy-0.18 | Check, Test, Clippy, Format, Docs, MSRV |
-| `security.yml`              | Push/PR, weekly schedule              | cargo-audit, cargo-deny                 |
-| `codeql.yml`                | Push/PR, weekly schedule              | Security analysis                       |
-| `release.yml`               | Tag v*.*.\*                           | Publish to crates.io                    |
-| `dependabot-auto-merge.yml` | Dependabot PRs                        | Auto-merge patch updates                |
+| Workflow                    | Trigger                                           | Purpose                                 |
+| --------------------------- | ------------------------------------------------- | --------------------------------------- |
+| `ci.yml`                    | Push/PR to main, bevy-0.19, bevy-0.18, release/\* | Check, Test, Clippy, Format, Docs, MSRV |
+| `security.yml`              | Push/PR, weekly schedule                          | cargo-audit, cargo-deny                 |
+| `codeql.yml`                | Push/PR, weekly schedule                          | Security analysis                       |
+| `release.yml`               | Tag v*.*.\*                                       | Publish to crates.io                    |
+| `dependabot-auto-merge.yml` | Dependabot PRs                                    | Auto-merge patch updates                |
+| `auto-tag.yml`              | CI completion on `main`                           | Push `v<version>` after a version bump  |
 
 ## Branch Protection
 
