@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-25
+
+### Changed
+
+- **`dirs` 7.0**: Bump `dirs` 6.0 → 7.0. This is a semver-major bump on a direct dependency, but it is
+  behaviourally inert for this crate. The only breaking change in `dirs` 7 is one line in
+  `src/win.rs`, where `preference_dir()` now resolves to `known_folder_roaming_app_data()`
+  instead of `known_folder_local_app_data()`. This crate calls only `dirs::config_dir()`, whose
+  implementation and signature (`-> Option<PathBuf>`) are byte-identical between the two
+  versions, and the dependency list is unchanged. The upstream project also moved from GitHub to
+  Codeberg, which is the substance of the major bump
+
+### Internal
+
+- **CI action updates**: `actions/cache` v5.0.5 → v6.1.0, `actions/checkout` v7.0.0 → v7.0.1,
+  `github/codeql-action` v4.36.2 → v4.38.1, `gitleaks/gitleaks-action` v2.0.8 → v3.0.0,
+  `ossf/scorecard-action` v2.4.3 → v2.4.4, `softprops/action-gh-release` v3.0.1 → v3.0.3. No
+  change to the library or to the public API
+
 ## [0.4.0] - 2026-10-25
 
 ### Changed
@@ -385,6 +404,7 @@ When contributing, please:
 
 ---
 
+[0.4.1]: https://github.com/greysquirr3l/bevy-archie/compare/v0.4.0..v0.4.1
 [0.4.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.3.0..v0.4.0
 [0.3.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.4..v0.3.0
 [0.2.4]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.3..v0.2.4
