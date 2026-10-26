@@ -9,6 +9,7 @@
 //! ```
 
 use bevy::prelude::*;
+use bevy::text::FontSourceTemplate;
 use bevy_archie::prelude::*;
 use std::fmt::Write;
 
@@ -22,25 +23,23 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
+    commands.spawn_scene(bsn! {
+        Camera2d
+    });
 
-    commands.spawn((
-        Text::new(
-            "Controller Detection Database Example\n\nConnect a controller to see its details...",
-        ),
+    commands.spawn_scene(bsn! {
+        Text("Controller Detection Database Example\n\nConnect a controller to see its details...")
         TextFont {
-            font: FontSource::sans_serif(),
+            font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
             font_size: FontSize::Px(24.0),
-            ..default()
-        },
-        TextColor(Color::WHITE),
+        }
+        TextColor(Color::WHITE)
         Node {
             position_type: PositionType::Absolute,
             left: Val::Px(10.0),
             top: Val::Px(10.0),
-            ..default()
-        },
-    ));
+        }
+    });
 }
 
 fn display_controller_info(

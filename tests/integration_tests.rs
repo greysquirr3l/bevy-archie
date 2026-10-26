@@ -288,3 +288,144 @@ fn test_input_buffer_capacity() {
     assert_eq!(buffer.inputs.len(), 0);
     assert!(buffer.inputs.is_empty());
 }
+
+// ========== bsn! scene equivalence ==========
+
+/// The examples were converted from `commands.spawn((...))` bundles to
+/// `commands.spawn_scene(bsn! { ... })` scenes. This test asserts that a scene
+/// produces exactly the same component set and values as the bundle it replaced,
+/// so the conversion is visual no-op.
+#[test]
+fn test_bsn_scene_matches_component_bundle() {
+    use bevy::text::{FontSourceTemplate, LetterSpacing};
+
+    let mut app = App::new();
+    app.add_plugins((
+        MinimalPlugins,
+        bevy::asset::AssetPlugin::default(),
+        bevy::scene::ScenePlugin,
+    ));
+
+    // The `bsn!` form.
+    let scene_entity = app
+        .world_mut()
+        .spawn_scene(bsn! {
+            Text("Bevy Archie - Controller Support Demo")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(32.0),
+                weight: FontWeight::BOLD,
+            }
+            TextColor(Color::WHITE)
+            LetterSpacing::Px(1.0)
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+            }
+        })
+        .unwrap()
+        .id();
+
+    // The component-bundle form the example used before the conversion.
+    let bundle_entity = app
+        .world_mut()
+        .spawn((
+            Text::new("Bevy Archie - Controller Support Demo"),
+            TextFont {
+                font: FontSource::sans_serif(),
+                font_size: FontSize::Px(32.0),
+                weight: FontWeight::BOLD,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            LetterSpacing::Px(1.0),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+        ))
+        .id();
+
+    let scene = app.world().entity(scene_entity);
+    let bundle = app.world().entity(bundle_entity);
+
+    assert_eq!(
+        scene.get::<Text>().unwrap(),
+        bundle.get::<Text>().unwrap(),
+        "Text component differs"
+    );
+    assert_eq!(
+        scene.get::<TextFont>().unwrap(),
+        bundle.get::<TextFont>().unwrap(),
+        "TextFont component differs"
+    );
+    assert_eq!(
+        scene.get::<TextColor>().unwrap(),
+        bundle.get::<TextColor>().unwrap(),
+        "TextColor component differs"
+    );
+    assert_eq!(
+        scene.get::<LetterSpacing>().unwrap(),
+        bundle.get::<LetterSpacing>().unwrap(),
+        "LetterSpacing component differs"
+    );
+    assert_eq!(
+        scene.get::<Node>().unwrap(),
+        bundle.get::<Node>().unwrap(),
+        "Node component differs"
+    );
+}
+
+#[test]
+fn test_bsn_scene_children_hierarchy() {
+    let mut app = App::new();
+    app.add_plugins((
+        MinimalPlugins,
+        bevy::asset::AssetPlugin::default(),
+        bevy::scene::ScenePlugin,
+    ));
+
+    let root = app
+        .world_mut()
+        .spawn_scene(bsn! {
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+            }
+            BackgroundColor(Color::srgb(0.1, 0.1, 0.15))
+            Children [
+                Text("first")
+                TextColor(Color::WHITE)
+                --
+                Text("second")
+                TextColor(Color::srgb(0.5, 0.5, 0.5))
+            ]
+        })
+        .unwrap()
+        .id();
+
+    let children: Vec<Entity> = app
+        .world_mut()
+        .entity_mut(root)
+        .get_mut::<Children>()
+        .map(|c| c.iter().collect())
+        .unwrap_or_default();
+
+    assert_eq!(children.len(), 2, "expected two children");
+
+    let first = app.world().entity(children[0]);
+    assert_eq!(first.get::<Text>().unwrap().0, "first");
+    assert_eq!(first.get::<TextColor>().unwrap().0, Color::WHITE);
+    // Children are parented through the `ChildOf` relationship.
+    assert!(first.get::<ChildOf>().is_some());
+
+    let second = app.world().entity(children[1]);
+    assert_eq!(second.get::<Text>().unwrap().0, "second");
+    assert_eq!(
+        second.get::<TextColor>().unwrap().0,
+        Color::srgb(0.5, 0.5, 0.5)
+    );
+    assert!(second.get::<ChildOf>().is_some());
+}

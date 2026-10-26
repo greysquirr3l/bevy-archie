@@ -9,10 +9,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Predefined game actions that can be mapped to inputs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Reflect, Default)]
 pub enum GameAction {
     // Navigation
     /// Confirm/select action (A button, Enter key)
+    #[default]
     Confirm,
     /// Cancel/back action (B button, Escape key)
     Cancel,

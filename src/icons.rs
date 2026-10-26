@@ -42,10 +42,11 @@ impl IconSize {
 }
 
 /// Button icon identifiers.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum ButtonIcon {
     // Face buttons
-    FaceDown,  // A / Cross
+    #[default]
+    FaceDown, // A / Cross
     FaceRight, // B / Circle
     FaceLeft,  // X / Square
     FaceUp,    // Y / Triangle

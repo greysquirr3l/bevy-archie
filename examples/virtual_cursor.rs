@@ -16,6 +16,7 @@
 //! - Configurable sensitivity and speed
 
 use bevy::prelude::*;
+use bevy::text::FontSourceTemplate;
 use bevy_archie::prelude::*;
 
 fn main() {
@@ -28,8 +29,22 @@ fn main() {
 }
 
 /// Marker for UI buttons.
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 struct ClickableButton;
+
+/// Scene for a single clickable demo button.
+fn demo_button(position: Vec2, color: Color) -> impl Scene {
+    bsn! {
+        ClickableButton
+        Sprite {
+            color: { color },
+            custom_size: { Some(Vec2::splat(150.0)) },
+        }
+        Transform {
+            translation: { position.extend(0.0) },
+        }
+    }
+}
 
 fn setup(
     mut commands: Commands,
@@ -37,7 +52,9 @@ fn setup(
     mut controller_config: ResMut<ControllerConfig>,
 ) {
     // Set up camera
-    commands.spawn(Camera2d::default());
+    commands.spawn_scene(bsn! {
+        Camera2d
+    });
 
     // Customize controller config for faster cursor
     controller_config.right_stick_sensitivity = 1.5;
@@ -50,7 +67,6 @@ fn setup(
     );
 
     // Create some UI buttons for demonstration
-    let button_size = 150.0;
     let positions = [
         Vec2::new(-200.0, 100.0),
         Vec2::new(0.0, 100.0),
@@ -70,35 +86,23 @@ fn setup(
     ];
 
     for (i, &pos) in positions.iter().enumerate() {
-        commands.spawn((
-            ClickableButton,
-            Sprite {
-                color: colors[i],
-                custom_size: Some(Vec2::splat(button_size)),
-                ..default()
-            },
-            Transform::from_translation(pos.extend(0.0)),
-        ));
+        commands.spawn_scene(demo_button(pos, colors[i]));
     }
 
     // Add instructions text
-    commands.spawn((
-        Text::new(
-            "Move cursor with RIGHT STICK\nClick with A button\nSwitch to mouse to hide cursor",
-        ),
+    commands.spawn_scene(bsn! {
+        Text("Move cursor with RIGHT STICK\nClick with A button\nSwitch to mouse to hide cursor")
         Node {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             left: Val::Px(10.0),
-            ..default()
-        },
+        }
         TextFont {
-            font: FontSource::sans_serif(),
+            font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
             font_size: FontSize::Px(20.0),
-            ..default()
-        },
-        TextColor(Color::WHITE),
-    ));
+        }
+        TextColor(Color::WHITE)
+    });
 }
 
 fn handle_cursor_clicks(

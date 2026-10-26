@@ -1,7 +1,7 @@
 //! Controller icons example showing how to display button prompts.
 
 use bevy::prelude::*;
-use bevy::text::LetterSpacing;
+use bevy::text::{FontSourceTemplate, LetterSpacing};
 use bevy_archie::icons::ButtonIcon;
 use bevy_archie::prelude::*;
 
@@ -14,155 +14,131 @@ fn main() {
         .run();
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 struct LayoutText;
 
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 struct ButtonPrompt {
     #[allow(dead_code)]
     icon: ButtonIcon,
 }
 
-/// Bundle for button prompt UI nodes
-#[derive(Bundle)]
-struct ButtonPromptBundle {
-    node: Node,
-    background: BackgroundColor,
-    prompt: ButtonPrompt,
-}
-
-fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
-
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                row_gap: Val::Px(20.0),
-                ..default()
-            },
-            BackgroundColor(Color::srgb(0.15, 0.15, 0.2)),
-        ))
-        .with_children(|parent| {
-            // Title
-            parent.spawn((
-                Text::new("Controller Icon Demo"),
-                TextFont {
-                    font: FontSource::sans_serif(),
-                    font_size: FontSize::Px(32.0),
-                    weight: FontWeight::BOLD,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                LetterSpacing::Px(1.0),
-            ));
-
-            // Layout indicator
-            parent.spawn((
-                Text::new("Layout: Xbox"),
-                TextFont {
-                    font: FontSource::sans_serif(),
-                    font_size: FontSize::Px(24.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                LayoutText,
-            ));
-
-            // Button prompts row
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(30.0),
-                    ..default()
-                })
-                .with_children(|row| {
-                    spawn_button_prompt(row, ButtonIcon::FaceDown, "Confirm");
-                    spawn_button_prompt(row, ButtonIcon::FaceRight, "Cancel");
-                    spawn_button_prompt(row, ButtonIcon::FaceLeft, "Action");
-                    spawn_button_prompt(row, ButtonIcon::FaceUp, "Special");
-                });
-
-            // Shoulder buttons row
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(30.0),
-                    ..default()
-                })
-                .with_children(|row| {
-                    spawn_button_prompt(row, ButtonIcon::LeftBumper, "Page Left");
-                    spawn_button_prompt(row, ButtonIcon::RightBumper, "Page Right");
-                    spawn_button_prompt(row, ButtonIcon::LeftTrigger, "Aim");
-                    spawn_button_prompt(row, ButtonIcon::RightTrigger, "Fire");
-                });
-
-            // Instructions
-            parent.spawn((
-                Text::new(
-                    "Press 1-4 to change layout:\n1=Xbox, 2=PlayStation, 3=Nintendo, 4=Generic",
-                ),
-                TextFont {
-                    font: FontSource::sans_serif(),
-                    font_size: FontSize::Px(18.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.5, 0.5, 0.5)),
-            ));
-        });
-}
-
-fn spawn_button_prompt(parent: &mut ChildSpawnerCommands, icon: ButtonIcon, label: &str) {
-    parent
-        .spawn(Node {
+/// Scene for a single button prompt: an icon placeholder with a text fallback,
+/// plus a label underneath.
+fn button_prompt(icon: ButtonIcon, label: &str) -> impl Scene {
+    bsn! {
+        Node {
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Center,
             row_gap: Val::Px(5.0),
-            ..default()
-        })
-        .with_children(|col: &mut ChildSpawnerCommands| {
+        }
+        Children [
             // Icon placeholder (in a real app, this would be an image)
-            col.spawn(ButtonPromptBundle {
-                node: Node {
-                    width: Val::Px(64.0),
-                    height: Val::Px(64.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    border_radius: BorderRadius::all(Val::Px(8.0)),
-                    ..default()
-                },
-                background: BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
-                prompt: ButtonPrompt { icon },
-            })
-            .with_children(|button: &mut ChildSpawnerCommands| {
+            Node {
+                width: Val::Px(64.0),
+                height: Val::Px(64.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(8.0)),
+            }
+            BackgroundColor(Color::srgb(0.3, 0.3, 0.4))
+            ButtonPrompt { icon }
+            Children [
                 // Text fallback for the icon
-                button.spawn((
-                    Text::new(icon.label(ControllerLayout::Xbox)),
-                    TextFont {
-                        font: FontSource::monospace(),
-                        font_size: FontSize::Px(20.0),
-                        weight: FontWeight::BOLD,
-                        ..default()
-                    },
-                    TextColor(Color::WHITE),
-                ));
-            });
-
-            // Label
-            col.spawn((
-                Text::new(label),
+                Text({ icon.label(ControllerLayout::Xbox) })
                 TextFont {
-                    font: FontSource::sans_serif(),
-                    font_size: FontSize::Px(16.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.8, 0.8, 0.8)),
-            ));
-        });
+                    font: FontSourceTemplate::Generic(GenericFontFamily::Monospace),
+                    font_size: FontSize::Px(20.0),
+                    weight: FontWeight::BOLD,
+                }
+                TextColor(Color::WHITE)
+            ]
+            --
+            // Label
+            Text(label)
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(16.0),
+            }
+            TextColor(Color::srgb(0.8, 0.8, 0.8))
+        ]
+    }
+}
+
+fn setup(mut commands: Commands) {
+    commands.spawn_scene(bsn! {
+        Camera2d
+    });
+
+    commands.spawn_scene(bsn! {
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            row_gap: Val::Px(20.0),
+        }
+        BackgroundColor(Color::srgb(0.15, 0.15, 0.2))
+        Children [
+            // Title
+            Text("Controller Icon Demo")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(32.0),
+                weight: FontWeight::BOLD,
+            }
+            TextColor(Color::WHITE)
+            LetterSpacing::Px(1.0)
+            --
+            // Layout indicator
+            Text("Layout: Xbox")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(24.0),
+            }
+            TextColor(Color::srgb(0.7, 0.7, 0.7))
+            LayoutText
+            --
+            // Button prompts row
+            Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: Val::Px(30.0),
+            }
+            Children [
+                @button_prompt(ButtonIcon::FaceDown, "Confirm")
+                --
+                @button_prompt(ButtonIcon::FaceRight, "Cancel")
+                --
+                @button_prompt(ButtonIcon::FaceLeft, "Action")
+                --
+                @button_prompt(ButtonIcon::FaceUp, "Special")
+            ]
+            --
+            // Shoulder buttons row
+            Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: Val::Px(30.0),
+            }
+            Children [
+                @button_prompt(ButtonIcon::LeftBumper, "Page Left")
+                --
+                @button_prompt(ButtonIcon::RightBumper, "Page Right")
+                --
+                @button_prompt(ButtonIcon::LeftTrigger, "Aim")
+                --
+                @button_prompt(ButtonIcon::RightTrigger, "Fire")
+            ]
+            --
+            // Instructions
+            Text("Press 1-4 to change layout:\n1=Xbox, 2=PlayStation, 3=Nintendo, 4=Generic")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(18.0),
+            }
+            TextColor(Color::srgb(0.5, 0.5, 0.5))
+        ]
+    });
 }
 
 #[allow(clippy::needless_pass_by_value)]

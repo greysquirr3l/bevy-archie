@@ -7,7 +7,7 @@
 //! Basic input example demonstrating controller detection and action mapping.
 
 use bevy::prelude::*;
-use bevy::text::LetterSpacing;
+use bevy::text::{FontSourceTemplate, LetterSpacing};
 use bevy_archie::prelude::*;
 
 fn main() {
@@ -19,83 +19,69 @@ fn main() {
         .run();
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 struct InputStateText;
 
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 struct ActionText;
 
 fn setup(mut commands: Commands) {
     // Camera
-    commands.spawn(Camera2d);
+    commands.spawn_scene(bsn! {
+        Camera2d
+    });
 
     // UI root
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                padding: UiRect::all(Val::Px(20.0)),
-                row_gap: Val::Px(10.0),
-                ..default()
-            },
-            BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
-        ))
-        .with_children(|parent| {
+    commands.spawn_scene(bsn! {
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            padding: UiRect::all(Val::Px(20.0)),
+            row_gap: Val::Px(10.0),
+        }
+        BackgroundColor(Color::srgb(0.1, 0.1, 0.15))
+        Children [
             // Title
-            parent.spawn((
-                Text::new("Bevy Archie - Controller Support Demo"),
-                TextFont {
-                    font: FontSource::sans_serif(),
-                    font_size: FontSize::Px(32.0),
-                    weight: FontWeight::BOLD,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-                LetterSpacing::Px(1.0),
-            ));
-
+            Text("Bevy Archie - Controller Support Demo")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(32.0),
+                weight: FontWeight::BOLD,
+            }
+            TextColor(Color::WHITE)
+            LetterSpacing::Px(1.0)
+            --
             // Input state display
-            parent.spawn((
-                Text::new("Input Device: Mouse"),
-                TextFont {
-                    font: FontSource::sans_serif(),
-                    font_size: FontSize::Px(24.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                InputStateText,
-            ));
-
+            Text("Input Device: Mouse")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(24.0),
+            }
+            TextColor(Color::srgb(0.7, 0.7, 0.7))
+            InputStateText
+            --
             // Actions display
-            parent.spawn((
-                Text::new("Actions: None"),
-                TextFont {
-                    font: FontSource::sans_serif(),
-                    font_size: FontSize::Px(20.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.5, 0.8, 0.5)),
-                ActionText,
-            ));
-
+            Text("Actions: None")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(20.0),
+            }
+            TextColor(Color::srgb(0.5, 0.8, 0.5))
+            ActionText
+            --
             // Instructions
-            parent.spawn((
-                Text::new(
-                    "Instructions:\n\
-                     - Use keyboard, mouse, or gamepad\n\
-                     - The active input device will be detected automatically\n\
-                     - Press buttons to see action states",
-                ),
-                TextFont {
-                    font: FontSource::sans_serif(),
-                    font_size: FontSize::Px(18.0),
-                    ..default()
-                },
-                TextColor(Color::srgb(0.6, 0.6, 0.6)),
-            ));
-        });
+            Text("Instructions:\n\
+                 - Use keyboard, mouse, or gamepad\n\
+                 - The active input device will be detected automatically\n\
+                 - Press buttons to see action states")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(18.0),
+            }
+            TextColor(Color::srgb(0.6, 0.6, 0.6))
+        ]
+    });
 }
 
 fn display_input_state(
