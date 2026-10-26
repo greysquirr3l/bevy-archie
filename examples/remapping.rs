@@ -109,7 +109,7 @@ fn setup(mut commands: Commands) {
                 weight: FontWeight::BOLD,
             }
             TextColor(Color::WHITE)
-            LetterSpacing::Px(1.0)
+            ~LetterSpacing::Px(1.0)
             --
             // Status text
             Text("Click an action to remap it, then press a button on your controller")

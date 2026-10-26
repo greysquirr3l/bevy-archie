@@ -83,7 +83,7 @@ fn setup(mut commands: Commands) {
             font_size: FontSize::Px(18.0),
         }
         TextColor(Color::WHITE)
-        LetterSpacing::Px(0.5)
+        ~LetterSpacing::Px(0.5)
     });
 }
 

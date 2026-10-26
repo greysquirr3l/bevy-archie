@@ -50,7 +50,7 @@ fn setup(mut commands: Commands) {
                 weight: FontWeight::BOLD,
             }
             TextColor(Color::WHITE)
-            LetterSpacing::Px(1.0)
+            ~LetterSpacing::Px(1.0)
             --
             // Input state display
             Text("Input Device: Mouse")
