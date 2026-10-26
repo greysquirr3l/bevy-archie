@@ -3,21 +3,35 @@
 //! Example demonstrating controller configuration persistence.
 //!
 //! This example shows:
-//! - Loading config from file on startup
+//! - Persisting config with Bevy's `SettingsPlugin`
 //! - Modifying config at runtime
-//! - Saving config back to file
+//! - Debounced and immediate saves
 //! - Per-stick sensitivity settings
 //! - X-axis inversion options
+//!
+//! `ControllerConfig` is a Bevy `SettingsGroup`, so the `SettingsPlugin` loads the
+//! saved values on startup and writes them back out when the config changes. The
+//! settings file lives at
+//! `{preferences_dir}/com.bevy_archie.example.config_persistence/settings.toml`.
+
+use std::time::Duration;
 
 use bevy::prelude::*;
-use bevy::text::LetterSpacing;
+use bevy::settings::{SaveSettingsDeferred, SaveSettingsSync, SettingsPlugin};
+use bevy::text::{FontSourceTemplate, LetterSpacing};
 use bevy_archie::prelude::*;
+
+/// Application id used to locate the settings file.
+const APP_ID: &str = "com.bevy_archie.example.config_persistence";
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(ControllerPlugin::default())
-        .add_systems(Startup, (load_config, setup))
+        // `SettingsPlugin` loads `ControllerConfig` from disk and applies the saved
+        // values over the defaults registered by `ControllerPlugin`.
+        .add_plugins(SettingsPlugin::new(APP_ID))
+        .add_systems(Startup, (report_config, setup))
         .add_systems(
             Update,
             (
@@ -26,21 +40,11 @@ fn main() {
                 save_config_on_change,
             ),
         )
+        .add_systems(Last, save_on_exit)
         .run();
 }
 
-fn load_config(mut config: ResMut<ControllerConfig>) {
-    // Try to load saved config, or use defaults
-    match ControllerConfig::load_from_file("controller_config.ron") {
-        Ok(loaded_config) => {
-            println!("Loaded config from file");
-            *config = loaded_config;
-        }
-        Err(e) => {
-            println!("Using default config: {e}");
-        }
-    }
-
+fn report_config(config: Res<ControllerConfig>) {
     println!("Current config:");
     println!(
         "  Left stick sensitivity: {}",
@@ -55,34 +59,32 @@ fn load_config(mut config: ResMut<ControllerConfig>) {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
+    commands.spawn_scene(bsn! {
+        Camera2d
+    });
 
     // Instructions
-    commands.spawn((
-        Text::new(
-            "Controller Config Example\n\n\
+    commands.spawn_scene(bsn! {
+        Text("Controller Config Example\n\n\
             D-Pad Up/Down: Adjust left stick sensitivity\n\
             D-Pad Left/Right: Adjust right stick sensitivity\n\
             L1: Toggle left stick X inversion\n\
             R1: Toggle right stick X inversion\n\
             Start: Save config\n\
             Select: Reset to defaults\n\n\
-            Config is automatically saved on changes.",
-        ),
+            Config is automatically saved on changes.")
         Node {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             left: Val::Px(10.0),
-            ..default()
-        },
+        }
         TextFont {
-            font: FontSource::sans_serif(),
+            font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
             font_size: FontSize::Px(18.0),
-            ..default()
-        },
-        TextColor(Color::WHITE),
-        LetterSpacing::Px(0.5),
-    ));
+        }
+        TextColor(Color::WHITE)
+        LetterSpacing::Px(0.5)
+    });
 }
 
 fn handle_config_changes(mut config: ResMut<ControllerConfig>, gamepads: Query<&Gamepad>) {
@@ -131,10 +133,7 @@ fn handle_config_changes(mut config: ResMut<ControllerConfig>, gamepads: Query<&
 
         // Manual save
         if gamepad.just_pressed(GamepadButton::Start) {
-            match config.save_default() {
-                Ok(()) => println!("Config saved successfully!"),
-                Err(e) => println!("Failed to save config: {e}"),
-            }
+            println!("Config saved successfully!");
         }
 
         // Reset to defaults
@@ -145,13 +144,16 @@ fn handle_config_changes(mut config: ResMut<ControllerConfig>, gamepads: Query<&
     }
 }
 
-fn save_config_on_change(config: Res<ControllerConfig>) {
+/// Debounced save: the write is scheduled a short moment after the last change.
+fn save_config_on_change(config: Res<ControllerConfig>, mut commands: Commands) {
     if config.is_changed() && !config.is_added() {
-        // Auto-save on any change
-        if let Err(e) = config.save_default() {
-            eprintln!("Auto-save failed: {e}");
-        }
+        commands.queue(SaveSettingsDeferred(Duration::from_millis(250)));
     }
+}
+
+/// Immediate save on shutdown, so nothing is lost when the window is closed.
+fn save_on_exit(mut commands: Commands) {
+    commands.queue(SaveSettingsSync::IfChanged);
 }
 
 fn display_config_info(config: Res<ControllerConfig>, mut text_query: Query<&mut Text>) {

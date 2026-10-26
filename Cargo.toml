@@ -39,6 +39,8 @@ bevy = { version = "0.20", default-features = false, features = [
     "bevy_sprite",
     "bevy_state",
     "bevy_scene",
+    # `ControllerConfig` is a `SettingsGroup`, so it can be persisted to disk with
+    # Bevy's `SettingsPlugin`. See `ControllerPlugin::with_settings`.
     "bevy_settings",
 ] }
 log = "0.4"
