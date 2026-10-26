@@ -1,6 +1,6 @@
 [package]
 name = "bevy_archie"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2024"
 rust-version = "1.97.1"
 description = "A comprehensive game controller support module for Bevy"

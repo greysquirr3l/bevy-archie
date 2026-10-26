@@ -7,6 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-26
+
+### Added
+
+- **`ControllerConfig` is now a Bevy `SettingsGroup`**: `ControllerConfig` derives
+  `bevy::settings::SettingsGroup` and is registered with `ReflectSettingsGroup`, so it can be
+  persisted to disk with Bevy's `SettingsPlugin` (TOML at `{preferences_dir}/{app_id}/settings.toml`,
+  with atomic writes and a browser local-storage fallback). `ControllerPlugin::with_settings(app_id)`
+  adds the `SettingsPlugin` for you, and `ControllerPlugin::with_settings_app_name(app_id)` sets the
+  app id on an existing plugin value
+- **`ControllerPlugin::settings_app_name`**: new public field on the plugin, `Option<String>`
+- **`VirtualKeyboard::grapheme_count`**: new public method returning the length of the input buffer
+  in grapheme clusters
+
+### Changed
+
+- **Controller config persistence**: the crate's hand-rolled JSON persistence is deprecated in favour
+  of Bevy's `SettingsPlugin`. `ControllerConfig::load_or_default`, `load_from_file`, `save_default`,
+  `save_to_file`, and `default_config_path` are now `#[deprecated]` and will be removed in 0.6.0 —
+  see the
+  [migration recipe](docs/dev/0.4_TO_0.5_MIGRATION.md#controller-config-persistence--bevy-settingsplugin).
+  The JSON file written by the old helpers is not migrated automatically
+- **`ControllerConfig::current_layout` is not persisted**: it is runtime state rather than a user
+  preference, so it is excluded from the settings file (`#[reflect(ignore)]`). `forced_layout` *is*
+  persisted
+- **Examples now use Bevy's `bsn!` scene notation**: `basic_input.rs`, `config_persistence.rs`,
+  `controller_database.rs`, `controller_icons.rs`, `remapping.rs`, and `virtual_cursor.rs` build
+  their UI with `commands.spawn_scene(bsn! { ... })` instead of `commands.spawn((...))` and
+  `.with_children(...)`. Visual output is unchanged. `remapping.rs` attaches its button observer with
+  `on(...)` instead of `.observe(...)`, and `controller_icons.rs` / `remapping.rs` express their
+  repeated sub-trees as scene functions
+- **`ButtonIcon` and `GameAction` implement `Default`**: required for the types to be used in `bsn!`
+  scenes, where components must be `Clone + Default`. `ButtonIcon::default()` is `FaceDown` and
+  `GameAction::default()` is `Confirm`
+- **`VirtualKeyboard::cursor` is now a grapheme-cluster index** instead of a byte offset, and
+  `VirtualKeyboard::max_length` is counted in grapheme clusters to match
+  `EditableText::max_characters`. The buffer is now edited with `unicode-segmentation`, which matches
+  the grapheme model Bevy's `EditableText` uses
+- **README**: Refreshed for Bevy 0.20 / bevy_archie 0.4.x. The Rust badge now reads 1.97.1+, the Bevy
+  badge reads 0.20, and the branch-policy note and version-compatibility table list `main` as Bevy
+  0.20.x with `bevy-0.19` and `bevy-0.18` as the maintenance branches
+- **README**: Corrected code samples that no longer compiled against the current API —
+  `ActionMap::bind` is now `bind_gamepad` (with `GamepadButton`, not `GamepadButtonType`),
+  `ControllerConfig::force_layout` is `forced_layout`, `ControllerConfig::load_or_default` returns
+  `Self` rather than a `Result`, `ControllerIconAssets::get_icon` takes
+  `(ButtonIcon, ControllerLayout, IconSize, &AssetServer)`, and Bevy 0.20's `MessageReader` replaces
+  `EventReader`
+- **README**: Removed the `Actionlike` trait bullet — no such trait exists in the crate — and added a
+  Cargo feature table, the `ControllerIconDisplay` auto-update pattern, the undocumented
+  `controller_database.rs` example, and links to the Joypad OS documentation
+- **README**: Fixed the controller support matrix to match `ControllerModel::default_layout` and the
+  `supports_gyro` / `supports_touchpad` / `supports_adaptive_triggers` data (added Switch 2 GameCube;
+  corrected the 8BitDo M30 layout), and removed broken links to `docs/TEST_COVERAGE.md` and
+  `LICENSE-APACHE`
+
+### Fixed
+
+- **`VirtualKeyboard` panicked on non-ASCII input**: the input buffer was byte-indexed, so typing a
+  multi-byte character (an accented letter, an emoji) and then another character tripped
+  `String`'s char-boundary assertion and crashed the app. Backspace also deleted a single byte
+  rather than a character. The buffer and cursor are now grapheme-cluster aware, covered by six new
+  regression tests including ZWJ emoji sequences
+
+### Internal
+
+- **`unicode-segmentation` 1.13**: added as a dependency for grapheme-cluster aware text editing in
+  the virtual keyboard
+- **Virtual keyboard `EditableText` investigation**: the decision to keep `VirtualKeyboard` as the
+  editing source of truth rather than migrating onto Bevy's `EditableText` is recorded in
+  [`docs/dev/VIRTUAL_KEYBOARD_EDITABLE_TEXT.md`](docs/dev/VIRTUAL_KEYBOARD_EDITABLE_TEXT.md)
+
 ## [0.4.1] - 2026-10-25
 
 ### Changed
@@ -223,29 +294,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uses Xbox-style button layout (A/B/X/Y, LB/RB, LT/RT)
   - SDL GameControllerDB mappings available for all platforms
 
-## [0.2.0] - Unreleased
-
-### Breaking Changes
-
-- **Bevy 0.18 required** - This release targets Bevy 0.18 and is not compatible with earlier versions
-- **Minimum Rust version bumped to 1.89** - Required by Bevy 0.18
-
-### Changed
-
-- Updated all dependencies to Bevy 0.18
-- `BorderRadius` is now set via `Node.border_radius` field instead of as a separate component
-- Integration tests now require `StatesPlugin` to be added before `ControllerPlugin`
-- Icon system gracefully handles missing `AssetServer` (returns early instead of panicking)
-
-### Fixed
-
-- Fixed `Bundle` trait changes - tuples of 4+ components now use explicit Bundle structs
-- Fixed virtual keyboard test assertions for symbol layout
-
-### Migration Guide
-
-See `docs/dev/BEVY_0.17_TO_0.18_MIGRATION.md` for detailed migration instructions.
-
 ## [0.1.3] - 2026-01-16
 
 ### Added
@@ -366,12 +414,13 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ### Compatibility
 
-- **Bevy 0.17.x**: Current version (0.1.x)
-- Future versions will track Bevy releases
+- **Bevy 0.20.x**: Current version (0.5.x)
+- Older Bevy versions are maintained on the `bevy-0.19` and `bevy-0.18` branches
 
 ### Deprecated Features
 
-None yet.
+- `ControllerConfig::load_or_default`, `load_from_file`, `save_default`, `save_to_file`, and
+  `default_config_path` — use Bevy's `SettingsPlugin` instead. Removed in `0.6.0`.
 
 ### Removed Features
 
@@ -404,6 +453,7 @@ When contributing, please:
 
 ---
 
+[0.5.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.4.1..v0.5.0
 [0.4.1]: https://github.com/greysquirr3l/bevy-archie/compare/v0.4.0..v0.4.1
 [0.4.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.3.0..v0.4.0
 [0.3.0]: https://github.com/greysquirr3l/bevy-archie/compare/v0.2.4..v0.3.0
