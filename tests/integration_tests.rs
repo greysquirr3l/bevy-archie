@@ -336,7 +336,7 @@ fn test_bsn_scene_matches_component_bundle() {
                 weight: FontWeight::BOLD,
             }
             TextColor(Color::WHITE)
-            LetterSpacing::Px(1.0)
+            ~LetterSpacing::Px(1.0)
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
