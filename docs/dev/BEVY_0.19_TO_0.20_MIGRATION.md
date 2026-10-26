@@ -97,6 +97,12 @@ use bevy::ui_widgets::{Activate, Button};
 
 The `handle_remap_ui` system no longer polls `Interaction` — it just refreshes the binding-text displays. Button activation flows through the per-entity observer.
 
+### Controller config persistence → Bevy `SettingsPlugin`
+
+> **Moved.** Controller config persistence moved to Bevy's `SettingsPlugin` in
+> `bevy_archie` **0.5.0**, not in 0.4.0. The full recipe lives in the
+> [0.4 → 0.5 migration guide](0.4_TO_0.5_MIGRATION.md#controller-config-persistence--bevy-settingsplugin).
+
 ## Notes for downstream consumers
 
 - **Library code (`src/`) compiles without modification.** No `bevy_archie` types changed.
@@ -107,9 +113,10 @@ The `handle_remap_ui` system no longer polls `Interaction` — it just refreshes
 
 ## Branching model
 
-| Bevy | bevy_archie | Branch                                       |
-| ---- | ----------- | -------------------------------------------- |
-| 0.20 | 0.4.x       | `bevy-0.20` (active migration)               |
-| 0.19 | 0.3.x       | `main` (still 0.19.x) / `bevy-0.19` (maint.) |
-| 0.18 | 0.2.x       | `bevy-0.18`                                  |
-| 0.17 | 0.1.x       | `bevy-0.17` (deprecated)                     |
+| Bevy | bevy_archie | Branch                       |
+| ---- | ----------- | ---------------------------- |
+| 0.20 | 0.5.x       | `main`                       |
+| 0.20 | 0.4.x       | `main` (superseded by 0.5.x) |
+| 0.19 | 0.3.x       | `bevy-0.19` (maintenance)    |
+| 0.18 | 0.2.x       | `bevy-0.18` (maintenance)    |
+| 0.17 | 0.1.x       | `bevy-0.17` (retired)        |

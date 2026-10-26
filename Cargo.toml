@@ -1,6 +1,6 @@
 [package]
 name = "bevy_archie"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2024"
 rust-version = "1.97.1"
 description = "A comprehensive game controller support module for Bevy"
@@ -39,12 +39,16 @@ bevy = { version = "0.20", default-features = false, features = [
     "bevy_sprite",
     "bevy_state",
     "bevy_scene",
+    # `ControllerConfig` is a `SettingsGroup`, so it can be persisted to disk with
+    # Bevy's `SettingsPlugin`. See `ControllerPlugin::with_settings`.
     "bevy_settings",
 ] }
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 dirs = "7.0"
+# Grapheme-cluster aware text editing for the virtual keyboard
+unicode-segmentation = "1.13"
 # Optional: DualSense controller support via HID
 dualsense-rs = { version = "0.6", optional = true }
 

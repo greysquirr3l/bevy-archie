@@ -4,6 +4,7 @@
 //! controller support functionality.
 
 use bevy::prelude::*;
+use bevy::settings::SettingsPlugin;
 
 /// The main controller support plugin.
 ///
@@ -18,10 +19,20 @@ use bevy::prelude::*;
 ///     .add_plugins(ControllerPlugin::default())
 ///     .run();
 /// ```
+///
+/// Use [`ControllerPlugin::with_settings`] to also persist
+/// [`ControllerConfig`](crate::config::ControllerConfig) to disk with Bevy's `SettingsPlugin`.
 #[derive(Debug, Clone, Default)]
 pub struct ControllerPlugin {
     /// Base path for controller icon assets.
     pub icon_base_path: Option<String>,
+
+    /// Application name used to persist [`ControllerConfig`](crate::config::ControllerConfig)
+    /// to disk with Bevy's [`SettingsPlugin`].
+    ///
+    /// When set, the plugin adds `SettingsPlugin::new(name)` to the app. The settings file
+    /// is written to `{preferences_dir}/{name}/settings.toml`.
+    pub settings_app_name: Option<String>,
 }
 
 impl ControllerPlugin {
@@ -29,7 +40,40 @@ impl ControllerPlugin {
     pub fn with_icon_path(icon_path: impl Into<String>) -> Self {
         Self {
             icon_base_path: Some(icon_path.into()),
+            settings_app_name: None,
         }
+    }
+
+    /// Create a new controller plugin that persists [`ControllerConfig`](crate::config::ControllerConfig)
+    /// to disk using Bevy's `SettingsPlugin`.
+    ///
+    /// The application name determines where the settings file lives:
+    /// `{preferences_dir}/{app_name}/settings.toml`.
+    ///
+    /// ```rust,no_run
+    /// use bevy::prelude::*;
+    /// use bevy_archie::prelude::*;
+    ///
+    /// App::new()
+    ///     .add_plugins(DefaultPlugins)
+    ///     .add_plugins(ControllerPlugin::with_settings("com.example.mygame"))
+    ///     .run();
+    /// ```
+    pub fn with_settings(app_name: impl Into<String>) -> Self {
+        Self {
+            icon_base_path: None,
+            settings_app_name: Some(app_name.into()),
+        }
+    }
+
+    /// Set the application name used for settings persistence.
+    ///
+    /// Composes with the other constructors:
+    /// `ControllerPlugin::with_icon_path("icons/x").with_settings_app_name("com.example.app")`.
+    #[must_use]
+    pub fn with_settings_app_name(mut self, app_name: impl Into<String>) -> Self {
+        self.settings_app_name = Some(app_name.into());
+        self
     }
 }
 
@@ -55,6 +99,13 @@ impl Plugin for ControllerPlugin {
         // Set up icon path if provided
         if let Some(path) = &self.icon_base_path {
             app.insert_resource(crate::icons::ControllerIconAssets::new(path.clone()));
+        }
+
+        // Persist `ControllerConfig` through Bevy's `SettingsPlugin` if requested.
+        // This is added after the config resource is registered so the loaded
+        // settings are applied on top of the registered defaults.
+        if let Some(app_name) = &self.settings_app_name {
+            app.add_plugins(SettingsPlugin::new(app_name));
         }
 
         // Add core systems

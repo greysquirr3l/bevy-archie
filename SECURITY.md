@@ -6,7 +6,8 @@ We release patches for security vulnerabilities. Currently supported versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+| 0.5.x   | :white_check_mark: |
+| 0.4.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
@@ -45,7 +46,7 @@ We follow the principle of [Responsible Disclosure](https://en.wikipedia.org/wik
 This library processes controller input from hardware devices. While the library itself does not execute arbitrary code from input data, users should be aware that:
 
 * Controller input is read through Bevy's gamepad abstraction layer
-* Configuration files are loaded from JSON and should be validated before use
+* Configuration files are loaded from TOML, via Bevy's `SettingsPlugin`, and should be validated before use
 * The library does not process untrusted network input by default
 
 ### Data Privacy
@@ -58,9 +59,15 @@ This library processes controller input from hardware devices. While the library
 
 This project depends on:
 
-* Bevy Engine (0.17.x) - A data-driven game engine
+* Bevy Engine (0.20.x) - A data-driven game engine
 * serde/serde_json - For configuration serialization
+* unicode-segmentation - For grapheme-cluster aware text editing
 * dirs - For platform-specific directory paths
+
+The `dirs` dependency is used only by the deprecated `ControllerConfig` JSON helpers
+(`load_from_file`, `save_to_file`, and their defaults), which are removed in `0.6.0`. New code
+should use Bevy's `SettingsPlugin` instead — see the
+[migration recipe](docs/dev/0.4_TO_0.5_MIGRATION.md#controller-config-persistence--bevy-settingsplugin).
 
 We monitor our dependencies for security advisories through:
 

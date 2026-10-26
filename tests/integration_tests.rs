@@ -7,6 +7,7 @@
 
 use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
+use bevy::text::{FontSourceTemplate, LetterSpacing};
 use bevy_archie::action_modifiers::ActionModifier;
 use bevy_archie::gyro::MotionGesture;
 use bevy_archie::haptics::{RumbleController, RumbleIntensity, RumblePattern};
@@ -287,4 +288,191 @@ fn test_input_buffer_capacity() {
     assert_eq!(buffer.inputs.capacity(), 32);
     assert_eq!(buffer.inputs.len(), 0);
     assert!(buffer.inputs.is_empty());
+}
+
+// ========== bsn! scene equivalence ==========
+
+/// Builds an app that can resolve `bsn!` scenes.
+fn scene_test_app() -> App {
+    let mut app = App::new();
+    app.add_plugins((
+        MinimalPlugins,
+        bevy::asset::AssetPlugin::default(),
+        bevy::scene::ScenePlugin,
+    ));
+    app
+}
+
+/// Spawns a `bsn!` scene and returns its root entity.
+///
+/// `World::spawn_scene` returns a `Result`. This turns a failure into a
+/// readable assertion message rather than an `unwrap` panic.
+fn spawn_scene_entity(app: &mut App, scene: impl bevy::scene::Scene) -> Entity {
+    let spawned = app.world_mut().spawn_scene(scene).map(|entity| entity.id());
+    assert!(
+        spawned.is_ok(),
+        "the scene failed to spawn: {:?}",
+        spawned.as_ref().err()
+    );
+    spawned.unwrap_or(Entity::PLACEHOLDER)
+}
+
+/// The examples were converted from `commands.spawn((...))` bundles to
+/// `commands.spawn_scene(bsn! { ... })` scenes. This test asserts that a scene
+/// produces the same component values as the bundle it replaced, so the
+/// conversion is a visual no-op.
+#[test]
+fn test_bsn_scene_matches_component_bundle() {
+    let mut app = scene_test_app();
+
+    // The `bsn!` form.
+    let scene_entity = spawn_scene_entity(
+        &mut app,
+        bsn! {
+            Text("Bevy Archie - Controller Support Demo")
+            TextFont {
+                font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
+                font_size: FontSize::Px(32.0),
+                weight: FontWeight::BOLD,
+            }
+            TextColor(Color::WHITE)
+            LetterSpacing::Px(1.0)
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+            }
+        },
+    );
+
+    // The component-bundle form the example used before the conversion.
+    let bundle_entity = app
+        .world_mut()
+        .spawn((
+            Text::new("Bevy Archie - Controller Support Demo"),
+            TextFont {
+                font: FontSource::sans_serif(),
+                font_size: FontSize::Px(32.0),
+                weight: FontWeight::BOLD,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            LetterSpacing::Px(1.0),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+        ))
+        .id();
+
+    let scene = app.world().entity(scene_entity);
+    let bundle = app.world().entity(bundle_entity);
+
+    // Compare the `Option`s directly. A component missing on one side but not
+    // the other is a difference, and `assert_eq!` reports both sides.
+    assert_eq!(
+        scene.get::<Text>(),
+        bundle.get::<Text>(),
+        "Text component differs"
+    );
+    assert_eq!(
+        scene.get::<TextFont>(),
+        bundle.get::<TextFont>(),
+        "TextFont component differs"
+    );
+    assert_eq!(
+        scene.get::<TextColor>(),
+        bundle.get::<TextColor>(),
+        "TextColor component differs"
+    );
+    assert_eq!(
+        scene.get::<LetterSpacing>(),
+        bundle.get::<LetterSpacing>(),
+        "LetterSpacing component differs"
+    );
+    assert_eq!(
+        scene.get::<Node>(),
+        bundle.get::<Node>(),
+        "Node component differs"
+    );
+}
+
+#[test]
+fn test_bsn_scene_children_hierarchy() {
+    let mut app = scene_test_app();
+
+    let root = spawn_scene_entity(
+        &mut app,
+        bsn! {
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+            }
+            BackgroundColor(Color::srgb(0.1, 0.1, 0.15))
+            Children [
+                Text("first")
+                TextColor(Color::WHITE)
+                --
+                Text("second")
+                TextColor(Color::srgb(0.5, 0.5, 0.5))
+            ]
+        },
+    );
+
+    let root_entity = app.world().entity(root);
+    assert_eq!(
+        root_entity.get::<BackgroundColor>().map(|c| c.0),
+        Some(Color::srgb(0.1, 0.1, 0.15)),
+        "the root's BackgroundColor was not applied"
+    );
+    assert_eq!(
+        root_entity.get::<Node>().map(|n| (n.width, n.height)),
+        Some((Val::Percent(100.0), Val::Percent(100.0))),
+        "the root's Node was not applied"
+    );
+
+    let children: Vec<Entity> = root_entity
+        .get::<Children>()
+        .map(|c| c.to_vec())
+        .unwrap_or_default();
+    assert_eq!(children.len(), 2, "expected two children");
+
+    let [first, second] = children.as_slice() else {
+        return;
+    };
+
+    let first_entity = app.world().entity(*first);
+    assert_eq!(
+        first_entity.get::<Text>().map(|t| t.0.as_str()),
+        Some("first"),
+        "the first child's Text is wrong"
+    );
+    assert_eq!(
+        first_entity.get::<TextColor>().map(|c| c.0),
+        Some(Color::WHITE),
+        "the first child's TextColor is wrong"
+    );
+    assert_eq!(
+        first_entity.get::<ChildOf>().map(ChildOf::parent),
+        Some(root),
+        "the first child is not parented to the root"
+    );
+
+    let second_entity = app.world().entity(*second);
+    assert_eq!(
+        second_entity.get::<Text>().map(|t| t.0.as_str()),
+        Some("second"),
+        "the second child's Text is wrong"
+    );
+    assert_eq!(
+        second_entity.get::<TextColor>().map(|c| c.0),
+        Some(Color::srgb(0.5, 0.5, 0.5)),
+        "the second child's TextColor is wrong"
+    );
+    assert_eq!(
+        second_entity.get::<ChildOf>().map(ChildOf::parent),
+        Some(root),
+        "the second child is not parented to the root"
+    );
 }

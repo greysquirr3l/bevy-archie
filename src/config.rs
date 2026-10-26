@@ -4,6 +4,7 @@
 //! including deadzone settings, sensitivity, and layout preferences.
 
 use bevy::prelude::*;
+use bevy::settings::{ReflectSettingsGroup, SettingsGroup};
 use serde::{Deserialize, Serialize};
 
 /// Controller layout type for icon display.
@@ -155,8 +156,23 @@ impl ControllerLayout {
 }
 
 /// Global controller configuration resource.
-#[derive(Debug, Clone, Resource, Serialize, Deserialize, Reflect)]
-#[reflect(Resource)]
+///
+/// This is also a Bevy [`SettingsGroup`], so it can be persisted to disk with Bevy's
+/// `SettingsPlugin`:
+///
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy::settings::SettingsPlugin;
+/// use bevy_archie::prelude::*;
+///
+/// App::new()
+///     .add_plugins(DefaultPlugins)
+///     .add_plugins(SettingsPlugin::new("com.example.mygame"))
+///     .add_plugins(ControllerPlugin::default())
+///     .run();
+/// ```
+#[derive(Debug, Clone, Resource, Serialize, Deserialize, Reflect, SettingsGroup)]
+#[reflect(Resource, SettingsGroup, Default)]
 #[expect(
     clippy::struct_excessive_bools,
     reason = "configuration toggles are naturally boolean flags"
@@ -191,6 +207,10 @@ pub struct ControllerConfig {
     pub forced_layout: Option<ControllerLayout>,
 
     /// Current detected/forced controller layout.
+    ///
+    /// This is runtime state rather than a user preference, so it is not persisted
+    /// by Bevy's `SettingsPlugin`.
+    #[reflect(ignore)]
     pub current_layout: ControllerLayout,
 
     /// Enable vibration/haptic feedback.
@@ -353,6 +373,10 @@ impl ControllerConfig {
     /// # Errors
     ///
     /// Returns an error if serialization fails or the file cannot be written.
+    #[deprecated(
+        since = "0.5.0",
+        note = "`ControllerConfig` is now a Bevy `SettingsGroup`. Add `SettingsPlugin::new(\"your.app.id\")` to your app and queue `SaveSettingsDeferred`/`SaveSettingsSync` instead. This method will be removed in 0.6.0."
+    )]
     pub fn save_to_file(&self, path: impl AsRef<std::path::Path>) -> std::io::Result<()> {
         let json = serde_json::to_string_pretty(self).map_err(std::io::Error::other)?;
         std::fs::write(path, json)
@@ -363,6 +387,10 @@ impl ControllerConfig {
     /// # Errors
     ///
     /// Returns an error if the file cannot be read or contains invalid JSON.
+    #[deprecated(
+        since = "0.5.0",
+        note = "`ControllerConfig` is now a Bevy `SettingsGroup`. Add `SettingsPlugin::new(\"your.app.id\")` to your app and the persisted values are loaded automatically. This method will be removed in 0.6.0."
+    )]
     pub fn load_from_file(path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
         let json = std::fs::read_to_string(path)?;
         serde_json::from_str(&json)
@@ -371,6 +399,10 @@ impl ControllerConfig {
 
     /// Get the default config file path for the current platform.
     #[must_use]
+    #[deprecated(
+        since = "0.5.0",
+        note = "Bevy's `SettingsPlugin` owns the settings path now. Use `SettingsPlugin::new(\"your.app.id\")` and the app id to control it. This method will be removed in 0.6.0."
+    )]
     pub fn default_config_path() -> std::path::PathBuf {
         if let Some(config_dir) = dirs::config_dir() {
             config_dir.join("bevy_archie").join("controller.json")
@@ -381,6 +413,11 @@ impl ControllerConfig {
 
     /// Load configuration from the default path, or return default if not found.
     #[must_use]
+    #[deprecated(
+        since = "0.5.0",
+        note = "`ControllerConfig` is now a Bevy `SettingsGroup`. Add `SettingsPlugin::new(\"your.app.id\")` to your app and the persisted values are loaded automatically. This method will be removed in 0.6.0."
+    )]
+    #[allow(deprecated)]
     pub fn load_or_default() -> Self {
         let path = Self::default_config_path();
         Self::load_from_file(&path).unwrap_or_default()
@@ -391,6 +428,11 @@ impl ControllerConfig {
     /// # Errors
     ///
     /// Returns an error if directories cannot be created or the file cannot be written.
+    #[deprecated(
+        since = "0.5.0",
+        note = "`ControllerConfig` is now a Bevy `SettingsGroup`. Queue `SaveSettingsDeferred` or `SaveSettingsSync` instead. This method will be removed in 0.6.0."
+    )]
+    #[allow(deprecated)]
     pub fn save_default(&self) -> std::io::Result<()> {
         let path = Self::default_config_path();
         if let Some(parent) = path.parent() {
@@ -779,9 +821,69 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_controller_config_default_path() {
         let path = ControllerConfig::default_config_path();
         assert!(path.to_string_lossy().contains("controller"));
+    }
+
+    #[test]
+    fn test_settings_group_round_trip() {
+        use bevy::platform::dirs::preferences_dir;
+        use bevy::settings::{SaveSettingsSync, SettingsPlugin};
+
+        const APP_ID: &str = "com.bevy_archie.tests.settings_round_trip";
+
+        // Start from a clean slate so the test does not depend on previous runs.
+        let settings_dir = preferences_dir().map(|dir| dir.join(APP_ID));
+        if let Some(dir) = &settings_dir {
+            let _ = std::fs::remove_dir_all(dir);
+        }
+
+        // First app: write a value and save it.
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        crate::config::register_config_types(&mut app);
+        app.add_plugins(SettingsPlugin::new(APP_ID));
+        {
+            let mut config = app.world_mut().resource_mut::<ControllerConfig>();
+            config.deadzone = 0.42;
+            config.forced_layout = Some(ControllerLayout::PlayStation);
+        }
+        app.add_systems(Update, |mut commands: Commands| {
+            commands.queue(SaveSettingsSync::Always);
+        });
+        app.update();
+
+        // The persisted file keeps the user preferences but not the runtime-only layout.
+        if let Some(dir) = &settings_dir {
+            let content = std::fs::read_to_string(dir.join("settings.toml")).unwrap();
+            assert!(
+                content.contains("deadzone"),
+                "missing deadzone in:\n{content}"
+            );
+            assert!(
+                content.contains("forced_layout"),
+                "missing forced_layout in:\n{content}"
+            );
+            assert!(
+                !content.contains("current_layout"),
+                "current_layout should not be persisted:\n{content}"
+            );
+        }
+
+        // Second app: the values should come back from disk.
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        crate::config::register_config_types(&mut app);
+        app.add_plugins(SettingsPlugin::new(APP_ID));
+        let config = app.world().resource::<ControllerConfig>();
+        assert_relative_eq!(config.deadzone, 0.42);
+        assert_eq!(config.forced_layout, Some(ControllerLayout::PlayStation));
+
+        if let Some(dir) = &settings_dir {
+            let _ = std::fs::remove_dir_all(dir);
+        }
     }
 
     // ========== ConfigField Tests ==========

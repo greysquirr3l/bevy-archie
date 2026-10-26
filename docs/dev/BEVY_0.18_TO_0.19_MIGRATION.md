@@ -51,8 +51,8 @@ The `FontSize` enum supports `Px`, `Vw`, `Vh`, `VMin`, `VMax`, and `Rem`. The `.
 
 ## Branching model
 
-| Bevy | bevy_archie | Branch |
-|------|-------------|--------|
-| 0.19 | 0.3.x | `main` |
-| 0.18 | 0.2.x | `bevy-0.18` |
-| 0.17 | 0.1.x | `bevy-0.17` (deprecated) |
+| Bevy | bevy_archie | Branch                   |
+| ---- | ----------- | ------------------------ |
+| 0.19 | 0.3.x       | `main`                   |
+| 0.18 | 0.2.x       | `bevy-0.18`              |
+| 0.17 | 0.1.x       | `bevy-0.17` (deprecated) |

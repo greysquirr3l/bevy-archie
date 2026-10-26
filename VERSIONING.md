@@ -4,16 +4,18 @@ bevy\_archie follows [Semantic Versioning](https://semver.org/) and maintains co
 
 ## Branch Strategy
 
-| Branch | Bevy Version | Status | Crate Version |
-| --- | --- | --- | --- |
-| `main` | 0.19.x | Active Development | 0.3.x |
-| `bevy-0.18` | 0.18.x | Maintenance mirror | 0.2.x |
+| Branch      | Bevy Version | Status             | Crate Version |
+| ----------- | ------------ | ------------------ | ------------- |
+| `main`      | 0.20.x       | Active Development | 0.5.x         |
+| `bevy-0.19` | 0.19.x       | Maintenance mirror | 0.3.x         |
+| `bevy-0.18` | 0.18.x       | Maintenance mirror | 0.2.x         |
 
 ## Deprecation Notice
 
 Bevy 0.17 support (crate `0.1.x`) is end-of-life. The `bevy-0.17` branch has been retired; the final 0.1.x releases remain on [crates.io](https://crates.io/crates/bevy_archie/versions) for existing consumers.
 
-- New development should target Bevy 0.19 (`main`, crate `0.3.x`)
+- New development should target Bevy 0.20 (`main`, crate `0.5.x`)
+- Bevy 0.19 maintenance-only patches target `bevy-0.19` (crate `0.3.x`)
 - Bevy 0.18 maintenance-only patches target `bevy-0.18` (crate `0.2.x`)
 
 ### Branch Lifecycle
@@ -25,19 +27,31 @@ Bevy 0.17 support (crate `0.1.x`) is end-of-life. The `bevy-0.17` branch has bee
 
 ## Version Mapping
 
-| bevy\_archie | Bevy | Rust | Notes |
-| --- | --- | --- | --- |
-| 0.3.x | 0.19.x | 1.96+ | Current stable |
-| 0.2.x | 0.18.x | 1.95+ | Maintenance |
+| bevy\_archie | Bevy   | Rust    | Notes          |
+| ------------ | ------ | ------- | -------------- |
+| 0.5.x        | 0.20.x | 1.97.1+ | Current stable |
+| 0.4.x        | 0.20.x | 1.97.1+ | Maintenance    |
+| 0.3.x        | 0.19.x | 1.96+   | Maintenance    |
+| 0.2.x        | 0.18.x | 1.95+   | Maintenance    |
 
 ## Upgrade Path
 
-### From bevy\_archie 0.2.x (Bevy 0.18) to 0.3.x (Bevy 0.19)
+### From bevy\_archie 0.4.x to 0.5.x (Bevy 0.20)
 
-Key changes in 0.3.x:
+Key changes in 0.5.x:
 
-- Updated to Bevy 0.19 APIs (resources-as-components, Parley text, BSN scenes)
-- See the upstream [Bevy 0.18 → 0.19 migration guide](https://bevy.org/learn/migration-guides/0-18-to-0-19/) for details
+- `ControllerConfig` is now a Bevy `SettingsGroup` and is persisted with `SettingsPlugin`. The
+  crate's own JSON helpers are deprecated and are removed in 0.6.0
+- The virtual keyboard buffer and cursor are now grapheme-cluster aware instead of byte-indexed
+- See the [0.4 → 0.5 migration guide](docs/dev/0.4_TO_0.5_MIGRATION.md) for the full recipe
+
+### From bevy\_archie 0.3.x (Bevy 0.19) to 0.4.x (Bevy 0.20)
+
+Key changes in 0.4.x:
+
+- Updated to Bevy 0.20 APIs
+- See the upstream [Bevy 0.19 → 0.20 migration guide](https://bevy.org/learn/migration-guides/0-19-to-0-20/) for details
+- See this repo's [Bevy 0.19 → 0.20 notes](docs/dev/BEVY_0.19_TO_0.20_MIGRATION.md)
 
 ### From bevy\_archie 0.1.x (Bevy 0.17) to 0.2.x (Bevy 0.18)
 
@@ -61,24 +75,24 @@ This ensures stability while keeping dependencies secure.
 
 ## Release Process
 
-### Patch Releases (0.1.1 → 0.1.2)
+### Patch Releases (0.5.0 → 0.5.1)
 
 - Bug fixes and security updates
 - No breaking changes
 - Released from maintenance branches as needed
 
-### Minor Releases (0.1.x → 0.2.0)
+### Minor Releases (0.4.x → 0.5.0)
 
-- New Bevy version support
+- New features and Bevy version support
 - May contain breaking changes
-- Released when migration to new Bevy version is complete
+- Released when migration to a new Bevy version is complete
 
 ### Creating a Release
 
 ```bash
 # Ensure version in Cargo.toml matches
-git tag v0.1.3
-git push origin v0.1.3
+git tag v0.5.0
+git push origin v0.5.0
 ```
 
 The release workflow automatically:
@@ -92,6 +106,10 @@ The release workflow automatically:
 Users can select their Bevy version in `Cargo.toml`:
 
 ```toml
+# For Bevy 0.20
+[dependencies]
+bevy_archie = "0.5"
+
 # For Bevy 0.19
 [dependencies]
 bevy_archie = "0.3"
@@ -106,4 +124,5 @@ bevy_archie = "0.2"
 When contributing, target the appropriate branch:
 
 - New features and standard fixes → `main`
+- Bevy 0.19 maintenance-only patches → `bevy-0.19`
 - Bevy 0.18 maintenance-only patches → `bevy-0.18`

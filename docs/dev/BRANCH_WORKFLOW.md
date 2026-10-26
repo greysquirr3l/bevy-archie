@@ -1,6 +1,6 @@
 # Branch Workflow & Synchronization
 
-> **Note:** This document is untracked and for local development reference only.
+> **Note:** This document describes the day-to-day release workflow for maintainers.
 
 ## Branch Strategy
 
@@ -19,7 +19,7 @@ Branch policy (effective 2026-10-22): `main` is Bevy **0.20.x** — the migratio
 
 `release/<version>` is a **staging** branch, distinct from the `bevy-*` **maintenance** branches:
 
-- `release/0.4` holds the release-prep commits for bevy_archie 0.4.x. It is cut from `main` and deleted once the release ships.
+- `release/<version>` holds the release-prep commits for the bevy_archie `<version>.x` line — currently `release/0.5` for 0.5.x. It is cut from `main` and deleted once the release ships.
 - `bevy-0.19` / `bevy-0.18` are long-lived lines that receive backports _after_ a release ships, because those releases track an older Bevy.
 
 Two constraints make the release branch work, both easy to get wrong:

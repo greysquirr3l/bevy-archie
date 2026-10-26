@@ -2,8 +2,32 @@
 //!
 //! This module provides a controller-friendly on-screen keyboard
 //! for entering text when a physical keyboard is not available.
+//!
+//! # Text editing model
+//!
+//! [`VirtualKeyboard`] owns the text buffer and cursor. Both are tracked in
+//! **grapheme clusters**, not bytes or `char`s, so multi-byte characters (accented
+//! letters, emoji, combining marks) are inserted and deleted as a single unit.
+//!
+//! # Relationship to Bevy's `EditableText`
+//!
+//! Bevy's `EditableText` component was evaluated as the editing backend for this
+//! module and deliberately **not** adopted:
+//!
+//! - The virtual keyboard has no rendered text field yet, so there is no entity for
+//!   an `EditableText` to live on. A sync layer would only duplicate state.
+//! - `EditableText` is driven by a physical keyboard and IME. Its headline features
+//!   (clipboard, IME composition, multi-click selection) are orthogonal to
+//!   controller-driven input.
+//! - Its edits are queued and applied by Bevy's `apply_text_edits` system in
+//!   `PostUpdate`, so a value read in the same frame a key was pressed would lag
+//!   behind by one frame.
+//!
+//! The grapheme-cluster model used here matches the one `EditableText` uses, so
+//! moving the buffer onto an `EditableText` later is a mechanical change.
 
 use bevy::prelude::*;
+use unicode_segmentation::UnicodeSegmentation;
 
 /// The current state of the virtual keyboard.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, States, Hash)]
@@ -75,9 +99,12 @@ impl Default for VirtualKeyboardConfig {
 pub struct VirtualKeyboard {
     /// Current input buffer.
     pub buffer: String,
-    /// Maximum length of input.
+    /// Maximum length of input, counted in grapheme clusters.
     pub max_length: Option<usize>,
-    /// Cursor position in the buffer.
+    /// Cursor position in the buffer, counted in grapheme clusters.
+    ///
+    /// This is an index into the buffer's grapheme clusters, not a byte offset, so it
+    /// always points at a valid insertion point.
     pub cursor: usize,
     /// Whether shift is active.
     pub shift_active: bool,
@@ -130,8 +157,32 @@ impl VirtualKeyboard {
     #[must_use]
     pub fn with_value(mut self, value: impl Into<String>) -> Self {
         self.buffer = value.into();
-        self.cursor = self.buffer.len();
+        self.cursor = self.grapheme_count();
         self
+    }
+
+    /// Number of grapheme clusters currently in the buffer.
+    #[must_use]
+    pub fn grapheme_count(&self) -> usize {
+        self.buffer.graphemes(true).count()
+    }
+
+    /// Byte offset of the grapheme boundary the cursor points at.
+    ///
+    /// Returns the buffer length when the cursor is at (or past) the end.
+    fn cursor_byte_offset(&self) -> usize {
+        self.buffer
+            .grapheme_indices(true)
+            .nth(self.cursor)
+            .map_or(self.buffer.len(), |(offset, _)| offset)
+    }
+
+    /// Number of grapheme clusters that start before `byte_offset`.
+    fn grapheme_count_before(&self, byte_offset: usize) -> usize {
+        self.buffer
+            .grapheme_indices(true)
+            .take_while(|(offset, _)| *offset < byte_offset)
+            .count()
     }
 
     /// Check if a character is allowed.
@@ -157,7 +208,7 @@ impl VirtualKeyboard {
         }
 
         if let Some(max) = self.max_length
-            && self.buffer.len() >= max
+            && self.grapheme_count() >= max
         {
             return;
         }
@@ -168,19 +219,33 @@ impl VirtualKeyboard {
             c
         };
 
-        self.buffer.insert(self.cursor, c);
-        self.cursor += 1;
+        let offset = self.cursor_byte_offset();
+        self.buffer.insert(offset, c);
+        // The inserted character can merge with the preceding grapheme (a ZWJ emoji
+        // sequence, for example), so the cursor is recomputed from the byte offset
+        // rather than assumed to advance by one.
+        self.cursor = self.grapheme_count_before(offset + c.len_utf8());
 
         // Auto-disable shift after typing
         self.shift_active = false;
     }
 
-    /// Remove the character before the cursor.
+    /// Remove the grapheme cluster before the cursor.
     pub fn backspace(&mut self) {
-        if self.cursor > 0 {
-            self.cursor -= 1;
-            self.buffer.remove(self.cursor);
+        if self.cursor == 0 {
+            return;
         }
+
+        // The grapheme before the cursor starts at the cursor's previous boundary.
+        let start = self
+            .buffer
+            .grapheme_indices(true)
+            .nth(self.cursor - 1)
+            .map_or(0, |(offset, _)| offset);
+        let end = self.cursor_byte_offset();
+
+        self.buffer.replace_range(start..end, "");
+        self.cursor -= 1;
     }
 
     /// Move cursor left.
@@ -192,7 +257,7 @@ impl VirtualKeyboard {
 
     /// Move cursor right.
     pub fn cursor_right(&mut self) {
-        if self.cursor < self.buffer.len() {
+        if self.cursor < self.grapheme_count() {
             self.cursor += 1;
         }
     }
@@ -762,5 +827,77 @@ mod tests {
         // Just ensure colors are set
         assert_ne!(config.key_color, config.key_hover_color);
         assert_ne!(config.key_color, config.key_pressed_color);
+    }
+
+    // ========== Grapheme Cluster Tests ==========
+
+    #[test]
+    fn test_virtual_keyboard_add_multi_byte_char() {
+        // Regression: the buffer used to be byte-indexed, so inserting a multi-byte
+        // character and then another character panicked on a char boundary.
+        let mut kb = VirtualKeyboard::new("Test");
+        kb.add_char('é');
+        kb.add_char('a');
+        assert_eq!(kb.buffer, "éa");
+        assert_eq!(kb.cursor, 2);
+    }
+
+    #[test]
+    fn test_virtual_keyboard_backspace_removes_whole_grapheme() {
+        let mut kb = VirtualKeyboard::new("Test").with_value("é");
+        assert_eq!(kb.cursor, 1);
+        kb.backspace();
+        assert_eq!(kb.buffer, "");
+        assert_eq!(kb.cursor, 0);
+    }
+
+    #[test]
+    fn test_virtual_keyboard_emoji_counts_as_one_grapheme() {
+        // A ZWJ emoji sequence is a single user-perceived character.
+        let mut kb = VirtualKeyboard::new("Test");
+        kb.add_char('👨');
+        kb.add_char('\u{200D}');
+        kb.add_char('👩');
+        kb.add_char('x');
+        assert_eq!(kb.buffer, "👨\u{200D}👩x");
+        assert_eq!(kb.grapheme_count(), 2);
+        assert_eq!(kb.cursor, 2);
+
+        kb.backspace();
+        assert_eq!(kb.buffer, "👨\u{200D}👩");
+        assert_eq!(kb.cursor, 1);
+    }
+
+    #[test]
+    fn test_virtual_keyboard_max_length_counts_graphemes() {
+        // Three multi-byte characters are nine bytes but three graphemes.
+        let mut kb = VirtualKeyboard::new("Test").with_max_length(3);
+        kb.add_char('é');
+        kb.add_char('ü');
+        kb.add_char('ñ');
+        kb.add_char('a'); // Should be ignored
+        assert_eq!(kb.buffer, "éüñ");
+        assert_eq!(kb.grapheme_count(), 3);
+    }
+
+    #[test]
+    fn test_virtual_keyboard_cursor_movement_over_multibyte() {
+        let mut kb = VirtualKeyboard::new("Test").with_value("éü");
+        assert_eq!(kb.cursor, 2);
+
+        kb.cursor_left();
+        assert_eq!(kb.cursor, 1);
+
+        kb.cursor_right();
+        assert_eq!(kb.cursor, 2);
+    }
+
+    #[test]
+    fn test_virtual_keyboard_insert_in_middle_of_multibyte() {
+        let mut kb = VirtualKeyboard::new("Test").with_value("éü");
+        kb.cursor_left();
+        kb.add_char('x');
+        assert_eq!(kb.buffer, "éxü");
+        assert_eq!(kb.cursor, 2);
     }
 }
