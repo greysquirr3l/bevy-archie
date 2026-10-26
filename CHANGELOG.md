@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2026-10-26
 
+### Breaking Changes
+
+- **`VirtualKeyboard::cursor` is now a grapheme-cluster index** instead of a byte offset into
+  `VirtualKeyboard::buffer`. This fixes a panic on non-ASCII input, but code that reads or writes
+  `cursor` directly must be updated — see the
+  [migration recipe](docs/dev/0.4_TO_0.5_MIGRATION.md#virtual-keyboard-the-cursor-is-now-a-grapheme-index).
+  Code that only uses `add_char`, `backspace`, `cursor_left`, `cursor_right`, and `clear` is
+  unaffected
+- **`VirtualKeyboard::max_length` is now counted in grapheme clusters** rather than bytes, to match
+  `EditableText::max_characters`. A buffer of multi-byte characters can now reach the configured
+  length sooner than it did before
+
 ### Added
 
 - **`ControllerConfig` is now a Bevy `SettingsGroup`**: `ControllerConfig` derives

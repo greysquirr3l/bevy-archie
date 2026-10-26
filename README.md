@@ -452,7 +452,7 @@ App::new()
 
 Settings are written as TOML to a platform-specific preferences directory:
 
-- **Linux**: `~/.config/{app_id}/settings.toml`
+- **Linux**: `~/.config/{app_id}/settings.toml` (or under `$XDG_CONFIG_HOME` when set)
 - **macOS**: `~/Library/Preferences/{app_id}/settings.toml`
 - **Windows**: `%LOCALAPPDATA%\{app_id}\settings.toml`
 
