@@ -7,6 +7,7 @@
 
 use bevy::prelude::*;
 use bevy::state::app::StatesPlugin;
+use bevy::text::{FontSourceTemplate, LetterSpacing};
 use bevy_archie::action_modifiers::ActionModifier;
 use bevy_archie::gyro::MotionGesture;
 use bevy_archie::haptics::{RumbleController, RumbleIntensity, RumblePattern};
@@ -291,25 +292,43 @@ fn test_input_buffer_capacity() {
 
 // ========== bsn! scene equivalence ==========
 
-/// The examples were converted from `commands.spawn((...))` bundles to
-/// `commands.spawn_scene(bsn! { ... })` scenes. This test asserts that a scene
-/// produces exactly the same component set and values as the bundle it replaced,
-/// so the conversion is visual no-op.
-#[test]
-fn test_bsn_scene_matches_component_bundle() {
-    use bevy::text::{FontSourceTemplate, LetterSpacing};
-
+/// Builds an app that can resolve `bsn!` scenes.
+fn scene_test_app() -> App {
     let mut app = App::new();
     app.add_plugins((
         MinimalPlugins,
         bevy::asset::AssetPlugin::default(),
         bevy::scene::ScenePlugin,
     ));
+    app
+}
+
+/// Spawns a `bsn!` scene and returns its root entity.
+///
+/// `World::spawn_scene` returns a `Result`. This turns a failure into a
+/// readable assertion message rather than an `unwrap` panic.
+fn spawn_scene_entity(app: &mut App, scene: impl bevy::scene::Scene) -> Entity {
+    let spawned = app.world_mut().spawn_scene(scene).map(|entity| entity.id());
+    assert!(
+        spawned.is_ok(),
+        "the scene failed to spawn: {:?}",
+        spawned.as_ref().err()
+    );
+    spawned.unwrap_or(Entity::PLACEHOLDER)
+}
+
+/// The examples were converted from `commands.spawn((...))` bundles to
+/// `commands.spawn_scene(bsn! { ... })` scenes. This test asserts that a scene
+/// produces the same component values as the bundle it replaced, so the
+/// conversion is a visual no-op.
+#[test]
+fn test_bsn_scene_matches_component_bundle() {
+    let mut app = scene_test_app();
 
     // The `bsn!` form.
-    let scene_entity = app
-        .world_mut()
-        .spawn_scene(bsn! {
+    let scene_entity = spawn_scene_entity(
+        &mut app,
+        bsn! {
             Text("Bevy Archie - Controller Support Demo")
             TextFont {
                 font: FontSourceTemplate::Generic(GenericFontFamily::SansSerif),
@@ -322,9 +341,8 @@ fn test_bsn_scene_matches_component_bundle() {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
             }
-        })
-        .unwrap()
-        .id();
+        },
+    );
 
     // The component-bundle form the example used before the conversion.
     let bundle_entity = app
@@ -350,45 +368,42 @@ fn test_bsn_scene_matches_component_bundle() {
     let scene = app.world().entity(scene_entity);
     let bundle = app.world().entity(bundle_entity);
 
+    // Compare the `Option`s directly. A component missing on one side but not
+    // the other is a difference, and `assert_eq!` reports both sides.
     assert_eq!(
-        scene.get::<Text>().unwrap(),
-        bundle.get::<Text>().unwrap(),
+        scene.get::<Text>(),
+        bundle.get::<Text>(),
         "Text component differs"
     );
     assert_eq!(
-        scene.get::<TextFont>().unwrap(),
-        bundle.get::<TextFont>().unwrap(),
+        scene.get::<TextFont>(),
+        bundle.get::<TextFont>(),
         "TextFont component differs"
     );
     assert_eq!(
-        scene.get::<TextColor>().unwrap(),
-        bundle.get::<TextColor>().unwrap(),
+        scene.get::<TextColor>(),
+        bundle.get::<TextColor>(),
         "TextColor component differs"
     );
     assert_eq!(
-        scene.get::<LetterSpacing>().unwrap(),
-        bundle.get::<LetterSpacing>().unwrap(),
+        scene.get::<LetterSpacing>(),
+        bundle.get::<LetterSpacing>(),
         "LetterSpacing component differs"
     );
     assert_eq!(
-        scene.get::<Node>().unwrap(),
-        bundle.get::<Node>().unwrap(),
+        scene.get::<Node>(),
+        bundle.get::<Node>(),
         "Node component differs"
     );
 }
 
 #[test]
 fn test_bsn_scene_children_hierarchy() {
-    let mut app = App::new();
-    app.add_plugins((
-        MinimalPlugins,
-        bevy::asset::AssetPlugin::default(),
-        bevy::scene::ScenePlugin,
-    ));
+    let mut app = scene_test_app();
 
-    let root = app
-        .world_mut()
-        .spawn_scene(bsn! {
+    let root = spawn_scene_entity(
+        &mut app,
+        bsn! {
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
@@ -402,30 +417,62 @@ fn test_bsn_scene_children_hierarchy() {
                 Text("second")
                 TextColor(Color::srgb(0.5, 0.5, 0.5))
             ]
-        })
-        .unwrap()
-        .id();
+        },
+    );
 
-    let children: Vec<Entity> = app
-        .world_mut()
-        .entity_mut(root)
-        .get_mut::<Children>()
-        .map(|c| c.iter().collect())
+    let root_entity = app.world().entity(root);
+    assert_eq!(
+        root_entity.get::<BackgroundColor>().map(|c| c.0),
+        Some(Color::srgb(0.1, 0.1, 0.15)),
+        "the root's BackgroundColor was not applied"
+    );
+    assert_eq!(
+        root_entity.get::<Node>().map(|n| (n.width, n.height)),
+        Some((Val::Percent(100.0), Val::Percent(100.0))),
+        "the root's Node was not applied"
+    );
+
+    let children: Vec<Entity> = root_entity
+        .get::<Children>()
+        .map(|c| c.to_vec())
         .unwrap_or_default();
-
     assert_eq!(children.len(), 2, "expected two children");
 
-    let first = app.world().entity(children[0]);
-    assert_eq!(first.get::<Text>().unwrap().0, "first");
-    assert_eq!(first.get::<TextColor>().unwrap().0, Color::WHITE);
-    // Children are parented through the `ChildOf` relationship.
-    assert!(first.get::<ChildOf>().is_some());
+    let [first, second] = children.as_slice() else {
+        return;
+    };
 
-    let second = app.world().entity(children[1]);
-    assert_eq!(second.get::<Text>().unwrap().0, "second");
+    let first_entity = app.world().entity(*first);
     assert_eq!(
-        second.get::<TextColor>().unwrap().0,
-        Color::srgb(0.5, 0.5, 0.5)
+        first_entity.get::<Text>().map(|t| t.0.as_str()),
+        Some("first"),
+        "the first child's Text is wrong"
     );
-    assert!(second.get::<ChildOf>().is_some());
+    assert_eq!(
+        first_entity.get::<TextColor>().map(|c| c.0),
+        Some(Color::WHITE),
+        "the first child's TextColor is wrong"
+    );
+    assert_eq!(
+        first_entity.get::<ChildOf>().map(ChildOf::parent),
+        Some(root),
+        "the first child is not parented to the root"
+    );
+
+    let second_entity = app.world().entity(*second);
+    assert_eq!(
+        second_entity.get::<Text>().map(|t| t.0.as_str()),
+        Some("second"),
+        "the second child's Text is wrong"
+    );
+    assert_eq!(
+        second_entity.get::<TextColor>().map(|c| c.0),
+        Some(Color::srgb(0.5, 0.5, 0.5)),
+        "the second child's TextColor is wrong"
+    );
+    assert_eq!(
+        second_entity.get::<ChildOf>().map(ChildOf::parent),
+        Some(root),
+        "the second child is not parented to the root"
+    );
 }
