@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`bsn!` example scenes**: Use the `~` template form for `LetterSpacing` in the examples and
+  integration tests. `bsn!` expands a bare constructor to
+  `<T as FromTemplate>::Template::Variant(..)`, and for a type that relies on the blanket
+  `FromTemplate` impl rust-analyzer cannot resolve that projection and reports a spurious
+  `E0107` ("this enum takes 0 generic arguments but 1 generic argument was supplied"). The `~`
+  prefix selects the `Template` codegen path instead. `cargo` is unaffected either way — the
+  bare form compiles and produces the same component — so this only clears the editor
+  diagnostic
+
 ## [0.5.0] - 2026-10-26
 
 ### Breaking Changes
